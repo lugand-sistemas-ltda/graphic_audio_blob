@@ -117,16 +117,17 @@ const getCategoryIcon = (category: string): string => {
 // Actions
 const addComponent = (componentId: string) => {
     moveComponent(componentId, props.windowId, { x: 100, y: 100 })
-    componentManager.setVisibility(componentId, true)
+    componentManager.setVisibility(componentId, true, props.windowId)
     showPicker.value = false
 }
 
 const removeComponent = (componentId: string) => {
     moveComponent(componentId, null, { x: 0, y: 0 })
-    componentManager.setVisibility(componentId, false)
+    componentManager.setVisibility(componentId, false, props.windowId)
 }
 
 const toggleVisibility = (componentId: string) => {
+    // Apenas alterna visibilidade visual, mantém na lista (não altera windowId)
     componentManager.toggleVisibility(componentId)
 }
 </script>

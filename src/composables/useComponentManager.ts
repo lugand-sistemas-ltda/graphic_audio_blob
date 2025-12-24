@@ -1,5 +1,6 @@
 import { ref, watch, reactive } from 'vue'
 import { useZIndex } from './useZIndex'
+import { moveComponent } from '../core/state/useGlobalState'
 
 /**
  * Sistema de gerenciamento central de componentes drag-drop
@@ -23,9 +24,6 @@ const components = reactive(new Map<string, ManagedComponent>())
 // Trigger para forçar reatividade quando necessário
 const componentsTrigger = ref(0)
 
-// Flag para controle global de collapse
-const allCollapsed = ref(false)
-
 // Flag para controle global de visibilidade
 const allHidden = ref(false)
 
@@ -48,11 +46,6 @@ const loadConfig = () => {
                         component.visible = visible as boolean
                     }
                 })
-            }
-
-            // Restaura estado de collapse global
-            if (config.allCollapsed !== undefined) {
-                allCollapsed.value = config.allCollapsed
             }
 
             // Restaura estado de visibilidade global
@@ -87,7 +80,6 @@ const saveConfig = () => {
 
     const config = {
         visibility,
-        allCollapsed: allCollapsed.value,
         allHidden: allHidden.value,
         visibilitySnapshot: snapshot
     }
@@ -96,7 +88,7 @@ const saveConfig = () => {
 }
 
 // Watch para salvar automaticamente
-watch([components, allCollapsed, allHidden, visibilitySnapshot], () => {
+watch([components, allHidden, visibilitySnapshot], () => {
     saveConfig()
 }, { deep: true })
 
@@ -121,6 +113,8 @@ export const useComponentManager = () => {
     /**
      * Alterna visibilidade de um componente
      * Quando fica visível: expande e traz para frente
+     * IMPORTANTE: NÃO altera o windowId (ownership), apenas a visibilidade visual
+     * Para adicionar/remover da janela, use addToWindow/removeFromWindow
      */
     const toggleVisibility = (id: string) => {
         const component = components.get(id)
@@ -162,8 +156,9 @@ export const useComponentManager = () => {
     /**
      * Define visibilidade de um componente
      * Quando fica visível: expande e traz para frente
+     * @param windowId ID da janela principal (necessário para sincronizar com estado global)
      */
-    const setVisibility = (id: string, visible: boolean) => {
+    const setVisibility = (id: string, visible: boolean, windowId?: string) => {
         const component = components.get(id)
         if (component) {
             const wasHidden = !component.visible
@@ -171,6 +166,17 @@ export const useComponentManager = () => {
 
             // Força atualização de reatividade
             componentsTrigger.value++
+
+            // Sincroniza com o estado global (ownership)
+            if (windowId) {
+                if (visible) {
+                    // Visível -> adiciona à janela principal
+                    moveComponent(id, windowId, { x: 100, y: 100 })
+                } else {
+                    // Invisível -> remove da janela (windowId: null)
+                    moveComponent(id, null, { x: 0, y: 0 })
+                }
+            }
 
             // Se estava escondido e agora está visível
             if (wasHidden && visible) {
@@ -193,27 +199,10 @@ export const useComponentManager = () => {
      */
     const isVisible = (id: string): boolean => {
         // Acessa o trigger para garantir reatividade
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         componentsTrigger.value
         const component = components.get(id)
         return component?.visible ?? true
-    }
-
-    /**
-     * Colapsa ou expande todos os componentes
-     */
-    const toggleAllCollapsed = () => {
-        allCollapsed.value = !allCollapsed.value
-
-        // Atualiza todos os componentes que têm collapsibleId
-        components.forEach(component => {
-            if (component.collapsibleId) {
-                const storageKey = `collapsible-${component.collapsibleId}`
-                localStorage.setItem(storageKey, JSON.stringify(!allCollapsed.value))
-            }
-        })
-
-        // Força reload da página para aplicar mudanças
-        window.location.reload()
     }
 
     /**
@@ -231,64 +220,88 @@ export const useComponentManager = () => {
     }
 
     /**
-     * Alterna visibilidade de todos os componentes
+     * Alterna visibilidade de todos os componentes ATIVOS (que estão na janela)
      * Ao esconder: salva snapshot do estado atual
      * Ao mostrar: restaura o snapshot salvo
+     * IMPORTANTE: NÃO altera o windowId (ownership), apenas a visibilidade visual
+     * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
-    const toggleAllVisibility = () => {
-        if (!allHidden.value) {
-            // Está visível, vai esconder -> salva snapshot antes
-            visibilitySnapshot.clear()
-            components.forEach((component, id) => {
-                visibilitySnapshot.set(id, component.visible)
-            })
+    const toggleAllVisibility = (activeComponentIds?: string[]) => {
+        // Se não forneceu IDs, usa todos os componentes (fallback)
+        const targetIds = activeComponentIds || Array.from(components.keys())
 
-            // Esconde todos
-            allHidden.value = true
-            components.forEach(component => {
-                component.visible = false
-            })
-        } else {
+        if (allHidden.value) {
             // Está escondido, vai mostrar -> restaura snapshot
             allHidden.value = false
 
             // Se existe snapshot, restaura o estado anterior
             if (visibilitySnapshot.size > 0) {
-                components.forEach((component, id) => {
+                targetIds.forEach((id) => {
+                    const component = components.get(id)
                     const savedState = visibilitySnapshot.get(id)
-                    if (savedState !== undefined) {
+                    if (component && savedState !== undefined) {
                         component.visible = savedState
                     }
                 })
             } else {
-                // Sem snapshot, mostra todos
-                components.forEach(component => {
-                    component.visible = true
+                // Sem snapshot, mostra todos os ativos
+                targetIds.forEach((id) => {
+                    const component = components.get(id)
+                    if (component) {
+                        component.visible = true
+                    }
                 })
             }
+        } else {
+            // Está visível, vai esconder -> salva snapshot antes
+            visibilitySnapshot.clear()
+            targetIds.forEach((id) => {
+                const component = components.get(id)
+                if (component) {
+                    visibilitySnapshot.set(id, component.visible)
+                    component.visible = false
+                }
+            })
+
+            // Marca como escondido
+            allHidden.value = true
         }
 
         saveConfig()
     }
 
     /**
-     * Mostra todos os componentes
+     * Mostra todos os componentes (ou apenas os ativos)
+     * IMPORTANTE: NÃO altera o windowId (ownership), apenas a visibilidade visual
+     * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
-    const showAll = () => {
+    const showAll = (activeComponentIds?: string[]) => {
         allHidden.value = false
-        components.forEach(component => {
-            component.visible = true
+        const targetIds = activeComponentIds || Array.from(components.keys())
+
+        targetIds.forEach((id) => {
+            const component = components.get(id)
+            if (component) {
+                component.visible = true
+            }
         })
         saveConfig()
     }
 
     /**
-     * Esconde todos os componentes
+     * Esconde todos os componentes (ou apenas os ativos)
+     * IMPORTANTE: NÃO altera o windowId (ownership), apenas a visibilidade visual
+     * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
-    const hideAll = () => {
+    const hideAll = (activeComponentIds?: string[]) => {
         allHidden.value = true
-        components.forEach(component => {
-            component.visible = false
+        const targetIds = activeComponentIds || Array.from(components.keys())
+
+        targetIds.forEach((id) => {
+            const component = components.get(id)
+            if (component) {
+                component.visible = false
+            }
         })
         saveConfig()
     }
@@ -299,9 +312,7 @@ export const useComponentManager = () => {
         toggleVisibility,
         setVisibility,
         isVisible,
-        toggleAllCollapsed,
         toggleAllVisibility,
-        allCollapsed,
         allHidden,
         getComponentsByCategory,
         getAllComponents,

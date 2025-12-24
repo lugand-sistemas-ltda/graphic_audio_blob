@@ -21,15 +21,6 @@
                         </span>
                     </button>
                 </div>
-                <div class="control-item">
-                    <label class="control-label">Collapse/Expand All</label>
-                    <button class="toggle-button" :class="{ active: allCollapsed }" @click="handleToggleAllCollapsed">
-                        <span class="toggle-label">{{ allCollapsed ? 'COLLAPSED' : 'EXPANDED' }}</span>
-                        <span class="toggle-switch">
-                            <span class="toggle-indicator" :class="{ active: allCollapsed }"></span>
-                        </span>
-                    </button>
-                </div>
             </div>
 
             <!-- Visual Controls Category -->
@@ -126,21 +117,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useCollapsible } from '../composables/useCollapsible'
 import { useComponentManager } from '../composables/useComponentManager'
 import { useWindowManager } from '../core/sync'
+import { getWindowComponents } from '../core/state/useGlobalState'
 
 const { isExpanded, toggle: toggleExpanded } = useCollapsible({ id: 'main-control', initialState: true })
 
+const componentManager = useComponentManager()
 const {
-    toggleVisibility,
-    toggleAllCollapsed,
-    toggleAllVisibility,
-    allCollapsed,
     allHidden,
     getComponentsByCategory
-} = useComponentManager()
+} = componentManager
+
+const windowId = inject<string>('windowId', '')
+
+// Obtém apenas os componentes ativos (que estão na janela atual)
+const activeComponents = computed(() => {
+    const windowComponents = getWindowComponents(windowId)
+    return windowComponents.map(wc => wc.id)
+})
+
+// Wrapper para toggleVisibility (NÃO passa windowId - apenas alterna visibilidade)
+const toggleVisibility = (componentId: string) => {
+    componentManager.toggleVisibility(componentId)
+}
+
+// Wrapper para toggleAllVisibility (apenas componentes ativos)
+const handleToggleAllVisibility = () => {
+    componentManager.toggleAllVisibility(activeComponents.value)
+}
 
 // Multi-Window Manager
 const windowManager = useWindowManager()
@@ -153,14 +160,6 @@ const visualComponents = computed(() => getComponentsByCategory('visual'))
 const audioComponents = computed(() => getComponentsByCategory('audio'))
 const debugComponents = computed(() => getComponentsByCategory('debug'))
 const systemComponents = computed(() => getComponentsByCategory('system'))
-
-const handleToggleAllCollapsed = () => {
-    toggleAllCollapsed()
-}
-
-const handleToggleAllVisibility = () => {
-    toggleAllVisibility()
-}
 
 // Multi-Window Functions
 const openNewWindow = () => {

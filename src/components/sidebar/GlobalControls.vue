@@ -3,7 +3,7 @@
         <h4 class="section-title">[ GLOBAL CONTROLS ]</h4>
 
         <div class="control-item">
-            <label class="control-label">Show/Hide All</label>
+            <span class="control-label">Show/Hide All</span>
             <button class="toggle-button" :class="{ active: !allHidden }" @click="handleToggleAllVisibility">
                 <span class="toggle-label">{{ allHidden ? 'HIDDEN' : 'VISIBLE' }}</span>
                 <span class="toggle-switch">
@@ -11,30 +11,26 @@
                 </span>
             </button>
         </div>
-
-        <div class="control-item">
-            <label class="control-label">Collapse/Expand All</label>
-            <button class="toggle-button" :class="{ active: allCollapsed }" @click="handleToggleAllCollapsed">
-                <span class="toggle-label">{{ allCollapsed ? 'COLLAPSED' : 'EXPANDED' }}</span>
-                <span class="toggle-switch">
-                    <span class="toggle-indicator" :class="{ active: allCollapsed }"></span>
-                </span>
-            </button>
-        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed, inject } from 'vue'
 import { useComponentManager } from '../../composables/useComponentManager'
+import { getWindowComponents } from '../../core/state/useGlobalState'
 
-const { toggleAllCollapsed, toggleAllVisibility, allCollapsed, allHidden } = useComponentManager()
+const { toggleAllVisibility, allHidden } = useComponentManager()
+const windowId = inject<string>('windowId', '')
 
-const handleToggleAllCollapsed = () => {
-    toggleAllCollapsed()
-}
+// Obtém apenas os componentes ativos (que estão na janela atual)
+const activeComponents = computed(() => {
+    const windowComponents = getWindowComponents(windowId)
+    return windowComponents.map(wc => wc.id)
+})
 
 const handleToggleAllVisibility = () => {
-    toggleAllVisibility()
+    // Passa apenas os IDs dos componentes ativos
+    toggleAllVisibility(activeComponents.value)
 }
 </script>
 

@@ -8,7 +8,7 @@ import { useComponentManager } from './composables/useComponentManager'
 import { useRgbMode } from './composables/useRgbMode'
 import { useChameleonMode } from './composables/useChameleonMode'
 import { useWindowManager } from './core/sync'
-import { useGlobalState, registerWindow } from './core/state'
+import { useGlobalState, registerWindow, moveComponent } from './core/state'
 import LoadingScreen from './components/LoadingScreen.vue'
 
 const audio = useAudioAnalyzer()
@@ -174,56 +174,67 @@ onMounted(async () => {
         lastActive: now
     })
 
-    // Registra componentes mas todos INVISÍVEIS inicialmente
-    // Usuário adiciona componentes pelo Sidebar
-    // REMOVIDO: main-control (agora integrado ao sidebar)
+    // Lista de componentes disponíveis
+    const componentsToRegister = [
+        {
+            id: 'orb-effect-control',
+            name: 'Orb Effect Control',
+            category: 'visual' as const,
+            collapsibleId: 'orb-effect-control'
+        },
+        {
+            id: 'frequency-visualizer',
+            name: 'Frequency Spectrum',
+            category: 'visual' as const,
+            collapsibleId: 'frequency-visualizer'
+        },
+        {
+            id: 'sound-control',
+            name: 'Sound Control',
+            category: 'audio' as const,
+            collapsibleId: 'sound-control'
+        },
+        {
+            id: 'debug-terminal',
+            name: 'System Monitor',
+            category: 'debug' as const,
+            collapsibleId: 'debug-terminal'
+        },
+        {
+            id: 'theme-selector',
+            name: 'Theme Control',
+            category: 'system' as const,
+            collapsibleId: 'theme-selector'
+        },
+        {
+            id: 'matrix-character',
+            name: 'Matrix Character',
+            category: 'system' as const,
+            collapsibleId: 'matrix-character'
+        }
+    ]
 
-    componentManager.registerComponent({
-        id: 'orb-effect-control',
-        name: 'Orb Effect Control',
-        category: 'visual',
-        visible: false,
-        collapsibleId: 'orb-effect-control'
+    // Registra cada componente no componentManager E no estado global
+    componentsToRegister.forEach(comp => {
+        // 1. Registra no componentManager (controle de visibilidade)
+        componentManager.registerComponent({
+            ...comp,
+            visible: false // Todos iniciam invisíveis
+        })
+
+        // 2. Registra no estado global (posição e ownership)
+        // Componentes começam sem janela (windowId: null)
+        moveComponent(comp.id, null, { x: 0, y: 0 })
     })
 
-    componentManager.registerComponent({
-        id: 'frequency-visualizer',
-        name: 'Frequency Spectrum',
-        category: 'visual',
-        visible: false,
-        collapsibleId: 'frequency-visualizer'
-    })
-
-    componentManager.registerComponent({
-        id: 'sound-control',
-        name: 'Sound Control',
-        category: 'audio',
-        visible: false,
-        collapsibleId: 'sound-control'
-    })
-
-    componentManager.registerComponent({
-        id: 'debug-terminal',
-        name: 'System Monitor',
-        category: 'debug',
-        visible: false,
-        collapsibleId: 'debug-terminal'
-    })
-
-    componentManager.registerComponent({
-        id: 'theme-selector',
-        name: 'Theme Control',
-        category: 'system',
-        visible: false,
-        collapsibleId: 'theme-selector'
-    })
-
-    componentManager.registerComponent({
-        id: 'matrix-character',
-        name: 'Matrix Character',
-        category: 'system',
-        visible: false,
-        collapsibleId: 'matrix-character'
+    // 3. Após registrar todos, sincroniza estado inicial
+    // Verifica se algum componente já está visível (por localStorage)
+    // e adiciona à janela principal
+    componentsToRegister.forEach(comp => {
+        if (componentManager.isVisible(comp.id)) {
+            // Se está visível, deve estar na janela principal
+            moveComponent(comp.id, mainWindowId, { x: 100, y: 100 })
+        }
     })
 
     // Carrega track atual e inicia debug data
