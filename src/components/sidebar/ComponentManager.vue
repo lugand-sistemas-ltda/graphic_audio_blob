@@ -54,32 +54,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useGlobalState, getWindowComponents, moveComponent } from '../../core/state'
+import { ref, computed, inject } from 'vue'
+import {
+    getWindowComponents,
+    addComponentToWindow,
+    removeComponentFromWindow,
+    toggleComponentVisibility
+} from '../../core/state'
 import { useComponentManager } from '../../composables/useComponentManager'
+import { AVAILABLE_COMPONENTS } from '../../config/availableComponents'
 import type { WindowId } from '../../core/state/types'
 
-interface Props {
-    windowId: WindowId
-}
+// Injeta windowId do contexto
+const windowId = inject<WindowId>('windowId', 'unknown')
 
-const props = defineProps<Props>()
-
-const { state } = useGlobalState()
 const componentManager = useComponentManager()
 const showPicker = ref(false)
 
-// Window components
-const windowComponents = computed(() => getWindowComponents(props.windowId))
+// Window components (componentes DESTA janela no GlobalState)
+const windowComponents = computed(() => getWindowComponents(windowId))
 
+// Active components (componentes desta janela que estão registrados)
 const activeComponents = computed(() => {
-    return componentManager.getAllComponents().filter(comp =>
+    return AVAILABLE_COMPONENTS.filter(comp =>
         windowComponents.value.some(wc => wc.id === comp.id)
-    )
+    ).map(comp => ({
+        ...comp,
+        visible: componentManager.isVisible(comp.id)
+    }))
 })
 
+// Available components (componentes que PODEM ser adicionados NESTA janela)
 const availableComponents = computed(() => {
-    return componentManager.getAllComponents().filter(comp =>
+    return AVAILABLE_COMPONENTS.filter(comp =>
         !windowComponents.value.some(wc => wc.id === comp.id)
     )
 })
@@ -116,19 +123,36 @@ const getCategoryIcon = (category: string): string => {
 
 // Actions
 const addComponent = (componentId: string) => {
-    moveComponent(componentId, props.windowId, { x: 100, y: 100 })
-    componentManager.setVisibility(componentId, true, props.windowId)
+    // 1. Adiciona ao GlobalState (ownership nesta janela)
+    addComponentToWindow(windowId, componentId, {
+        id: componentId,
+        transform: { x: 100, y: 100 },
+        visible: true,
+        collapsed: false,
+        zIndex: 1
+    })
+
+    // 2. Torna visível no ComponentManager (UI local)
+    componentManager.setVisibility(componentId, true)
+
     showPicker.value = false
 }
 
 const removeComponent = (componentId: string) => {
-    moveComponent(componentId, null, { x: 0, y: 0 })
-    componentManager.setVisibility(componentId, false, props.windowId)
+    // 1. Remove do GlobalState (ownership)
+    removeComponentFromWindow(windowId, componentId)
+
+    // 2. Esconde no ComponentManager (UI local)
+    componentManager.setVisibility(componentId, false)
 }
 
 const toggleVisibility = (componentId: string) => {
-    // Apenas alterna visibilidade visual, mantém na lista (não altera windowId)
+    // Toggle visibilidade visual (UI local)
+    const newVisibility = !componentManager.isVisible(componentId)
     componentManager.toggleVisibility(componentId)
+
+    // Sincroniza com GlobalState
+    toggleComponentVisibility(windowId, componentId, newVisibility)
 }
 </script>
 

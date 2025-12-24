@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: Required<GlobalStateConfig> = {
 // Estado global reativo (singleton)
 const globalState = reactive<GlobalState>({
     windows: {},
-    components: {},
+    componentsByWindow: {}, // windowId → componentId → ComponentState
     draggedComponent: {
         id: null,
         sourceWindowId: null,
@@ -47,32 +47,57 @@ function log(...args: any[]) {
 }
 
 /**
- * Persiste estado no localStorage
+ * Gera chave de persistência única por janela
+ */
+function getWindowPersistKey(windowId: WindowId): string {
+    return `${config.persistKey}-window-${windowId}`
+}
+
+/**
+ * Persiste estado no localStorage (isolado por janela)
  */
 function persistState() {
+    if (!currentWindowId) return
+
     try {
+        // Persiste apenas o estado desta janela
+        const windowComponents = globalState.componentsByWindow[currentWindowId] || {}
+
         const stateToPersist = {
-            windows: globalState.windows,
-            components: globalState.components
+            window: globalState.windows[currentWindowId],
+            components: windowComponents
         }
-        localStorage.setItem(config.persistKey, JSON.stringify(stateToPersist))
-        log('State persisted')
+
+        const key = getWindowPersistKey(currentWindowId)
+        localStorage.setItem(key, JSON.stringify(stateToPersist))
+        log(`State persisted for window ${currentWindowId}`)
     } catch (error) {
         console.error('[GlobalState] Failed to persist:', error)
     }
 }
 
 /**
- * Carrega estado do localStorage
+ * Carrega estado do localStorage (isolado por janela)
  */
-function loadPersistedState() {
+function loadPersistedState(windowId: WindowId) {
     try {
-        const stored = localStorage.getItem(config.persistKey)
+        const key = getWindowPersistKey(windowId)
+        const stored = localStorage.getItem(key)
+
         if (stored) {
             const parsed = JSON.parse(stored)
-            Object.assign(globalState.windows, parsed.windows || {})
-            Object.assign(globalState.components, parsed.components || {})
-            log('State loaded from localStorage')
+
+            // Restaura janela
+            if (parsed.window) {
+                globalState.windows[windowId] = parsed.window
+            }
+
+            // Restaura componentes desta janela
+            if (parsed.components) {
+                globalState.componentsByWindow[windowId] = parsed.components
+            }
+
+            log(`State loaded from localStorage for window ${windowId}`)
         }
     } catch (error) {
         console.error('[GlobalState] Failed to load persisted state:', error)
@@ -89,6 +114,10 @@ function applyAction(action: StateAction) {
         case 'WINDOW_CREATED': {
             const window = action.payload
             globalState.windows[window.id] = window
+            // Inicializa Map de componentes para esta janela
+            if (!globalState.componentsByWindow[window.id]) {
+                globalState.componentsByWindow[window.id] = {}
+            }
             break
         }
 
@@ -102,47 +131,62 @@ function applyAction(action: StateAction) {
 
         case 'WINDOW_REMOVED': {
             const { id } = action.payload
-            // Move componentes da janela removida para null (não visíveis)
-            Object.values(globalState.components).forEach(component => {
-                if (component.windowId === id) {
-                    component.windowId = null
-                    component.visible = false
-                }
-            })
+            // Remove janela e seus componentes
             delete globalState.windows[id]
+            delete globalState.componentsByWindow[id]
             break
         }
 
-        case 'COMPONENT_MOVED': {
-            const { id, windowId, transform } = action.payload
-            if (globalState.components[id]) {
-                globalState.components[id].windowId = windowId
-                globalState.components[id].transform = transform
-            } else {
-                globalState.components[id] = {
-                    id,
-                    windowId,
-                    transform,
-                    visible: true,
-                    collapsed: false,
-                    zIndex: 1
+        case 'COMPONENT_ADDED_TO_WINDOW': {
+            const { windowId, componentId, state } = action.payload
+            if (!globalState.componentsByWindow[windowId]) {
+                globalState.componentsByWindow[windowId] = {}
+            }
+            globalState.componentsByWindow[windowId][componentId] = state
+
+            // Adiciona à lista de componentes ativos da janela
+            if (globalState.windows[windowId]) {
+                if (!globalState.windows[windowId].activeComponents.includes(componentId)) {
+                    globalState.windows[windowId].activeComponents.push(componentId)
                 }
             }
             break
         }
 
-        case 'COMPONENT_UPDATED': {
-            const { id, ...updates } = action.payload
-            if (globalState.components[id]) {
-                Object.assign(globalState.components[id], updates)
+        case 'COMPONENT_REMOVED_FROM_WINDOW': {
+            const { windowId, componentId } = action.payload
+            if (globalState.componentsByWindow[windowId]) {
+                delete globalState.componentsByWindow[windowId][componentId]
+            }
+
+            // Remove da lista de componentes ativos da janela
+            if (globalState.windows[windowId]) {
+                globalState.windows[windowId].activeComponents =
+                    globalState.windows[windowId].activeComponents.filter(id => id !== componentId)
             }
             break
         }
 
-        case 'COMPONENT_TOGGLED': {
-            const { id, visible } = action.payload
-            if (globalState.components[id]) {
-                globalState.components[id].visible = visible
+        case 'COMPONENT_UPDATED_IN_WINDOW': {
+            const { windowId, componentId, updates } = action.payload
+            if (globalState.componentsByWindow[windowId]?.[componentId]) {
+                Object.assign(globalState.componentsByWindow[windowId][componentId], updates)
+            }
+            break
+        }
+
+        case 'COMPONENT_VISIBILITY_TOGGLED': {
+            const { windowId, componentId, visible } = action.payload
+            if (globalState.componentsByWindow[windowId]?.[componentId]) {
+                globalState.componentsByWindow[windowId][componentId].visible = visible
+            }
+            break
+        }
+
+        case 'WINDOW_HIDE_ALL_COMPONENTS': {
+            const { windowId, hidden } = action.payload
+            if (globalState.windows[windowId]) {
+                globalState.windows[windowId].allComponentsHidden = hidden
             }
             break
         }
@@ -159,11 +203,6 @@ function applyAction(action: StateAction) {
         }
 
         case 'DRAG_ENDED': {
-            const { id, windowId, transform } = action.payload
-            if (globalState.components[id]) {
-                globalState.components[id].windowId = windowId
-                globalState.components[id].transform = transform
-            }
             // Reset drag state
             globalState.draggedComponent.id = null
             globalState.draggedComponent.sourceWindowId = null
@@ -174,7 +213,7 @@ function applyAction(action: StateAction) {
         case 'STATE_SYNC': {
             // Full state sync (usado para inicialização)
             Object.assign(globalState.windows, action.payload.windows)
-            Object.assign(globalState.components, action.payload.components)
+            Object.assign(globalState.componentsByWindow, action.payload.componentsByWindow)
             break
         }
     }
@@ -199,19 +238,14 @@ export function useGlobalState(customConfig?: Partial<GlobalStateConfig>) {
         config = { ...DEFAULT_CONFIG, ...customConfig }
     }
 
-    // Carrega estado persistido (apenas na primeira chamada)
-    if (Object.keys(globalState.windows).length === 0) {
-        loadPersistedState()
-    }
-
     // Escuta ações de outras janelas
     onMessage('GLOBAL_STATE_ACTION', (action: StateAction) => {
         applyAction(action)
     })
 
-    // Auto-persist em mudanças
+    // Auto-persist em mudanças (apenas para componentes da janela atual)
     watch(
-        () => [globalState.windows, globalState.components],
+        () => [globalState.windows, globalState.componentsByWindow],
         () => persistState(),
         { deep: true }
     )
@@ -223,6 +257,8 @@ export function useGlobalState(customConfig?: Partial<GlobalStateConfig>) {
         // Current window
         setCurrentWindowId: (id: WindowId) => {
             currentWindowId = id
+            // Carrega estado persistido desta janela
+            loadPersistedState(id)
         },
         getCurrentWindowId: () => currentWindowId,
 
@@ -260,27 +296,96 @@ export function removeWindow(id: WindowId) {
 }
 
 /**
- * Move componente para janela
+ * Adiciona componente a uma janela
+ */
+export function addComponentToWindow(windowId: WindowId, componentId: ComponentId, state: ComponentState) {
+    const { dispatch } = useGlobalState()
+    dispatch({
+        type: 'COMPONENT_ADDED_TO_WINDOW',
+        payload: { windowId, componentId, state }
+    })
+}
+
+/**
+ * Remove componente de uma janela
+ */
+export function removeComponentFromWindow(windowId: WindowId, componentId: ComponentId) {
+    const { dispatch } = useGlobalState()
+    dispatch({
+        type: 'COMPONENT_REMOVED_FROM_WINDOW',
+        payload: { windowId, componentId }
+    })
+}
+
+/**
+ * Atualiza componente em uma janela
+ */
+export function updateComponentInWindow(windowId: WindowId, componentId: ComponentId, updates: Partial<ComponentState>) {
+    const { dispatch } = useGlobalState()
+    dispatch({
+        type: 'COMPONENT_UPDATED_IN_WINDOW',
+        payload: { windowId, componentId, updates }
+    })
+}
+
+/**
+ * Toggle visibilidade de componente em uma janela
+ */
+export function toggleComponentVisibility(windowId: WindowId, componentId: ComponentId, visible: boolean) {
+    const { dispatch } = useGlobalState()
+    dispatch({
+        type: 'COMPONENT_VISIBILITY_TOGGLED',
+        payload: { windowId, componentId, visible }
+    })
+}
+
+/**
+ * Esconde/mostra todos os componentes de uma janela
+ */
+export function hideAllComponents(windowId: WindowId, hidden: boolean) {
+    const { dispatch } = useGlobalState()
+    dispatch({
+        type: 'WINDOW_HIDE_ALL_COMPONENTS',
+        payload: { windowId, hidden }
+    })
+}
+
+/**
+ * DEPRECATED: Use addComponentToWindow
  */
 export function moveComponent(id: ComponentId, windowId: WindowId | null, transform: ComponentTransform) {
-    const { dispatch } = useGlobalState()
-    dispatch({ type: 'COMPONENT_MOVED', payload: { id, windowId, transform } })
+    console.warn('[GlobalState] moveComponent is deprecated, use addComponentToWindow/removeComponentFromWindow')
+    if (windowId) {
+        addComponentToWindow(windowId, id, {
+            id,
+            transform,
+            visible: true,
+            collapsed: false,
+            zIndex: 1
+        })
+    } else {
+        // Remove de todas as janelas
+        const { state } = useGlobalState()
+        Object.keys(state.windows).forEach(winId => {
+            if (state.componentsByWindow[winId]?.[id]) {
+                removeComponentFromWindow(winId, id)
+            }
+        })
+    }
 }
 
 /**
- * Atualiza componente
+ * DEPRECATED: Use updateComponentInWindow
  */
-export function updateComponent(id: ComponentId, updates: Partial<ComponentState>) {
-    const { dispatch } = useGlobalState()
-    dispatch({ type: 'COMPONENT_UPDATED', payload: { id, ...updates } })
+export function updateComponent(_id: ComponentId, _updates: Partial<ComponentState>) {
+    console.warn('[GlobalState] updateComponent is deprecated, use updateComponentInWindow')
 }
 
 /**
- * Toggle visibilidade de componente
+ * DEPRECATED: Use toggleComponentVisibility
  */
-export function toggleComponent(id: ComponentId, visible: boolean) {
-    const { dispatch } = useGlobalState()
-    dispatch({ type: 'COMPONENT_TOGGLED', payload: { id, visible } })
+export function toggleComponent(_id: ComponentId, _visible: boolean) {
+    console.warn('[GlobalState] toggleComponent is deprecated, use toggleComponentVisibility')
 }
 
 /**
@@ -308,11 +413,12 @@ export function endDrag(id: ComponentId, windowId: WindowId | null, transform: C
 }
 
 /**
- * Obtém componentes de uma janela
+ * Obtém componentes ativos de uma janela
  */
 export function getWindowComponents(windowId: WindowId): ComponentState[] {
     const { state } = useGlobalState()
-    return Object.values(state.components).filter(c => c.windowId === windowId)
+    const components = state.componentsByWindow[windowId] || {}
+    return Object.values(components)
 }
 
 /**
@@ -324,11 +430,11 @@ export function getWindows(): WindowConfig[] {
 }
 
 /**
- * Verifica se componente está em janela específica
+ * Verifica se componente está ativo em janela específica
  */
 export function isComponentInWindow(componentId: ComponentId, windowId: WindowId): boolean {
     const { state } = useGlobalState()
-    return state.components[componentId]?.windowId === windowId
+    return !!state.componentsByWindow[windowId]?.[componentId]
 }
 
 /**

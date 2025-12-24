@@ -3,7 +3,13 @@
         <div class="header-content">
             <div class="header-left">
                 <div class="app-title">
-                    <span class="title-text">{{ windowTitle }}</span>
+                    <!-- Nome editável -->
+                    <input v-if="isEditingTitle" v-model="editableTitle" @blur="saveTitle" @keyup.enter="saveTitle"
+                        @keyup.esc="cancelEdit" class="title-input" ref="titleInput" maxlength="50" />
+                    <span v-else class="title-text" @dblclick="startEditTitle">{{ windowTitle }}</span>
+                    <button v-if="!isEditingTitle" class="edit-button" @click="startEditTitle" title="Edit window name">
+                        ✏️
+                    </button>
                     <span class="title-subtitle">SPECTRAL VISUALIZER</span>
                 </div>
             </div>
@@ -23,8 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useGlobalState } from '../core/state'
+import { computed, ref, nextTick } from 'vue'
+import { useGlobalState, updateWindow } from '../core/state'
 import type { WindowId } from '../core/state/types'
 
 interface Props {
@@ -34,6 +40,11 @@ interface Props {
 const props = defineProps<Props>()
 
 const { state } = useGlobalState()
+
+// Edição de título
+const isEditingTitle = ref(false)
+const editableTitle = ref('')
+const titleInput = ref<HTMLInputElement | null>(null)
 
 // Window config
 const windowConfig = computed(() => state.windows[props.windowId])
@@ -52,6 +63,28 @@ const handleClose = () => {
     if (confirmed) {
         window.close()
     }
+}
+
+// Funções de edição de título
+const startEditTitle = () => {
+    isEditingTitle.value = true
+    editableTitle.value = windowTitle.value
+    nextTick(() => {
+        titleInput.value?.focus()
+        titleInput.value?.select()
+    })
+}
+
+const saveTitle = () => {
+    if (editableTitle.value.trim()) {
+        updateWindow(props.windowId, { title: editableTitle.value.trim() })
+    }
+    isEditingTitle.value = false
+}
+
+const cancelEdit = () => {
+    isEditingTitle.value = false
+    editableTitle.value = windowTitle.value
 }
 </script>
 
@@ -88,6 +121,7 @@ const handleClose = () => {
     display: flex;
     flex-direction: column;
     font-family: var(--font-family-mono);
+    position: relative;
 
     .title-text {
         font-size: var(--font-size-md);
@@ -95,6 +129,58 @@ const handleClose = () => {
         color: var(--color-theme-primary);
         text-shadow: var(--text-shadow-md);
         letter-spacing: 1px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+
+    .title-input {
+        font-size: var(--font-size-md);
+        font-weight: bold;
+        color: var(--color-theme-primary);
+        background: rgba(var(--theme-primary-rgb), 0.1);
+        border: 1px solid var(--color-theme-primary);
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-family: var(--font-family-mono);
+        letter-spacing: 1px;
+        outline: none;
+        box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.3);
+
+        &:focus {
+            box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.5);
+        }
+    }
+
+    .edit-button {
+        position: absolute;
+        top: 0;
+        right: -30px;
+        background: rgba(var(--theme-primary-rgb), 0.1);
+        border: 1px solid rgba(var(--theme-primary-rgb), 0.3);
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+
+        &:hover {
+            opacity: 1;
+            background: rgba(var(--theme-primary-rgb), 0.2);
+            transform: scale(1.1);
+        }
+    }
+
+    &:hover .edit-button {
+        opacity: 0.6;
     }
 
     .title-subtitle {

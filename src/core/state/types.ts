@@ -24,6 +24,8 @@ export interface WindowConfig {
     backgroundColor: string
     createdAt: number
     lastActive: number
+    activeComponents: ComponentId[] // Lista de componentes ativos nesta janela
+    allComponentsHidden: boolean // Flag para hide/show all
 }
 
 // Posição e tamanho de um componente
@@ -34,20 +36,20 @@ export interface ComponentTransform {
     height?: number
 }
 
-// Estado de um componente
+// Estado de um componente (por janela)
 export interface ComponentState {
     id: ComponentId
-    windowId: WindowId | null // null = não visível em nenhuma janela
-    transform: ComponentTransform
-    visible: boolean
-    collapsed: boolean
-    zIndex: number
+    transform: ComponentTransform // Posição relativa nesta janela
+    visible: boolean // Visível nesta janela?
+    collapsed: boolean // Colapsado nesta janela?
+    zIndex: number // Z-index nesta janela
 }
 
 // Estado global completo
 export interface GlobalState {
     windows: Record<WindowId, WindowConfig>
-    components: Record<ComponentId, ComponentState>
+    // Agora: windowId → componentId → state
+    componentsByWindow: Record<WindowId, Record<ComponentId, ComponentState>>
     draggedComponent: {
         id: ComponentId | null
         sourceWindowId: WindowId | null
@@ -60,9 +62,11 @@ export type StateAction =
     | { type: 'WINDOW_CREATED'; payload: WindowConfig }
     | { type: 'WINDOW_UPDATED'; payload: Partial<WindowConfig> & { id: WindowId } }
     | { type: 'WINDOW_REMOVED'; payload: { id: WindowId } }
-    | { type: 'COMPONENT_MOVED'; payload: { id: ComponentId; windowId: WindowId | null; transform: ComponentTransform } }
-    | { type: 'COMPONENT_UPDATED'; payload: Partial<ComponentState> & { id: ComponentId } }
-    | { type: 'COMPONENT_TOGGLED'; payload: { id: ComponentId; visible: boolean } }
+    | { type: 'COMPONENT_ADDED_TO_WINDOW'; payload: { windowId: WindowId; componentId: ComponentId; state: ComponentState } }
+    | { type: 'COMPONENT_REMOVED_FROM_WINDOW'; payload: { windowId: WindowId; componentId: ComponentId } }
+    | { type: 'COMPONENT_UPDATED_IN_WINDOW'; payload: { windowId: WindowId; componentId: ComponentId; updates: Partial<ComponentState> } }
+    | { type: 'COMPONENT_VISIBILITY_TOGGLED'; payload: { windowId: WindowId; componentId: ComponentId; visible: boolean } }
+    | { type: 'WINDOW_HIDE_ALL_COMPONENTS'; payload: { windowId: WindowId; hidden: boolean } }
     | { type: 'DRAG_STARTED'; payload: { id: ComponentId; windowId: WindowId } }
     | { type: 'DRAG_MOVED'; payload: { mousePosition: { x: number; y: number } } }
     | { type: 'DRAG_ENDED'; payload: { id: ComponentId; windowId: WindowId | null; transform: ComponentTransform } }

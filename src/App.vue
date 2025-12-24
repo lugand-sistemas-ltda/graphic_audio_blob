@@ -1,18 +1,34 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { onMounted, watch, ref, provide } from 'vue'
+import { onMounted, onUnmounted, watch, ref, provide, inject } from 'vue'
 import { useAudioAnalyzer } from './composables/useAudioAnalyzer'
 import { useSpectralVisualEffect } from './composables/useSpectralVisualEffect'
 import { usePlaylist } from './composables/usePlaylist'
 import { useComponentManager } from './composables/useComponentManager'
 import { useRgbMode } from './composables/useRgbMode'
 import { useChameleonMode } from './composables/useChameleonMode'
-import { useWindowManager } from './core/sync'
-import { useGlobalState, registerWindow, moveComponent } from './core/state'
+import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
+import { useGlobalAudio } from './core/global'
+import { AVAILABLE_COMPONENTS } from './config/availableComponents'
 import LoadingScreen from './components/LoadingScreen.vue'
 
-const audio = useAudioAnalyzer()
-const playlist = usePlaylist()
+// Detecta se é janela main ou filha (MainLayout já fez provide)
+const isMainWindow = inject<boolean>('isMainWindow', true)
+const injectedWindowId = inject<string | null>('windowId', null)
+
+// ID da janela (usa injected se disponível, senão gera novo)
+const windowId = injectedWindowId || 'main-' + Date.now()
+
+// ========================================
+// GLOBAL AUDIO (Todas as janelas)
+// ========================================
+const globalAudio = useGlobalAudio()
+
+// Flag para indicar se esta janela é o audio owner
+const isAudioOwner = ref(false)
+
+// Instâncias locais (apenas para audio owner)
+let audio: ReturnType<typeof useAudioAnalyzer> | null = null
 
 // Gerenciador de componentes
 const componentManager = useComponentManager()
@@ -23,21 +39,16 @@ useRgbMode()
 // Inicializa Chameleon mode globalmente
 useChameleonMode()
 
-// Inicializa sistema multi-window
-const windowManager = useWindowManager({ enableLogging: false })
-
-// ID da janela principal (gerado baseado em timestamp ou use window.name)
-const mainWindowId = 'main-' + Date.now()
-
 // Inicializa o estado global
 useGlobalState()
 
-// Inicializa o efeito visual espectral com dados de áudio
+// Inicializa o efeito visual espectral com dados de áudio GLOBAL
+// TODAS as janelas podem ter efeitos visuais usando frequencyData do globalAudio
 const visualEffect = useSpectralVisualEffect({
-    audioDataProvider: audio.getFrequencyData,
+    audioDataProvider: () => globalAudio.state.value.frequencyData,
     enableMouseControl: true,
     layerCount: 8,
-    windowId: mainWindowId
+    windowId: windowId
 })
 
 // Estados para os componentes de debug
@@ -46,38 +57,40 @@ const currentVolume = ref(0.7)
 const frequencyBands = ref([0, 0, 0, 0, 0, 0, 0, 0])
 const beatDetected = ref(false)
 
-// Handlers
+// Handlers - Usam globalAudio para sincronização entre janelas
 const handleTogglePlay = async () => {
-    if (audio.isPlaying.value) {
-        audio.pause()
+    if (globalAudio.state.value.isPlaying) {
+        globalAudio.pause(windowId)
     } else {
-        await audio.play()
+        globalAudio.play(windowId)
     }
 }
 
 const handleNext = () => {
-    playlist.nextTrack()
+    globalAudio.nextTrack(windowId)
 }
 
 const handlePrevious = () => {
-    playlist.previousTrack()
+    globalAudio.previousTrack(windowId)
 }
 
 const handleSelectTrack = (index: number) => {
-    playlist.selectTrack(index)
+    globalAudio.selectTrack(index, windowId)
 }
 
 const handleSeek = (time: number) => {
-    audio.seek(time)
+    globalAudio.seek(time, windowId)
 }
 
 const handleVolumeChange = (volume: number) => {
-    audio.setVolume(volume)
+    globalAudio.setVolume(volume, windowId)
     currentVolume.value = volume
 }
 
 const handleBeatSensitivityChange = (sensitivity: number) => {
-    audio.setBeatSensitivity(sensitivity)
+    if (audio) {
+        audio.setBeatSensitivity(sensitivity)
+    }
 }
 
 const handleSphereSize = (size: number) => {
@@ -90,17 +103,22 @@ const handleSphereReactivity = (reactivity: number) => {
 
 // ⚠️ PROVIDE DEVE VIR ANTES DE QUALQUER RENDER ⚠️
 console.log('[App.vue] Providing dependencies:', {
-    mainWindowId,
+    windowId,
+    isMainWindow,
     componentManager: !!componentManager,
     audio: !!audio,
-    playlist: !!playlist,
+    globalAudio: !!globalAudio,
     visualEffect: !!visualEffect
 })
 
-provide('windowId', mainWindowId)
+// Só faz provide se não houver inject (evita override do MainLayout)
+if (!injectedWindowId) {
+    provide('windowId', windowId)
+    provide('isMainWindow', isMainWindow)
+}
 provide('componentManager', componentManager)
 provide('audio', audio)
-provide('playlist', playlist)
+provide('globalAudio', globalAudio)
 provide('visualEffect', visualEffect)
 provide('spherePosition', spherePosition)
 provide('currentVolume', currentVolume)
@@ -124,132 +142,186 @@ const updateDebugData = () => {
     const newPosition = visualEffect.getSpherePosition()
     spherePosition.value = { ...newPosition }
 
-    // Atualiza dados de frequência
-    const data = audio.getFrequencyData()
+    // Atualiza dados de frequência do globalAudio
+    const data = globalAudio.state.value.frequencyData
     if (data) {
         // Cria novo array para garantir reatividade
         frequencyBands.value = [...(data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0])]
         beatDetected.value = data.beat || false
-
-        // DEBUG: Log apenas se houver dados não-zero
-        const hasData = data.frequencyBands.some(v => v > 0)
-        if (hasData) {
-            console.log('[App] Frequency data:', data.frequencyBands)
-        }
-
-        // Sincroniza dados de áudio para outras janelas
-        windowManager.syncAudioData({
-            frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
-            bass: data.bass || 0,
-            mid: data.mid || 0,
-            treble: data.treble || 0,
-            overall: data.overall || 0,
-            beat: data.beat || false
-        })
     }
 
     requestAnimationFrame(updateDebugData)
 }
 
-const loadTrack = async (trackFile: string) => {
-    const wasPlaying = audio.isPlaying.value
-    await audio.initAudio(trackFile)
-    if (wasPlaying) {
-        await audio.play()
-    }
-}
-
 // Registra todos os componentes gerenciáveis E inicia audio
 onMounted(async () => {
-    // Primeiro, registra a janela principal no estado global
+    // Inicializa o estado global para esta janela específica
+    const { setCurrentWindowId } = useGlobalState()
+    setCurrentWindowId(windowId)
+
+    // Primeiro, registra a janela no estado global
     const now = Date.now()
+    const windowRole = isMainWindow ? 'main' : 'secondary'
+
     registerWindow({
-        id: mainWindowId,
-        title: 'Spectral Audio Visualizer',
-        role: 'main',
+        id: windowId,
+        title: isMainWindow ? 'Spectral Audio Visualizer' : 'Child Window',
+        role: windowRole,
         effects: [], // Inicializa sem efeitos - usuário ativa pelo menu
         layout: 'free',
         backgroundColor: '#000000',
         createdAt: now,
-        lastActive: now
+        lastActive: now,
+        activeComponents: [], // Lista de componentes ativos nesta janela
+        allComponentsHidden: false // Flag para hide/show all
     })
 
-    // Lista de componentes disponíveis
-    const componentsToRegister = [
-        {
-            id: 'orb-effect-control',
-            name: 'Orb Effect Control',
-            category: 'visual' as const,
-            collapsibleId: 'orb-effect-control'
-        },
-        {
-            id: 'frequency-visualizer',
-            name: 'Frequency Spectrum',
-            category: 'visual' as const,
-            collapsibleId: 'frequency-visualizer'
-        },
-        {
-            id: 'sound-control',
-            name: 'Sound Control',
-            category: 'audio' as const,
-            collapsibleId: 'sound-control'
-        },
-        {
-            id: 'debug-terminal',
-            name: 'System Monitor',
-            category: 'debug' as const,
-            collapsibleId: 'debug-terminal'
-        },
-        {
-            id: 'theme-selector',
-            name: 'Theme Control',
-            category: 'system' as const,
-            collapsibleId: 'theme-selector'
-        },
-        {
-            id: 'matrix-character',
-            name: 'Matrix Character',
-            category: 'system' as const,
-            collapsibleId: 'matrix-character'
-        }
-    ]
+    // ========================================
+    // AUDIO OWNER LOGIC
+    // ========================================
+    // Verifica se já existe um audio owner
+    if (globalAudio.hasAudioOwner.value) {
+        console.log('[App.vue] This window is a CONSUMER (not audio owner):', windowId)
+    } else {
+        // Tenta registrar como audio owner
+        const registered = globalAudio.registerAudioOwner(windowId)
 
-    // Registra cada componente no componentManager E no estado global
-    componentsToRegister.forEach(comp => {
-        // 1. Registra no componentManager (controle de visibilidade)
+        if (!registered) {
+            console.warn('[App.vue] Failed to register as audio owner (already exists):', windowId)
+        } else {
+            // Sucesso! Esta janela é o audio owner
+            isAudioOwner.value = true
+            console.log('[App.vue] This window is the AUDIO OWNER:', windowId)
+
+            // Inicializa <audio> element físico e playlist
+            audio = useAudioAnalyzer()
+            const playlist = usePlaylist()
+
+            // Carrega tracks no globalAudio
+            globalAudio.setTracks(playlist.tracks.value.map(t => ({
+                name: t.title,
+                file: t.file
+            })))
+
+            // Carrega track atual se houver
+            const currentTrack = globalAudio.currentTrack.value
+            if (currentTrack) {
+                await audio.initAudio(currentTrack.file)
+            }
+
+            // ========================================
+            // SYNC LOOP: Audio Data → GlobalAudio
+            // ========================================
+            const syncAudioData = () => {
+                if (!audio) return
+
+                const data = audio.getFrequencyData()
+                if (data) {
+                    globalAudio.updateFrequencyData({
+                        bass: data.bass || 0,
+                        mid: data.mid || 0,
+                        treble: data.treble || 0,
+                        overall: data.overall || 0,
+                        beat: data.beat || false,
+                        frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
+                        raw: data.raw || new Uint8Array(0)
+                    })
+                }
+
+                // Atualiza tempo de playback
+                if (audio.audioElement.value) {
+                    globalAudio.updateTime(
+                        audio.audioElement.value.currentTime,
+                        audio.audioElement.value.duration
+                    )
+                }
+
+                requestAnimationFrame(syncAudioData)
+            }
+            syncAudioData()
+
+            // ========================================
+            // WATCH: GlobalAudio Commands → Physical Audio
+            // ========================================
+
+            // Play/Pause
+            watch(() => globalAudio.state.value.isPlaying, async (playing) => {
+                if (!audio) return
+                if (playing && !audio.isPlaying.value) {
+                    await audio.play()
+                } else if (!playing && audio.isPlaying.value) {
+                    audio.pause()
+                }
+            })
+
+            // Seek
+            watch(() => globalAudio.state.value.currentTime, (time) => {
+                if (!audio || !audio.audioElement.value) return
+                // Evita loop infinito: só atualiza se diferença > 1s
+                const diff = Math.abs(audio.audioElement.value.currentTime - time)
+                if (diff > 1) {
+                    audio.seek(time)
+                }
+            })
+
+            // Volume
+            watch(() => globalAudio.state.value.volume, (vol) => {
+                if (!audio) return
+                audio.setVolume(vol)
+            })
+
+            // Track Change
+            watch(() => globalAudio.state.value.currentTrackIndex, async () => {
+                const track = globalAudio.currentTrack.value
+                if (track && audio) {
+                    await audio.initAudio(track.file)
+                    if (globalAudio.state.value.isPlaying) {
+                        await audio.play()
+                    }
+                }
+            })
+        }
+    }
+
+    // ========================================
+    // COMPONENT REGISTRATION (All windows)
+    // ========================================
+
+    // Registra cada componente DISPONÍVEL no componentManager desta janela
+    // ComponentManager controla visibilidade local (UI)
+    // GlobalState controla ownership e posição (cross-window)
+    AVAILABLE_COMPONENTS.forEach(comp => {
+        // Registra no componentManager (controle de visibilidade UI)
         componentManager.registerComponent({
             ...comp,
             visible: false // Todos iniciam invisíveis
         })
-
-        // 2. Registra no estado global (posição e ownership)
-        // Componentes começam sem janela (windowId: null)
-        moveComponent(comp.id, null, { x: 0, y: 0 })
     })
 
-    // 3. Após registrar todos, sincroniza estado inicial
-    // Verifica se algum componente já está visível (por localStorage)
-    // e adiciona à janela principal
-    componentsToRegister.forEach(comp => {
+    // 3. Após registrar todos, sincroniza estado inicial do localStorage
+    // Se algum componente foi salvo como visível, restaura no GlobalState também
+    AVAILABLE_COMPONENTS.forEach(comp => {
         if (componentManager.isVisible(comp.id)) {
-            // Se está visível, deve estar na janela principal
-            moveComponent(comp.id, mainWindowId, { x: 100, y: 100 })
+            // Adiciona ao GlobalState (ownership)
+            addComponentToWindow(windowId, comp.id, {
+                id: comp.id,
+                transform: { x: 100, y: 100 },
+                visible: true,
+                collapsed: false,
+                zIndex: 1
+            })
         }
     })
 
-    // Carrega track atual e inicia debug data
-    const currentTrack = playlist.currentTrack.value
-    if (currentTrack) {
-        await loadTrack(currentTrack.file)
-    }
-    // Inicia atualização dos dados de debug
+    // Inicia atualização dos dados de debug (todas as janelas)
     updateDebugData()
 })
 
-// Watch para mudanças de track
-watch(() => playlist.currentTrack.value, async (newTrack) => {
-    if (newTrack) {
-        await loadTrack(newTrack.file)
+// Cleanup ao fechar janela
+onUnmounted(() => {
+    if (isAudioOwner.value) {
+        globalAudio.unregisterAudioOwner(windowId)
+        console.log('[App.vue] Audio owner unregistered:', windowId)
     }
 })
 </script>

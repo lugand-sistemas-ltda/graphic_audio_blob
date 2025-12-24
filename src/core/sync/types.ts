@@ -20,6 +20,22 @@ export type SyncMessageType =
     | 'HEARTBEAT'
     | 'GLOBAL_STATE_ACTION' // Para sincronização do estado global
     | 'WINDOW_ROLE_CHANGE'
+    // Global Audio Manager messages
+    | 'GLOBAL_AUDIO_PLAY'
+    | 'GLOBAL_AUDIO_PAUSE'
+    | 'GLOBAL_AUDIO_SEEK'
+    | 'GLOBAL_AUDIO_VOLUME'
+    | 'GLOBAL_AUDIO_TRACK_CHANGE'
+    | 'GLOBAL_AUDIO_DATA'
+    | 'GLOBAL_AUDIO_OWNER'
+    | 'GLOBAL_AUDIO_OWNER_REMOVED'
+    | 'GLOBAL_AUDIO_TIME_UPDATE'
+    // Global Theme Manager messages
+    | 'GLOBAL_THEME_CHANGE'
+    | 'GLOBAL_RGB_TOGGLE'
+    | 'GLOBAL_RGB_CONFIG'
+    | 'GLOBAL_CHAMELEON_TOGGLE'
+    | 'GLOBAL_CHAMELEON_CONFIG'
 
 // Roles que uma janela pode assumir
 export type WindowRole = 'main' | 'visual' | 'controls' | 'grid' | 'custom'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { inject, computed, watch } from 'vue'
 import SoundControl from '../components/SoundControl.vue'
 import OrbEffectControl from '../components/OrbEffectControl.vue'
 import AudioControls from '../components/AudioControls.vue'
@@ -7,79 +7,197 @@ import MatrixCharacter from '../components/MatrixCharacter.vue'
 import DebugTerminal from '../components/DebugTerminal.vue'
 import FrequencyVisualizer from '../components/FrequencyVisualizer.vue'
 import ThemeSelector from '../components/ThemeSelector.vue'
+import { useGlobalAudio } from '../core/global'
+import { getWindowComponents } from '../core/state'
+import type { Track } from '../composables/usePlaylist'
 
-// Injetar dependências do App.vue (através do provide)
-const componentManager = inject<any>('componentManager', null)
-const audio = inject<any>('audio', null)
-const playlist = inject<any>('playlist', null)
+// ========================================
+// DEPENDÊNCIAS UNIVERSAIS (Todas as janelas)
+// ========================================
+const windowId = inject<string>('windowId', 'unknown')
+
+// Global Audio (funciona em TODAS as janelas)
+const globalAudio = useGlobalAudio()
+
+// Visual Effect (injetado do App.vue)
 const visualEffect = inject<any>('visualEffect', null)
 const spherePosition = inject<any>('spherePosition', null)
 const currentVolume = inject<any>('currentVolume', null)
 const frequencyBands = inject<any>('frequencyBands', null)
 const beatDetected = inject<any>('beatDetected', null)
-const handlers = inject<any>('handlers', null)
 
-// Debug - verificar se as dependências foram injetadas
+// Debug
 console.log('[HomeView] Dependencies:', {
-    componentManager: !!componentManager,
-    audio: !!audio,
-    playlist: !!playlist,
+    windowId,
+    globalAudio: !!globalAudio,
     visualEffect: !!visualEffect,
-    handlers: !!handlers,
-    frequencyBands: !!frequencyBands,
-    spherePosition: !!spherePosition
+    frequencyBands: !!frequencyBands
 })
 
-// Debug específico para frequencyBands
-if (frequencyBands) {
-    console.log('[HomeView] frequencyBands ref:', frequencyBands)
-    console.log('[HomeView] frequencyBands.value:', frequencyBands.value)
+// ========================================
+// COMPONENTES DO GLOBALSTATE (Fonte única da verdade)
+// ========================================
+const globalWindowComponents = computed(() => getWindowComponents(windowId))
+
+watch(globalWindowComponents, (newComps) => {
+    console.log('[HomeView] 🎯 GlobalState components changed:', {
+        count: newComps.length,
+        components: newComps.map(c => ({ id: c.id, visible: c.visible }))
+    })
+}, { deep: true, immediate: true })
+
+// ========================================
+// HANDLERS UNIVERSAIS (Usam GlobalAudio)
+// ========================================
+const handleTogglePlay = () => {
+    if (globalAudio.state.value.isPlaying) {
+        globalAudio.pause(windowId)
+    } else {
+        globalAudio.play(windowId)
+    }
 }
 
-// Computed para controlar visibilidade (removido showMainControl)
-const showSoundControl = computed(() => componentManager?.isVisible('sound-control') || false)
-const showOrbEffectControl = computed(() => componentManager?.isVisible('orb-effect-control') || false)
-const showThemeSelector = computed(() => componentManager?.isVisible('theme-selector') || false)
-const showMatrixCharacter = computed(() => componentManager?.isVisible('matrix-character') || false)
-const showDebugTerminal = computed(() => componentManager?.isVisible('debug-terminal') || false)
-const showFrequencyVisualizer = computed(() => componentManager?.isVisible('frequency-visualizer') || false)
+const handleNext = () => {
+    globalAudio.nextTrack(windowId)
+}
+
+const handlePrevious = () => {
+    globalAudio.previousTrack(windowId)
+}
+
+const handleSelectTrack = (index: number) => {
+    globalAudio.selectTrack(index, windowId)
+}
+
+const handleSeek = (time: number) => {
+    globalAudio.seek(time, windowId)
+}
+
+const handleVolumeChange = (volume: number) => {
+    globalAudio.setVolume(volume, windowId)
+}
+
+const handleBeatSensitivityChange = (sensitivity: number) => {
+    // TODO: Implementar beat sensitivity no globalAudio
+    console.log('[HomeView] Beat sensitivity:', sensitivity)
+}
+
+const handleSphereSize = (size: number) => {
+    visualEffect?.setSphereSize(size)
+}
+
+const handleSphereReactivity = (reactivity: number) => {
+    visualEffect?.setSphereReactivity(reactivity)
+}
+
+// ========================================
+// COMPUTED para Visibilidade dos Componentes (USA GLOBALSTATE)
+// ========================================
+const showSoundControl = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'sound-control')
+    return comp?.visible ?? false
+})
+
+const showOrbEffectControl = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'orb-effect-control')
+    return comp?.visible ?? false
+})
+
+const showThemeSelector = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'theme-selector')
+    return comp?.visible ?? false
+})
+
+const showMatrixCharacter = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'matrix-character')
+    return comp?.visible ?? false
+})
+
+const showDebugTerminal = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'debug-terminal')
+    return comp?.visible ?? false
+})
+
+const showFrequencyVisualizer = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'frequency-visualizer')
+    return comp?.visible ?? false
+})
+
+// Debug: Monitora mudanças nos computeds
+watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTerminal, showFrequencyVisualizer], (values) => {
+    console.log('[HomeView] 🎨 Visibility computeds updated:', {
+        soundControl: values[0],
+        orbEffect: values[1],
+        themeSelector: values[2],
+        debug: values[3],
+        frequency: values[4]
+    })
+}, { immediate: true })
+
+// ========================================
+// DADOS para SoundControl (via GlobalAudio)
+// ========================================
+const tracks = computed<Track[]>(() => {
+    return globalAudio.state.value.tracks.map((t, index) => ({
+        id: String(index),
+        title: t.name,
+        file: t.file
+    }))
+})
+
+const currentTrack = computed<Track | null>(() => {
+    const track = globalAudio.currentTrack.value
+    if (!track) return null
+
+    return {
+        id: String(globalAudio.state.value.currentTrackIndex),
+        title: track.name,
+        file: track.file
+    }
+})
+
+const currentTrackIndex = computed(() => globalAudio.state.value.currentTrackIndex)
+const isPlaying = computed(() => globalAudio.state.value.isPlaying)
+const currentTime = computed(() => globalAudio.state.value.currentTime)
+const duration = computed(() => globalAudio.state.value.duration)
+
+const hasNext = computed(() => {
+    return currentTrackIndex.value < tracks.value.length - 1
+})
+
+const hasPrevious = computed(() => {
+    return currentTrackIndex.value > 0
+})
 </script>
 
 <template>
     <div class="home-view">
-        <!-- Sound Control -->
-        <SoundControl
-            v-if="showSoundControl && audio && playlist && handlers && audio.isPlaying && audio.currentTime && audio.duration"
-            :tracks="playlist.tracks.value || []" :current-track="playlist.currentTrack.value"
-            :current-track-index="playlist.currentTrackIndex.value || 0" :is-playing="audio.isPlaying.value"
-            :current-time="audio.currentTime.value || 0" :duration="audio.duration.value || 0"
-            :has-next="playlist.hasNext.value || false" :has-previous="playlist.hasPrevious.value || false"
-            @toggle-play="handlers.handleTogglePlay" @next="handlers.handleNext" @previous="handlers.handlePrevious"
-            @select-track="handlers.handleSelectTrack" @seek="handlers.handleSeek"
-            @volume-change="handlers.handleVolumeChange" />
+        <!-- Sound Control (UNIVERSAL - funciona em todas as janelas) -->
+        <SoundControl v-if="showSoundControl" :tracks="tracks" :current-track="currentTrack"
+            :current-track-index="currentTrackIndex" :is-playing="isPlaying" :current-time="currentTime"
+            :duration="duration" :has-next="hasNext" :has-previous="hasPrevious" @toggle-play="handleTogglePlay"
+            @next="handleNext" @previous="handlePrevious" @select-track="handleSelectTrack" @seek="handleSeek"
+            @volume-change="handleVolumeChange" />
 
         <!-- Orb Effect Control -->
-        <OrbEffectControl v-if="showOrbEffectControl && handlers"
-            @beat-sensitivity-change="handlers.handleBeatSensitivityChange"
-            @sphere-size-change="handlers.handleSphereSize"
-            @sphere-reactivity-change="handlers.handleSphereReactivity" />
+        <OrbEffectControl v-if="showOrbEffectControl" @beat-sensitivity-change="handleBeatSensitivityChange"
+            @sphere-size-change="handleSphereSize" @sphere-reactivity-change="handleSphereReactivity" />
 
-        <AudioControls v-if="audio" />
+        <AudioControls />
 
-        <!-- Theme Selector (top-left) -->
+        <!-- Theme Selector (UNIVERSAL - funciona em todas as janelas) -->
         <ThemeSelector v-if="showThemeSelector" />
 
-        <!-- Matrix Character (bottom-right) -->
+        <!-- Matrix Character -->
         <MatrixCharacter v-if="showMatrixCharacter" />
 
-        <!-- Debug Terminal (below theme selector) -->
-        <DebugTerminal v-if="showDebugTerminal && visualEffect && audio"
-            :sphere-position="spherePosition || { x: 50, y: 50 }" :sphere-size="visualEffect.getSphereSize()"
-            :sphere-reactivity="visualEffect.getSphereReactivity()" :is-playing="audio.isPlaying?.value || false"
-            :current-time="audio.currentTime?.value || 0" :duration="audio.duration?.value || 0"
+        <!-- Debug Terminal -->
+        <DebugTerminal v-if="showDebugTerminal && visualEffect" :sphere-position="spherePosition || { x: 50, y: 50 }"
+            :sphere-size="visualEffect.getSphereSize()" :sphere-reactivity="visualEffect.getSphereReactivity()"
+            :is-playing="isPlaying" :current-time="currentTime" :duration="duration"
             :volume="currentVolume?.value || 0.7" :beat-detected="beatDetected?.value || false" :layer-count="8" />
 
-        <!-- Frequency Visualizer (below debug terminal) -->
+        <!-- Frequency Visualizer -->
         <FrequencyVisualizer v-if="showFrequencyVisualizer" :frequency-bands="frequencyBands || []" />
     </div>
 </template>

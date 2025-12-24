@@ -69,14 +69,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { useRgbMode } from '../composables/useRgbMode'
-import { useChameleonMode } from '../composables/useChameleonMode'
+import { useGlobalTheme } from '../core/global'
 import { useCollapsible } from '../composables/useCollapsible'
 import { useVisibilityReload } from '../composables/useVisibilityReload'
 
 const { currentTheme, availableThemes, setTheme, getCurrentThemeInfo, nextTheme, previousTheme } = useTheme()
-const { isRgbModeActive, toggleRgbMode } = useRgbMode()
-const { isChameleonModeActive, toggleChameleonMode } = useChameleonMode()
+
+// Acessa o estado global de tema (RGB e Chameleon são gerenciados globalmente)
+const globalTheme = useGlobalTheme()
+
+// Computed para acessar estados do global theme
+const isRgbModeActive = computed(() => globalTheme.state.value.rgbMode.enabled)
+const isChameleonModeActive = computed(() => globalTheme.state.value.chameleonMode.enabled)
+
+// Funções para toggle (delega para o gerenciador global)
+const toggleRgbMode = () => {
+    globalTheme.toggleRgbMode('theme-selector')
+}
+
+const toggleChameleonMode = () => {
+    globalTheme.toggleChameleonMode('theme-selector')
+}
+
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'theme-selector', initialState: false })
 
 // Detecta quando o componente fica visível e recarrega o estado

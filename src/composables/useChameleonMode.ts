@@ -1,6 +1,6 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, inject, watch, computed } from 'vue'
+import { useGlobalTheme } from '../core/global'
 
-const isChameleonModeActive = ref(false)
 const chameleonAnimationId = ref<number | null>(null)
 
 // Múltiplos offsets de hue para criar gradientes diferentes em cada elemento
@@ -12,16 +12,75 @@ const hueOffsets = ref({
 })
 
 export function useChameleonMode() {
+    // Acessa o gerenciador global de tema
+    const globalTheme = useGlobalTheme()
+    const windowId = inject<string>('windowId', 'unknown')
+
+    // Computed para o estado do Chameleon mode (do estado global)
+    const isChameleonModeActive = computed(() => globalTheme.state.value.chameleonMode.enabled)
+
+    // Converte HSL para RGB (DECLARADO ANTES DE SER USADO)
+    const hslToRgb = (h: number, s: number, l: number) => {
+        s /= 100
+        l /= 100
+
+        const c = (1 - Math.abs(2 * l - 1)) * s
+        const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+        const m = l - c / 2
+
+        let r = 0,
+            g = 0,
+            b = 0
+
+        if (h >= 0 && h < 60) {
+            r = c
+            g = x
+        } else if (h >= 60 && h < 120) {
+            r = x
+            g = c
+        } else if (h >= 120 && h < 180) {
+            g = c
+            b = x
+        } else if (h >= 180 && h < 240) {
+            g = x
+            b = c
+        } else if (h >= 240 && h < 300) {
+            r = x
+            b = c
+        } else if (h >= 300 && h < 360) {
+            r = c
+            b = x
+        }
+
+        return {
+            r: Math.round((r + m) * 255),
+            g: Math.round((g + m) * 255),
+            b: Math.round((b + m) * 255)
+        }
+    }
+
+    // Calcula a média entre duas cores (DECLARADO ANTES DE SER USADO)
+    const averageColors = (color1: { r: number; g: number; b: number }, color2: { r: number; g: number; b: number }) => {
+        return {
+            r: Math.round((color1.r + color2.r) / 2),
+            g: Math.round((color1.g + color2.g) / 2),
+            b: Math.round((color1.b + color2.b) / 2)
+        }
+    }
+
     const startChameleonAnimation = () => {
         if (chameleonAnimationId.value !== null) return
 
         const animate = () => {
+            // Usa configurações do global state
+            const sensitivity = globalTheme.state.value.chameleonMode.sensitivity
+
             // Incrementa cada offset em velocidades ligeiramente diferentes
             // para criar um efeito mais orgânico e "camaleônico"
-            hueOffsets.value.primary = (hueOffsets.value.primary + 0.7) % 360
-            hueOffsets.value.secondary = (hueOffsets.value.secondary + 0.5) % 360
-            hueOffsets.value.tertiary = (hueOffsets.value.tertiary + 0.9) % 360
-            hueOffsets.value.quaternary = (hueOffsets.value.quaternary + 0.6) % 360
+            hueOffsets.value.primary = (hueOffsets.value.primary + (0.7 * sensitivity)) % 360
+            hueOffsets.value.secondary = (hueOffsets.value.secondary + (0.5 * sensitivity)) % 360
+            hueOffsets.value.tertiary = (hueOffsets.value.tertiary + (0.9 * sensitivity)) % 360
+            hueOffsets.value.quaternary = (hueOffsets.value.quaternary + (0.6 * sensitivity)) % 360
 
             // Calcula cores para gradientes
             const color1 = hslToRgb(hueOffsets.value.primary, 85, 60)
@@ -31,12 +90,10 @@ export function useChameleonMode() {
 
             // Cria 8 cores diferentes para as 8 camadas da esfera
             // Cada camada terá uma cor única do espectro
-            const layerColors = []
             for (let i = 0; i < 8; i++) {
                 // Distribui as cores uniformemente pelo espectro (0-360 graus)
                 const layerHue = (hueOffsets.value.primary + (i * 45)) % 360
                 const layerColor = hslToRgb(layerHue, 85, 60)
-                layerColors.push(layerColor)
 
                 // Define variável CSS para cada camada
                 document.documentElement.style.setProperty(
@@ -138,9 +195,12 @@ export function useChameleonMode() {
     }
 
     const toggleChameleonMode = () => {
-        isChameleonModeActive.value = !isChameleonModeActive.value
+        globalTheme.toggleChameleonMode(windowId)
+    }
 
-        if (isChameleonModeActive.value) {
+    // Watch para iniciar/parar animação quando o estado global mudar
+    watch(isChameleonModeActive, (active) => {
+        if (active) {
             startChameleonAnimation()
             // Adiciona classe ao body para aplicar estilos especiais
             document.documentElement.classList.add('chameleon-mode')
@@ -148,67 +208,7 @@ export function useChameleonMode() {
             stopChameleonAnimation()
             document.documentElement.classList.remove('chameleon-mode')
         }
-
-        // Persiste no localStorage
-        localStorage.setItem('chameleon-mode-active', isChameleonModeActive.value.toString())
-    }
-
-    // Converte HSL para RGB
-    const hslToRgb = (h: number, s: number, l: number) => {
-        s /= 100
-        l /= 100
-
-        const c = (1 - Math.abs(2 * l - 1)) * s
-        const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
-        const m = l - c / 2
-
-        let r = 0,
-            g = 0,
-            b = 0
-
-        if (h >= 0 && h < 60) {
-            r = c
-            g = x
-        } else if (h >= 60 && h < 120) {
-            r = x
-            g = c
-        } else if (h >= 120 && h < 180) {
-            g = c
-            b = x
-        } else if (h >= 180 && h < 240) {
-            g = x
-            b = c
-        } else if (h >= 240 && h < 300) {
-            r = x
-            b = c
-        } else if (h >= 300 && h < 360) {
-            r = c
-            b = x
-        }
-
-        return {
-            r: Math.round((r + m) * 255),
-            g: Math.round((g + m) * 255),
-            b: Math.round((b + m) * 255)
-        }
-    }
-
-    // Calcula a média entre duas cores
-    const averageColors = (color1: { r: number; g: number; b: number }, color2: { r: number; g: number; b: number }) => {
-        return {
-            r: Math.round((color1.r + color2.r) / 2),
-            g: Math.round((color1.g + color2.g) / 2),
-            b: Math.round((color1.b + color2.b) / 2)
-        }
-    }
-
-    // Carrega estado do localStorage ao inicializar
-    const savedState = localStorage.getItem('chameleon-mode-active')
-    if (savedState === 'true') {
-        isChameleonModeActive.value = true
-        startChameleonAnimation()
-        document.documentElement.classList.add('chameleon-mode')
-    }
+    }, { immediate: true })
 
     // Cleanup ao desmontar
     onUnmounted(() => {

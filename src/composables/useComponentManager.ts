@@ -1,10 +1,13 @@
-import { ref, watch, reactive } from 'vue'
+import { ref, watch, reactive, inject, computed } from 'vue'
 import { useZIndex } from './useZIndex'
-import { moveComponent } from '../core/state/useGlobalState'
 
 /**
  * Sistema de gerenciamento central de componentes drag-drop
  * Controla visibilidade e estado de expansão de todos os componentes
+ * 
+ * AGORA: Cada janela tem seu próprio estado de componentes independente
+ * IMPORTANTE: Este composable gerencia apenas UI local (visibilidade visual)
+ * Para ownership (adicionar/remover da janela), use GlobalState APIs
  */
 
 export interface ManagedComponent {
@@ -18,88 +21,114 @@ export interface ManagedComponent {
 // Instância do gerenciador de z-index
 const zIndexManager = useZIndex()
 
-// Estado global dos componentes (Map reativo para que mutações sejam rastreadas)
-const components = reactive(new Map<string, ManagedComponent>())
+// ========================================
+// ESTADO POR JANELA (Map de windowId → componentes)
+// ========================================
+const componentsByWindow = reactive(new Map<string, Map<string, ManagedComponent>>())
 
 // Trigger para forçar reatividade quando necessário
 const componentsTrigger = ref(0)
 
-// Flag para controle global de visibilidade
-const allHidden = ref(false)
+// Flag para controle global de visibilidade (por janela)
+const allHiddenByWindow = reactive(new Map<string, boolean>())
 
-// Snapshot do estado de visibilidade antes de esconder tudo
-// Usado para restaurar o estado original ao mostrar novamente
-const visibilitySnapshot = reactive(new Map<string, boolean>())
+// Snapshot do estado de visibilidade antes de esconder tudo (por janela)
+const visibilitySnapshotByWindow = reactive(new Map<string, Map<string, boolean>>())
 
-// Carrega configurações do localStorage
-const loadConfig = () => {
-    const saved = localStorage.getItem('component-manager-config')
+// Carrega configurações do localStorage (por janela)
+const loadConfig = (windowId: string) => {
+    const saved = localStorage.getItem(`component-manager-config-${windowId}`)
     if (saved) {
         try {
             const config = JSON.parse(saved)
 
             // Restaura visibilidade
             if (config.visibility) {
-                Object.entries(config.visibility).forEach(([id, visible]) => {
-                    const component = components.get(id)
-                    if (component) {
-                        component.visible = visible as boolean
-                    }
-                })
+                const components = componentsByWindow.get(windowId)
+                if (components) {
+                    Object.entries(config.visibility).forEach(([id, visible]) => {
+                        const component = components.get(id)
+                        if (component) {
+                            component.visible = visible as boolean
+                        }
+                    })
+                }
             }
 
             // Restaura estado de visibilidade global
             if (config.allHidden !== undefined) {
-                allHidden.value = config.allHidden
+                allHiddenByWindow.set(windowId, config.allHidden)
             }
 
             // Restaura snapshot de visibilidade
             if (config.visibilitySnapshot) {
-                visibilitySnapshot.clear()
+                const snapshot = new Map<string, boolean>()
                 Object.entries(config.visibilitySnapshot).forEach(([id, visible]) => {
-                    visibilitySnapshot.set(id, !!visible)
+                    snapshot.set(id, !!visible)
                 })
+                visibilitySnapshotByWindow.set(windowId, snapshot)
             }
         } catch (e) {
-            console.error('Error loading component manager config:', e)
+            console.error(`[ComponentManager] Error loading config for window ${windowId}:`, e)
         }
     }
 }
 
-// Salva configurações no localStorage
-const saveConfig = () => {
+// Salva configurações no localStorage (por janela)
+const saveConfig = (windowId: string) => {
+    const components = componentsByWindow.get(windowId)
+    if (!components) return
+
     const visibility: Record<string, boolean> = {}
     components.forEach((component, id) => {
         visibility[id] = component.visible
     })
 
     const snapshot: Record<string, boolean> = {}
-    visibilitySnapshot.forEach((visible, id) => {
-        snapshot[id] = visible
-    })
+    const windowSnapshot = visibilitySnapshotByWindow.get(windowId)
+    if (windowSnapshot) {
+        windowSnapshot.forEach((visible, id) => {
+            snapshot[id] = visible
+        })
+    }
 
     const config = {
         visibility,
-        allHidden: allHidden.value,
+        allHidden: allHiddenByWindow.get(windowId) || false,
         visibilitySnapshot: snapshot
     }
 
-    localStorage.setItem('component-manager-config', JSON.stringify(config))
+    localStorage.setItem(`component-manager-config-${windowId}`, JSON.stringify(config))
 }
 
-// Watch para salvar automaticamente
-watch([components, allHidden, visibilitySnapshot], () => {
-    saveConfig()
-}, { deep: true })
-
 export const useComponentManager = () => {
+    // Injeta windowId do contexto (fornecido pelo App.vue ou MainLayout)
+    const windowId = inject<string>('windowId', 'unknown')
+
+    console.log('[ComponentManager] Initialized for window:', windowId)
+
+    // Garante que esta janela tenha um Map de componentes
+    if (!componentsByWindow.has(windowId)) {
+        componentsByWindow.set(windowId, new Map())
+        allHiddenByWindow.set(windowId, false)
+        visibilitySnapshotByWindow.set(windowId, new Map())
+    }
+
+    // Obtém os componentes DESTA janela
+    const getComponents = () => componentsByWindow.get(windowId)!
+
+    // Watch para salvar automaticamente (apenas desta janela)
+    watch([() => componentsByWindow.get(windowId), () => allHiddenByWindow.get(windowId)], () => {
+        saveConfig(windowId)
+    }, { deep: true })
     /**
      * Registra um componente no gerenciador
      */
     const registerComponent = (component: ManagedComponent) => {
+        const components = getComponents()
         if (!components.has(component.id)) {
             components.set(component.id, { ...component })
-            loadConfig() // Carrega config após registrar
+            loadConfig(windowId) // Carrega config após registrar
         }
     }
 
@@ -107,6 +136,7 @@ export const useComponentManager = () => {
      * Remove um componente do gerenciador
      */
     const unregisterComponent = (id: string) => {
+        const components = getComponents()
         components.delete(id)
     }
 
@@ -117,6 +147,7 @@ export const useComponentManager = () => {
      * Para adicionar/remover da janela, use addToWindow/removeFromWindow
      */
     const toggleVisibility = (id: string) => {
+        const components = getComponents()
         const component = components.get(id)
         if (component) {
             const wasHidden = !component.visible
@@ -149,16 +180,18 @@ export const useComponentManager = () => {
                 })
             }
 
-            saveConfig()
+            saveConfig(windowId)
         }
     }
 
     /**
      * Define visibilidade de um componente
      * Quando fica visível: expande e traz para frente
-     * @param windowId ID da janela principal (necessário para sincronizar com estado global)
+     * IMPORTANTE: Apenas controla visibilidade UI local!
+     * Para adicionar/remover da janela, use addComponentToWindow/removeComponentFromWindow
      */
-    const setVisibility = (id: string, visible: boolean, windowId?: string) => {
+    const setVisibility = (id: string, visible: boolean) => {
+        const components = getComponents()
         const component = components.get(id)
         if (component) {
             const wasHidden = !component.visible
@@ -166,17 +199,6 @@ export const useComponentManager = () => {
 
             // Força atualização de reatividade
             componentsTrigger.value++
-
-            // Sincroniza com o estado global (ownership)
-            if (windowId) {
-                if (visible) {
-                    // Visível -> adiciona à janela principal
-                    moveComponent(id, windowId, { x: 100, y: 100 })
-                } else {
-                    // Invisível -> remove da janela (windowId: null)
-                    moveComponent(id, null, { x: 0, y: 0 })
-                }
-            }
 
             // Se estava escondido e agora está visível
             if (wasHidden && visible) {
@@ -190,7 +212,7 @@ export const useComponentManager = () => {
                 zIndexManager.bringToFront(id)
             }
 
-            saveConfig()
+            saveConfig(windowId)
         }
     }
 
@@ -201,6 +223,7 @@ export const useComponentManager = () => {
         // Acessa o trigger para garantir reatividade
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         componentsTrigger.value
+        const components = getComponents()
         const component = components.get(id)
         return component?.visible ?? true
     }
@@ -209,6 +232,7 @@ export const useComponentManager = () => {
      * Obtém componentes por categoria
      */
     const getComponentsByCategory = (category: ManagedComponent['category']) => {
+        const components = getComponents()
         return Array.from(components.values()).filter(c => c.category === category)
     }
 
@@ -216,6 +240,7 @@ export const useComponentManager = () => {
      * Obtém todos os componentes
      */
     const getAllComponents = () => {
+        const components = getComponents()
         return Array.from(components.values())
     }
 
@@ -227,12 +252,16 @@ export const useComponentManager = () => {
      * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
     const toggleAllVisibility = (activeComponentIds?: string[]) => {
+        const components = getComponents()
+        const allHidden = allHiddenByWindow.get(windowId) || false
+        const visibilitySnapshot = visibilitySnapshotByWindow.get(windowId) || new Map()
+
         // Se não forneceu IDs, usa todos os componentes (fallback)
         const targetIds = activeComponentIds || Array.from(components.keys())
 
-        if (allHidden.value) {
+        if (allHidden) {
             // Está escondido, vai mostrar -> restaura snapshot
-            allHidden.value = false
+            allHiddenByWindow.set(windowId, false)
 
             // Se existe snapshot, restaura o estado anterior
             if (visibilitySnapshot.size > 0) {
@@ -264,10 +293,10 @@ export const useComponentManager = () => {
             })
 
             // Marca como escondido
-            allHidden.value = true
+            allHiddenByWindow.set(windowId, true)
         }
 
-        saveConfig()
+        saveConfig(windowId)
     }
 
     /**
@@ -276,7 +305,8 @@ export const useComponentManager = () => {
      * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
     const showAll = (activeComponentIds?: string[]) => {
-        allHidden.value = false
+        const components = getComponents()
+        allHiddenByWindow.set(windowId, false)
         const targetIds = activeComponentIds || Array.from(components.keys())
 
         targetIds.forEach((id) => {
@@ -285,7 +315,7 @@ export const useComponentManager = () => {
                 component.visible = true
             }
         })
-        saveConfig()
+        saveConfig(windowId)
     }
 
     /**
@@ -294,7 +324,8 @@ export const useComponentManager = () => {
      * @param activeComponentIds - IDs dos componentes ativos (que estão na lista [ COMPONENTS ])
      */
     const hideAll = (activeComponentIds?: string[]) => {
-        allHidden.value = true
+        const components = getComponents()
+        allHiddenByWindow.set(windowId, true)
         const targetIds = activeComponentIds || Array.from(components.keys())
 
         targetIds.forEach((id) => {
@@ -303,7 +334,7 @@ export const useComponentManager = () => {
                 component.visible = false
             }
         })
-        saveConfig()
+        saveConfig(windowId)
     }
 
     return {
@@ -313,15 +344,15 @@ export const useComponentManager = () => {
         setVisibility,
         isVisible,
         toggleAllVisibility,
-        allHidden,
+        allHidden: computed(() => allHiddenByWindow.get(windowId) || false),
         getComponentsByCategory,
         getAllComponents,
         showAll,
         hideAll,
-        components,
         // Debug helper
         debugGetAll: () => {
-            console.log('[ComponentManager] All components:', Array.from(components.entries()))
+            const components = getComponents()
+            console.log(`[ComponentManager] All components for window ${windowId}:`, Array.from(components.entries()))
             return Array.from(components.entries())
         }
     }

@@ -1,4 +1,5 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, inject } from 'vue'
+import { broadcast, onMessage } from '../core/sync/useBroadcastSync'
 
 export interface AudioFrequencyData {
     bass: number       // Graves (0-255)
@@ -11,6 +12,9 @@ export interface AudioFrequencyData {
 }
 
 export const useAudioAnalyzer = () => {
+    // Detecta se é janela main
+    const isMainWindow = inject<boolean>('isMainWindow', true)
+
     const audioContext = ref<AudioContext | null>(null)
     const analyser = ref<AnalyserNode | null>(null)
     const dataArray = ref<Uint8Array<ArrayBuffer> | null>(null)
@@ -19,13 +23,23 @@ export const useAudioAnalyzer = () => {
     const currentTime = ref(0)
     const duration = ref(0)
 
+    // Cached audio data (para janelas filhas)
+    const cachedFrequencyData = ref<AudioFrequencyData | null>(null)
+
     // Beat detection
     let lastBeatTime = 0
     let beatThreshold = 200 // Limiar para detectar batida
     let lastVolume = 0
     let timeUpdateInterval: number | null = null
+    let broadcastInterval: number | null = null
 
     const getFrequencyData = (): AudioFrequencyData | null => {
+        // Janela FILHA: retorna dados em cache do broadcast
+        if (!isMainWindow) {
+            return cachedFrequencyData.value
+        }
+
+        // Janela MAIN: analisa áudio localmente
         if (!analyser.value || !dataArray.value) return null
 
         analyser.value.getByteFrequencyData(dataArray.value)
@@ -135,6 +149,11 @@ export const useAudioAnalyzer = () => {
 
                 // Atualiza currentTime periodicamente
                 startTimeUpdate()
+
+                // JANELA MAIN: Inicia broadcast de audio data
+                if (isMainWindow) {
+                    startAudioBroadcast()
+                }
             } catch (error) {
                 console.error('Erro ao reproduzir áudio:', error)
             }
@@ -146,6 +165,11 @@ export const useAudioAnalyzer = () => {
             audioElement.value.pause()
             isPlaying.value = false
             stopTimeUpdate()
+
+            // JANELA MAIN: Para broadcast
+            if (isMainWindow) {
+                stopAudioBroadcast()
+            }
         }
     }
 
@@ -182,9 +206,76 @@ export const useAudioAnalyzer = () => {
         beatThreshold = sensitivity
     }
 
+    /**
+     * Inicia broadcast de audio data (apenas janela main)
+     * Throttled para ~60 FPS
+     */
+    const startAudioBroadcast = () => {
+        if (!isMainWindow) return
+
+        stopAudioBroadcast() // Limpa interval anterior
+
+        let lastBroadcast = 0
+        const BROADCAST_INTERVAL = 16 // ~60 FPS
+
+        broadcastInterval = globalThis.setInterval(() => {
+            const now = Date.now()
+            if (now - lastBroadcast < BROADCAST_INTERVAL) return
+
+            const frequencyData = getFrequencyData()
+            if (frequencyData) {
+                // Converte Uint8Array para array normal (serializável)
+                const serializableData = {
+                    bass: frequencyData.bass,
+                    mid: frequencyData.mid,
+                    treble: frequencyData.treble,
+                    overall: frequencyData.overall,
+                    beat: frequencyData.beat,
+                    frequencyBands: frequencyData.frequencyBands,
+                    raw: Array.from(frequencyData.raw),
+                    timestamp: now
+                }
+
+                broadcast('AUDIO_DATA', serializableData)
+                lastBroadcast = now
+            }
+        }, BROADCAST_INTERVAL)
+    }
+
+    /**
+     * Para broadcast de audio data
+     */
+    const stopAudioBroadcast = () => {
+        if (broadcastInterval) {
+            clearInterval(broadcastInterval)
+            broadcastInterval = null
+        }
+    }
+
+    /**
+     * Listener para janelas filhas receberem audio data
+     */
+    if (!isMainWindow) {
+        onMessage('AUDIO_DATA', (data: any) => {
+            // Reconstrói Uint8Array dos dados recebidos
+            const rawArray = new Uint8Array(data.raw)
+
+            cachedFrequencyData.value = {
+                bass: data.bass,
+                mid: data.mid,
+                treble: data.treble,
+                overall: data.overall,
+                beat: data.beat,
+                frequencyBands: data.frequencyBands,
+                raw: rawArray
+            }
+        })
+    }
+
     const cleanup = () => {
         pause()
         stopTimeUpdate()
+        stopAudioBroadcast()
         if (audioContext.value) {
             audioContext.value.close()
         }

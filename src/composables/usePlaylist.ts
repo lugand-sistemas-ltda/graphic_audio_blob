@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { broadcast, onMessage } from '../core/sync/useBroadcastSync'
 
 export interface Track {
     id: string
@@ -34,18 +35,22 @@ const loadTracks = (): Track[] => {
 
 export const usePlaylist = () => {
     const tracks = ref<Track[]>(loadTracks())
-
     const currentTrackIndex = ref(0)
 
     const currentTrack = computed(() => tracks.value[currentTrackIndex.value])
-
     const hasNext = computed(() => currentTrackIndex.value < tracks.value.length - 1)
-
     const hasPrevious = computed(() => currentTrackIndex.value > 0)
 
     const nextTrack = () => {
         if (hasNext.value) {
             currentTrackIndex.value++
+
+            // Broadcast mudança de track
+            broadcast('TRACK_CHANGE', {
+                trackIndex: currentTrackIndex.value,
+                track: currentTrack.value
+            })
+
             return currentTrack.value
         }
         return null
@@ -54,6 +59,13 @@ export const usePlaylist = () => {
     const previousTrack = () => {
         if (hasPrevious.value) {
             currentTrackIndex.value--
+
+            // Broadcast mudança de track
+            broadcast('TRACK_CHANGE', {
+                trackIndex: currentTrackIndex.value,
+                track: currentTrack.value
+            })
+
             return currentTrack.value
         }
         return null
@@ -62,10 +74,24 @@ export const usePlaylist = () => {
     const selectTrack = (index: number) => {
         if (index >= 0 && index < tracks.value.length) {
             currentTrackIndex.value = index
+
+            // Broadcast mudança de track
+            broadcast('TRACK_CHANGE', {
+                trackIndex: currentTrackIndex.value,
+                track: currentTrack.value
+            })
+
             return currentTrack.value
         }
         return null
     }
+
+    // Listener para sincronização de tracks (todas as janelas)
+    onMessage('TRACK_CHANGE', (data: any) => {
+        if (data.trackIndex !== undefined && data.trackIndex !== currentTrackIndex.value) {
+            currentTrackIndex.value = data.trackIndex
+        }
+    })
 
     return {
         tracks,

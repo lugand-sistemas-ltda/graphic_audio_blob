@@ -1,4 +1,5 @@
-import { ref, watch } from 'vue'
+import { watch, inject, computed } from 'vue'
+import { useGlobalTheme } from '../core/global'
 
 export interface Theme {
     id: string
@@ -82,24 +83,6 @@ export const availableThemes: Theme[] = [
     }
 ]
 
-const STORAGE_KEY = 'audio-visualizer-theme'
-
-// Estado reativo do tema atual
-const currentTheme = ref<string>('matrix')
-
-// Carrega tema do localStorage na inicialização
-const loadThemeFromStorage = (): string => {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY)
-        if (saved && availableThemes.some(t => t.id === saved)) {
-            return saved
-        }
-    } catch (error) {
-        console.warn('Failed to load theme from localStorage:', error)
-    }
-    return 'matrix'
-}
-
 // Aplica o tema no DOM
 const applyTheme = (themeId: string) => {
     if (themeId === 'matrix') {
@@ -111,33 +94,24 @@ const applyTheme = (themeId: string) => {
     }
 }
 
-// Salva tema no localStorage
-const saveThemeToStorage = (themeId: string) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, themeId)
-    } catch (error) {
-        console.warn('Failed to save theme to localStorage:', error)
-    }
-}
-
 export function useTheme() {
-    // Inicializa tema na primeira chamada
-    if (currentTheme.value === 'matrix' && globalThis.window !== undefined) {
-        const savedTheme = loadThemeFromStorage()
-        currentTheme.value = savedTheme
-        applyTheme(savedTheme)
-    }
+    // Acessa o gerenciador global de tema
+    const globalTheme = useGlobalTheme()
+    const windowId = inject<string>('windowId', 'unknown')
 
-    // Watch para aplicar tema quando mudar
+    // Computed para o tema atual (do estado global)
+    const currentTheme = computed(() => globalTheme.state.value.currentTheme)
+
+    // Watch para aplicar tema quando mudar no estado global
     watch(currentTheme, (newTheme) => {
         applyTheme(newTheme)
-        saveThemeToStorage(newTheme)
-    })
+    }, { immediate: true })
 
     // Função para trocar tema
     const setTheme = (themeId: string) => {
         if (availableThemes.some(t => t.id === themeId)) {
-            currentTheme.value = themeId
+            globalTheme.setTheme(themeId, windowId)
+            applyTheme(themeId) // Aplica imediatamente nesta janela
         } else {
             console.warn(`Theme "${themeId}" not found`)
         }
