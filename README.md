@@ -25,6 +25,7 @@
 ## 🚀 Quick Start
 
 ### Pré-requisitos
+
 - Node.js >= 18
 - npm ou yarn
 
@@ -135,17 +136,18 @@ src/
 
 ```typescript
 interface AudioFrequencyData {
-  bass: number           // Graves (0-255)
-  mid: number            // Médios (0-255)
-  treble: number         // Agudos (0-255)
-  overall: number        // Volume geral (0-255)
-  beat: boolean          // Beat detectado
-  raw: Uint8Array        // Dados FFT brutos
-  frequencyBands: number[] // 8 bandas espectrais ⭐
+  bass: number; // Graves (0-255)
+  mid: number; // Médios (0-255)
+  treble: number; // Agudos (0-255)
+  overall: number; // Volume geral (0-255)
+  beat: boolean; // Beat detectado
+  raw: Uint8Array; // Dados FFT brutos
+  frequencyBands: number[]; // 8 bandas espectrais ⭐
 }
 ```
 
 **Especificações técnicas:**
+
 - **FFT Size**: 512 bins de frequência
 - **Smoothing**: 0.8 (suavização temporal)
 - **Taxa de atualização**: 60 FPS (requestAnimationFrame)
@@ -153,6 +155,7 @@ interface AudioFrequencyData {
 - **Cooldown de beat**: 300ms (evita falsos positivos)
 
 **8 Bandas de Frequência (divisão logarítmica):**
+
 ```
 Banda 0: 20-60Hz    (Sub-bass)
 Banda 1: 60-250Hz   (Bass)
@@ -165,6 +168,7 @@ Banda 7: 10-22kHz   (Air)
 ```
 
 **Controles disponíveis:**
+
 ```typescript
 audio.play()                    // Iniciar reprodução
 audio.pause()                   // Pausar
@@ -181,25 +185,27 @@ audio.setBeatSensitivity(s)     // Threshold de beat (50-300)
 
 ```typescript
 interface SpectralLayer {
-  frequency: number        // Valor atual (interpolado)
-  targetFrequency: number  // Valor alvo (do áudio)
-  radius: number           // Raio base da camada
-  color: { h, s, l }       // Cor HSL dinâmica
-  wobble: number           // Distorção senoidal
+  frequency: number; // Valor atual (interpolado)
+  targetFrequency: number; // Valor alvo (do áudio)
+  radius: number; // Raio base da camada
+  color: { h; s; l }; // Cor HSL dinâmica
+  wobble: number; // Distorção senoidal
 }
 ```
 
 **Sistema de cores HSL dinâmico:**
+
 ```typescript
 // Mapeamento: Agudos (vermelho) → Graves (azul/roxo)
-baseHue = 360 - (layerIndex / 8) * 280
+baseHue = 360 - (layerIndex / 8) * 280;
 
 // Intensidade afeta saturação e luminosidade
-saturation = 70 + (frequency / 255) * 30  // 70%-100%
-lightness = 30 + (frequency / 255) * 30   // 30%-60%
+saturation = 70 + (frequency / 255) * 30; // 70%-100%
+lightness = 30 + (frequency / 255) * 30; // 30%-60%
 ```
 
 **Efeitos visuais:**
+
 - ✨ **Parallax 3D**: Mouse controla offset do gradiente (profundidade)
 - 🌊 **Wobble effect**: Distorção senoidal + reação ao áudio
 - 💥 **Beat pulse**: Body inteiro pulsa (scale 1.02) no beat
@@ -207,6 +213,7 @@ lightness = 30 + (frequency / 255) * 30   // 30%-60%
 - 📐 **Responsivo**: Tamanho baseado em % da diagonal da viewport
 
 **Cálculo de tamanho responsivo:**
+
 ```typescript
 // Diagonal da tela = tamanho máximo
 maxScreenSize = √(width² + height²) / 2
@@ -225,6 +232,7 @@ finalSize = baseSize + (baseSize * 0.3 * volumeRatio)
 **Sincronização em tempo real via BroadcastChannel API (nativo do browser):**
 
 **Arquitetura em camadas:**
+
 ```
 ┌─────────────────────────────────┐
 │ useWindowManager (High-Level)   │ ← API específica do app
@@ -236,6 +244,7 @@ finalSize = baseSize + (baseSize * 0.3 * volumeRatio)
 ```
 
 **Features implementadas:**
+
 - ✅ **Heartbeat system**: Janelas enviam "estou viva" a cada 3s
 - ✅ **Auto-detecção**: Janelas inativas detectadas após 10s sem heartbeat
 - ✅ **Sincronização de áudio**: 8 bandas de frequência + beat (60 FPS)
@@ -244,6 +253,7 @@ finalSize = baseSize + (baseSize * 0.3 * volumeRatio)
 - ✅ **Window roles**: main, visual, controls, grid
 
 **Uso típico (setup dual-screen):**
+
 ```typescript
 // Monitor 1 (Principal) - Rota: /
 - MainControl, MusicPlayer, Playlist
@@ -257,17 +267,19 @@ finalSize = baseSize + (baseSize * 0.3 * volumeRatio)
 ```
 
 **API:**
-```typescript
-const wm = useWindowManager({ enableLogging: false })
 
-wm.windowCount              // Número de janelas
-wm.isMultiWindow           // Mais de 1 janela?
-wm.openVisualWindow()      // Abre /visual
-wm.syncAudioData(data)     // Envia áudio para outras janelas
-wm.onAudioData((data) => {}) // Recebe áudio de outras janelas
+```typescript
+const wm = useWindowManager({ enableLogging: false });
+
+wm.windowCount; // Número de janelas
+wm.isMultiWindow; // Mais de 1 janela?
+wm.openVisualWindow(); // Abre /visual
+wm.syncAudioData(data); // Envia áudio para outras janelas
+wm.onAudioData((data) => {}); // Recebe áudio de outras janelas
 ```
 
 **Limitações:**
+
 - ⚠️ Mesmo domínio apenas (segurança do browser)
 - ⚠️ Popup blocker (usuário precisa permitir)
 - ⚠️ Browser support: Chrome, Firefox, Edge, Safari 15.4+
@@ -280,38 +292,40 @@ wm.onAudioData((data) => {}) // Recebe áudio de outras janelas
 
 ```typescript
 interface ManagedComponent {
-  id: string
-  name: string
-  category: 'visual' | 'audio' | 'debug' | 'system'
-  visible: boolean
-  collapsibleId?: string  // ID do useCollapsible
+  id: string;
+  name: string;
+  category: "visual" | "audio" | "debug" | "system";
+  visible: boolean;
+  collapsibleId?: string; // ID do useCollapsible
 }
 ```
 
 **Funcionalidades:**
+
 ```typescript
 // Registro (automático ao montar componente)
-componentManager.register(id, name, category)
+componentManager.register(id, name, category);
 
 // Controle individual
-componentManager.toggle(id)       // Alterna visibilidade
-componentManager.show(id)         // Mostrar
-componentManager.hide(id)         // Esconder
-componentManager.collapse(id)     // Colapsar
-componentManager.expand(id)       // Expandir
+componentManager.toggle(id); // Alterna visibilidade
+componentManager.show(id); // Mostrar
+componentManager.hide(id); // Esconder
+componentManager.collapse(id); // Colapsar
+componentManager.expand(id); // Expandir
 
 // Controle global
-componentManager.showAll()        // Mostrar todos
-componentManager.hideAll()        // Esconder todos
-componentManager.collapseAll()    // Colapsar todos
-componentManager.expandAll()      // Expandir todos
+componentManager.showAll(); // Mostrar todos
+componentManager.hideAll(); // Esconder todos
+componentManager.collapseAll(); // Colapsar todos
+componentManager.expandAll(); // Expandir todos
 
 // Estado
-componentManager.isVisible(id)    // Retorna boolean
-componentManager.listComponents() // Lista todos registrados
+componentManager.isVisible(id); // Retorna boolean
+componentManager.listComponents(); // Lista todos registrados
 ```
 
 **Persistência:**
+
 - ✅ Estado salvo em `localStorage` automaticamente
 - ✅ Restaurado ao recarregar página
 - ✅ Snapshot de visibilidade para restore após `hideAll()`
@@ -324,13 +338,12 @@ componentManager.listComponents() // Lista todos registrados
 
 ```vue
 <template>
-  <div v-draggable class="my-component">
-    Arraste-me!
-  </div>
+  <div v-draggable class="my-component">Arraste-me!</div>
 </template>
 ```
 
 **Features:**
+
 - ✅ **Z-index automático**: Componente clicado vem para frente
 - ✅ **Posições persistidas**: Salvamento em localStorage
 - ✅ **Smooth dragging**: Transform CSS (GPU accelerated)
@@ -338,6 +351,7 @@ componentManager.listComponents() // Lista todos registrados
 - ✅ **Cross-window**: Experimental (drag entre janelas)
 
 **Integração com `useZIndex`:**
+
 ```typescript
 const zIndexManager = useZIndex()
 
@@ -359,29 +373,33 @@ zIndexManager.bringToFront(componentId)  // +1 no z-index
 **3 sistemas de temas simultâneos:**
 
 #### A) **Temas Estáticos** (`_themes.scss`)
+
 ```scss
 :root {
-  --theme-primary: #00ff00;      // Matrix green (padrão)
+  --theme-primary: #00ff00; // Matrix green (padrão)
   --theme-primary-bright: #41ff41;
   --theme-primary-dim: #008f11;
 }
 
 :root[data-theme="cyberpunk"] {
-  --theme-primary: #ff00ff;      // Rosa neon
+  --theme-primary: #ff00ff; // Rosa neon
 }
 ```
 
 **Trocar tema:**
+
 ```javascript
-document.documentElement.setAttribute('data-theme', 'cyberpunk')
+document.documentElement.setAttribute("data-theme", "cyberpunk");
 ```
 
 #### B) **RGB Mode** (`useRgbMode.ts`)
+
 - Rotação contínua de HSL (0°-360°)
 - Atualização a cada 50ms
 - Efeito arco-íris suave
 
 #### C) **Chameleon Mode** (`useChameleonMode.ts`)
+
 - Cores baseadas em frequências de áudio
 - Bass → Red, Mid → Green, Treble → Blue
 - Transições suaves interpoladas
@@ -394,44 +412,49 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 
 ```typescript
 // Vite glob import automático
-const musicFiles = import.meta.glob('/src/assets/music/*.mp3', {
+const musicFiles = import.meta.glob("/src/assets/music/*.mp3", {
   eager: true,
-  query: '?url',
-  import: 'default'
-})
+  query: "?url",
+  import: "default",
+});
 
 // Converte para Track[]
 interface Track {
-  id: string
-  title: string    // Nome do arquivo sem .mp3
-  file: string     // URL do arquivo
+  id: string;
+  title: string; // Nome do arquivo sem .mp3
+  file: string; // URL do arquivo
 }
 ```
 
 **API:**
+
 ```typescript
-const playlist = usePlaylist()
+const playlist = usePlaylist();
 
-playlist.tracks              // ref<Track[]>
-playlist.currentTrack        // computed<Track>
-playlist.currentTrackIndex   // ref<number>
-playlist.hasNext             // computed<boolean>
-playlist.hasPrevious         // computed<boolean>
+playlist.tracks; // ref<Track[]>
+playlist.currentTrack; // computed<Track>
+playlist.currentTrackIndex; // ref<number>
+playlist.hasNext; // computed<boolean>
+playlist.hasPrevious; // computed<boolean>
 
-playlist.nextTrack()         // Avançar
-playlist.previousTrack()     // Voltar
-playlist.selectTrack(index)  // Selecionar específica
+playlist.nextTrack(); // Avançar
+playlist.previousTrack(); // Voltar
+playlist.selectTrack(index); // Selecionar específica
 ```
 
 **Integração com áudio:**
+
 ```typescript
 // App.vue - watch reativo
-watch(() => playlist.currentTrack.value, async (newTrack) => {
-  if (newTrack) {
-    await audio.initAudio(newTrack.file)
-    if (wasPlaying) audio.play()
+watch(
+  () => playlist.currentTrack.value,
+  async (newTrack) => {
+    if (newTrack) {
+      await audio.initAudio(newTrack.file);
+      if (wasPlaying) audio.play();
+    }
   }
-})
+);
 ```
 
 ---
@@ -443,6 +466,7 @@ watch(() => playlist.currentTrack.value, async (newTrack) => {
 Terminal estilo hacker exibindo variáveis do sistema em tempo real (60 FPS).
 
 **Variáveis monitoradas:**
+
 ```
 sphere.position.x     → Posição X do mouse (0-100%)
 sphere.position.y     → Posição Y do mouse (0-100%)
@@ -457,6 +481,7 @@ fps                   → Frames por segundo
 ```
 
 **Features:**
+
 - ✅ Timestamp com hora atualizada
 - ✅ Status "ONLINE" piscante
 - ✅ Efeito scanline Matrix
@@ -470,6 +495,7 @@ fps                   → Frames por segundo
 8 barras verticais mostrando intensidade de cada banda de frequência em tempo real.
 
 **Bandas exibidas:**
+
 ```
 20Hz   → Sub-bass profundo
 60Hz   → Bass
@@ -482,6 +508,7 @@ fps                   → Frames por segundo
 ```
 
 **Sistema de cores dinâmico (baseado em intensidade):**
+
 ```scss
 > 80%:  rgba(0, 255, 65, 0.8-1.0)   // Verde brilhante
 50-80%: rgba(0, 255, 0, 0.6-1.0)    // Verde médio
@@ -490,10 +517,12 @@ fps                   → Frames por segundo
 ```
 
 **Informações adicionais:**
+
 - **Peak**: Frequência com maior intensidade no momento
 - **Avg**: Nível médio de todas as frequências (%)
 
 **Features:**
+
 - ✅ Transição suave (0.05s ease-out)
 - ✅ Efeito glow no topo das barras
 - ✅ Labels de frequência
@@ -506,6 +535,7 @@ fps                   → Frames por segundo
 Efeito de moeda 3D girando com imagem Matrix.
 
 **Efeitos 3D aplicados:**
+
 - 🔄 Rotação Y contínua (360° em 4s, loop infinito)
 - 🎨 Perspectiva 1000px (profundidade)
 - 🪙 Dupla face (front/back) com backface-visibility hidden
@@ -513,6 +543,7 @@ Efeito de moeda 3D girando com imagem Matrix.
 - ⚡ Hover: Acelera rotação para 2s
 
 **Processamento da imagem:**
+
 - Remoção de fundo (threshold de luminosidade)
 - Conversão para escala de cinza
 - Colorização Matrix (verde dominante)
@@ -564,38 +595,38 @@ Efeito de moeda 3D girando com imagem Matrix.
 // App.vue - Loop principal
 const updateDebugData = () => {
   // 1. Obter dados do áudio
-  const audioData = audio.getFrequencyData()
-  
+  const audioData = audio.getFrequencyData();
+
   // 2. Atualizar efeito visual
-  visualEffect.update(audioData)
-  
+  visualEffect.update(audioData);
+
   // 3. Sincronizar com outras janelas
-  windowManager.syncAudioData(audioData)
-  
+  windowManager.syncAudioData(audioData);
+
   // 4. Atualizar refs reativas para debug
-  spherePosition.value = visualEffect.getSpherePosition()
-  frequencyBands.value = [...audioData.frequencyBands]
-  beatDetected.value = audioData.beat
-  
+  spherePosition.value = visualEffect.getSpherePosition();
+  frequencyBands.value = [...audioData.frequencyBands];
+  beatDetected.value = audioData.beat;
+
   // 5. Próximo frame
-  requestAnimationFrame(updateDebugData)
-}
+  requestAnimationFrame(updateDebugData);
+};
 ```
 
 ---
 
 ## 🔧 Tecnologias e Versões
 
-| Tecnologia | Versão | Uso | Documentação |
-|------------|--------|-----|--------------|
-| **Vue 3** | 3.5.24 | Framework reativo | [docs](https://vuejs.org) |
-| **TypeScript** | 5.9.3 | Type safety | [docs](https://www.typescriptlang.org) |
-| **Vite** | 7.2.5 (Rolldown) | Build tool (experimental) | [docs](https://vitejs.dev) |
-| **Pinia** | 3.0.4 | State management (subutilizado) | [docs](https://pinia.vuejs.org) |
-| **Vue Router** | 4.6.3 | SPA routing (hash mode) | [docs](https://router.vuejs.org) |
-| **SCSS** | 1.94.2 | Estilos modulares | [docs](https://sass-lang.com) |
-| **Web Audio API** | Nativo | Análise FFT de áudio | [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) |
-| **BroadcastChannel** | Nativo | Multi-window sync | [MDN](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) |
+| Tecnologia           | Versão           | Uso                             | Documentação                                                             |
+| -------------------- | ---------------- | ------------------------------- | ------------------------------------------------------------------------ |
+| **Vue 3**            | 3.5.24           | Framework reativo               | [docs](https://vuejs.org)                                                |
+| **TypeScript**       | 5.9.3            | Type safety                     | [docs](https://www.typescriptlang.org)                                   |
+| **Vite**             | 7.2.5 (Rolldown) | Build tool (experimental)       | [docs](https://vitejs.dev)                                               |
+| **Pinia**            | 3.0.4            | State management (subutilizado) | [docs](https://pinia.vuejs.org)                                          |
+| **Vue Router**       | 4.6.3            | SPA routing (hash mode)         | [docs](https://router.vuejs.org)                                         |
+| **SCSS**             | 1.94.2           | Estilos modulares               | [docs](https://sass-lang.com)                                            |
+| **Web Audio API**    | Nativo           | Análise FFT de áudio            | [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)    |
+| **BroadcastChannel** | Nativo           | Multi-window sync               | [MDN](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) |
 
 ---
 
@@ -629,33 +660,33 @@ const handleTogglePlay = () => {}
 ```vue
 <script setup lang="ts">
 // 1. Imports (libs, components, composables, types)
-import { ref, computed, onMounted } from 'vue'
-import { useAudioAnalyzer } from '../composables/useAudioAnalyzer'
+import { ref, computed, onMounted } from "vue";
+import { useAudioAnalyzer } from "../composables/useAudioAnalyzer";
 
 // 2. Props e Emits (quando necessário)
 interface Props {
-  title: string
+  title: string;
 }
-const props = defineProps<Props>()
-const emit = defineEmits<{ play: [] }>()
+const props = defineProps<Props>();
+const emit = defineEmits<{ play: [] }>();
 
 // 3. Injects (dependências de parents)
-const audio = inject<any>('audio')
+const audio = inject<any>("audio");
 
 // 4. Composables
-const playlist = usePlaylist()
+const playlist = usePlaylist();
 
 // 5. Refs e Reactive
-const isActive = ref(false)
+const isActive = ref(false);
 
 // 6. Computed
-const trackTitle = computed(() => playlist.currentTrack.value?.title)
+const trackTitle = computed(() => playlist.currentTrack.value?.title);
 
 // 7. Functions
-const handleClick = () => {}
+const handleClick = () => {};
 
 // 8. Lifecycle hooks
-onMounted(() => {})
+onMounted(() => {});
 </script>
 
 <template>
@@ -663,8 +694,8 @@ onMounted(() => {})
 </template>
 
 <style scoped lang="scss">
-@use '../style/mixins' as *;
-@use '../style/variables' as *;
+@use "../style/mixins" as *;
+@use "../style/variables" as *;
 
 .component {
   @include matrix-panel;
@@ -676,8 +707,8 @@ onMounted(() => {})
 
 ```scss
 // Importar mixins e variables
-@use '../style/mixins' as *;
-@use '../style/variables' as *;
+@use "../style/mixins" as *;
+@use "../style/variables" as *;
 
 // NÃO importe index.scss (já está global)
 // NÃO importe themes (já está no :root)
@@ -735,16 +766,19 @@ chore: tarefas de manutenção
 ### ⚠️ Pontos de Atenção Identificados
 
 **Críticos:**
+
 - [ ] Adicionar try/catch em `useAudioAnalyzer.initAudio()` (evitar crashes)
 - [ ] Cleanup de event listeners em `onUnmounted` (memory leaks)
 - [ ] Remover console.logs em produção (usar env variables)
 
 **Performance:**
+
 - [ ] Throttle/debounce na renderização de efeitos (skip frames se necessário)
 - [ ] Lazy loading de componentes não-críticos (`defineAsyncComponent`)
 - [ ] Otimizar beat detection (threshold adaptativo)
 
 **Qualidade de Código:**
+
 - [ ] Consolidar estado em Pinia (migrar de composables esparsos)
 - [ ] Remover tipos `any`, fortalecer interfaces
 - [ ] Padronizar idioma dos comentários (PT-BR ou EN)
@@ -752,6 +786,7 @@ chore: tarefas de manutenção
 - [ ] Limpar variáveis SCSS não utilizadas
 
 **Features Futuras:**
+
 - [ ] Upload de áudio customizado (arrastar .mp3)
 - [ ] Presets de efeitos visuais salvos
 - [ ] Histórico de posições (undo/redo drag)
@@ -761,6 +796,7 @@ chore: tarefas de manutenção
 - [ ] Gravação de sessões (capture canvas)
 
 **Testing:**
+
 - [ ] Setup Vitest + Vue Test Utils
 - [ ] Testes unitários para composables críticos
 - [ ] Testes de integração (áudio → efeitos)
@@ -771,25 +807,30 @@ chore: tarefas de manutenção
 ## 🐛 Troubleshooting
 
 ### Áudio não toca
+
 1. Verifique se há arquivos `.mp3` em `/src/assets/music/`
 2. Verifique permissões de autoplay do browser
 3. Console: Procure por erros de CORS ou AudioContext
 
 ### Popup bloqueado (multi-window)
+
 - Permita popups para o site nas configurações do browser
 - Chrome: Ícone ao lado da URL → "Sempre permitir popups"
 
 ### Performance ruim
+
 - Esperado em multi-window (cada janela = processo separado)
 - Recomendado: GPU dedicada para 3+ janelas
 - Feche debug components se não necessários
 
 ### Sincronização não funciona
+
 1. Verifique se ambas as janelas estão no mesmo domínio
 2. Browser suporta BroadcastChannel? (Safari < 15.4 não)
 3. Habilite logging: `useWindowManager({ enableLogging: true })`
 
 ### Build falha
+
 ```bash
 # Limpe node_modules e reinstale
 rm -rf node_modules package-lock.json
@@ -854,7 +895,7 @@ Projeto proprietário - **Lugand Sistemas LTDA**
 
 **Desenvolvido com 💚 e ☕ pela equipe Lugand Sistemas**
 
-*Graphic Audio Blob v0.0.1 - Dezembro 2025*
+_Graphic Audio Blob v0.0.1 - Dezembro 2025_
 
 ---
 
@@ -863,6 +904,7 @@ Projeto proprietário - **Lugand Sistemas LTDA**
 ### Design System Completo por Responsabilidade
 
 **Ordem de importação (crítica!):**
+
 ```scss
 // src/style/index.scss
 1. _themes.scss      → Paletas de cores
@@ -893,15 +935,16 @@ Projeto proprietário - **Lugand Sistemas LTDA**
 
 // Tema Cyberpunk (exemplo)
 :root[data-theme="cyberpunk"] {
-  --theme-primary: #ff00ff;  // Rosa neon
+  --theme-primary: #ff00ff; // Rosa neon
   --theme-primary-bright: #ff41ff;
   --theme-primary-rgb: 255, 0, 255;
 }
 ```
 
 **Trocar tema dinamicamente:**
+
 ```javascript
-document.documentElement.setAttribute('data-theme', 'cyberpunk')
+document.documentElement.setAttribute("data-theme", "cyberpunk");
 ```
 
 ---
@@ -913,30 +956,30 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 ```scss
 :root {
   // Spacing Scale
-  --spacing-xs: 0.5rem;   // 8px
-  --spacing-sm: 1rem;     // 16px
-  --spacing-md: 1.5rem;   // 24px
-  --spacing-lg: 2rem;     // 32px
-  --spacing-xl: 3rem;     // 48px
-  
+  --spacing-xs: 0.5rem; // 8px
+  --spacing-sm: 1rem; // 16px
+  --spacing-md: 1.5rem; // 24px
+  --spacing-lg: 2rem; // 32px
+  --spacing-xl: 3rem; // 48px
+
   // Typography
-  --font-size-xs: 0.75rem;   // 12px
-  --font-size-sm: 0.875rem;  // 14px
-  --font-size-md: 1rem;      // 16px
-  --font-size-lg: 1.25rem;   // 20px
-  --font-size-xl: 1.5rem;    // 24px
-  
+  --font-size-xs: 0.75rem; // 12px
+  --font-size-sm: 0.875rem; // 14px
+  --font-size-md: 1rem; // 16px
+  --font-size-lg: 1.25rem; // 20px
+  --font-size-xl: 1.5rem; // 24px
+
   // Effects
   --glow-primary: 0 0 10px var(--theme-primary);
   --glow-intense: 0 0 20px var(--theme-primary-bright);
   --shadow-elevated: 0 4px 20px rgba(0, 255, 0, 0.3);
   --text-shadow-glow: 0 0 10px var(--theme-primary);
-  
+
   // Transitions
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
-  
+
   // Z-Index Scale
   --z-index-base: 1;
   --z-index-panel: 10;
@@ -958,13 +1001,11 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
   background: rgba(0, 0, 0, 0.95);
   border: 1px solid var(--theme-primary-dim);
   border-radius: 4px;
-  box-shadow: 
-    0 0 30px rgba(var(--theme-primary-rgb), 0.2),
-    inset 0 0 30px rgba(var(--theme-primary-rgb), 0.05);
-  
+  box-shadow: 0 0 30px rgba(var(--theme-primary-rgb), 0.2), inset 0 0 30px rgba(var(--theme-primary-rgb), 0.05);
+
   // Scanline effect
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background: repeating-linear-gradient(
@@ -980,32 +1021,42 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 }
 
 // Texto com glow
-@mixin matrix-text($size: 'md') {
+@mixin matrix-text($size: "md") {
   color: var(--theme-primary-bright);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   text-shadow: var(--text-shadow-glow);
-  
-  @if $size == 'xs' { font-size: var(--font-size-xs); }
-  @if $size == 'sm' { font-size: var(--font-size-sm); }
-  @if $size == 'md' { font-size: var(--font-size-md); }
-  @if $size == 'lg' { font-size: var(--font-size-lg); }
-  @if $size == 'xl' { font-size: var(--font-size-xl); }
+
+  @if $size == "xs" {
+    font-size: var(--font-size-xs);
+  }
+  @if $size == "sm" {
+    font-size: var(--font-size-sm);
+  }
+  @if $size == "md" {
+    font-size: var(--font-size-md);
+  }
+  @if $size == "lg" {
+    font-size: var(--font-size-lg);
+  }
+  @if $size == "xl" {
+    font-size: var(--font-size-xl);
+  }
 }
 
 // Botão Matrix
 @mixin matrix-button {
-  @include matrix-text('sm');
+  @include matrix-text("sm");
   background: rgba(var(--theme-primary-rgb), 0.1);
   border: 1px solid var(--theme-primary);
   padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
   transition: var(--transition-fast);
-  
+
   &:hover {
     background: rgba(var(--theme-primary-rgb), 0.2);
     box-shadow: var(--glow-primary);
   }
-  
+
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
@@ -1032,19 +1083,20 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 ```
 
 **Uso nos componentes:**
+
 ```vue
 <style scoped lang="scss">
-@use '../style/mixins' as *;
+@use "../style/mixins" as *;
 
 .my-component {
   @include matrix-panel;
   @include flex-column;
   padding: var(--spacing-lg);
-  
+
   .title {
-    @include matrix-text('xl');
+    @include matrix-text("xl");
   }
-  
+
   button {
     @include matrix-button;
   }
@@ -1060,35 +1112,61 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 
 ```scss
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.3); 
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.3);
   }
-  50% { 
-    box-shadow: 0 0 40px rgba(var(--theme-primary-rgb), 0.6); 
+  50% {
+    box-shadow: 0 0 40px rgba(var(--theme-primary-rgb), 0.6);
   }
 }
 
 @keyframes glitch {
-  0%, 100% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(2px, -2px); }
-  60% { transform: translate(-2px, -2px); }
-  80% { transform: translate(2px, 2px); }
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(2px, -2px);
+  }
+  60% {
+    transform: translate(-2px, -2px);
+  }
+  80% {
+    transform: translate(2px, 2px);
+  }
 }
 
 @keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
 }
 
 // Classes utilitárias
@@ -1112,23 +1190,28 @@ document.documentElement.setAttribute('data-theme', 'cyberpunk')
 **Responsabilidade:** Reset e estilos de tags HTML nativas
 
 ```scss
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   color: var(--theme-primary);
   background: var(--theme-bg-primary);
 }
 
-h1, h2, h3 {
-  @include matrix-text('lg');
+h1,
+h2,
+h3 {
+  @include matrix-text("lg");
   margin-bottom: var(--spacing-md);
 }
 
@@ -1140,13 +1223,13 @@ input[type="range"] {
   // Slider customizado
   -webkit-appearance: none;
   background: transparent;
-  
+
   &::-webkit-slider-track {
     background: rgba(var(--theme-primary-rgb), 0.2);
     height: 4px;
     border-radius: 2px;
   }
-  
+
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 16px;
@@ -1173,7 +1256,7 @@ input[type="range"] {
 }
 
 .badge {
-  @include matrix-text('xs');
+  @include matrix-text("xs");
   padding: var(--spacing-xs);
   border: 1px solid var(--theme-primary-dim);
   border-radius: 3px;
@@ -1199,7 +1282,7 @@ input[type="range"] {
 ::-webkit-scrollbar-thumb {
   background: var(--theme-primary-dim);
   border-radius: 4px;
-  
+
   &:hover {
     background: var(--theme-primary);
   }
@@ -1211,6 +1294,7 @@ input[type="range"] {
 ### 🎓 Boas Práticas
 
 **✅ FAÇA:**
+
 - Use variáveis CSS ao invés de valores fixos
 - Use mixins quando código se repete 3+ vezes
 - Mantenha `index.scss` apenas com imports
@@ -1218,6 +1302,7 @@ input[type="range"] {
 - Importe apenas o necessário: `@use '../style/mixins' as *`
 
 **❌ NÃO FAÇA:**
+
 - Colocar estilos em `index.scss`
 - Misturar cores em `_variables.scss` (use `_themes.scss`)
 - Duplicar código (crie mixin)
@@ -1228,13 +1313,11 @@ input[type="range"] {
 
 ### 📊 Benefícios da Arquitetura
 
-| Aspecto | Antes | Depois | Melhoria |
-|---------|-------|--------|----------|
-| **Arquivos** | 1 grande | 7 organizados | +600% |
-| **Código duplicado** | Alto | Zero | -100% |
-| **Adicionar tema** | 2 horas | 5 minutos | -96% |
-| **Linhas de CSS** | ~350 | ~210 | -40% |
-| **Valores hardcoded** | ~45 | ~5 | -89% |
-| **Tempo novo componente** | 15 min | 5 min | -67% |
-
-
+| Aspecto                   | Antes    | Depois        | Melhoria |
+| ------------------------- | -------- | ------------- | -------- |
+| **Arquivos**              | 1 grande | 7 organizados | +600%    |
+| **Código duplicado**      | Alto     | Zero          | -100%    |
+| **Adicionar tema**        | 2 horas  | 5 minutos     | -96%     |
+| **Linhas de CSS**         | ~350     | ~210          | -40%     |
+| **Valores hardcoded**     | ~45      | ~5            | -89%     |
+| **Tempo novo componente** | 15 min   | 5 min         | -67%     |
