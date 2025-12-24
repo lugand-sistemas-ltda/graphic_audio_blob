@@ -1,0 +1,182 @@
+// ==============================================
+// CUSTOM COMPONENTS - PROJECT SPECIFIC
+// ==============================================
+// Classes customizadas criadas para o projeto
+// Adicione aqui componentes reutilizáveis específicos do app
+
+@use './mixins' as *;
+
+// App container
+#app {
+    position: relative;
+    background: transparent;
+    min-height: 100vh;
+    width: 100%;
+}
+
+// Card genérico
+.card {
+    @include matrix-panel;
+    padding: var(--spacing-xl);
+}
+
+// Matrix panel customizado (se precisar de variações)
+.matrix-box {
+    @include matrix-panel;
+    padding: var(--spacing-lg);
+
+    &--small {
+        padding: var(--spacing-md);
+    }
+
+    &--large {
+        padding: var(--spacing-2xl);
+    }
+}
+
+// Badge/Tag
+.badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(var(--theme-primary-rgb), 0.2);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    color: var(--color-text);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    text-shadow: var(--text-shadow-sm);
+}
+
+// Divider
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(var(--theme-primary-rgb), 0.5) 50%,
+            transparent);
+    margin: var(--spacing-lg) 0;
+}
+
+// Status indicator
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: var(--glow-sm);
+
+    &--active {
+        animation: pulse 2s infinite;
+    }
+
+    &--error {
+        background: #ff0000;
+    }
+
+    &--warning {
+        background: #ffaa00;
+    }
+}
+
+// Loading spinner (se precisar)
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(var(--theme-primary-rgb), 0.3);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// Tooltip (se precisar)
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid var(--color-border);
+    border-radius: var(--control-panel-border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--color-text);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    box-shadow: var(--shadow-outset);
+    pointer-events: none;
+    z-index: var(--z-modal);
+}
+
+// Utility classes
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-glow {
+    text-shadow: var(--text-shadow-lg);
+}
+
+.no-margin {
+    margin: 0 !important;
+}
+
+.no-padding {
+    padding: 0 !important;
+}
+
+// Spacing utilities
+.mt-sm {
+    margin-top: var(--spacing-sm);
+}
+
+.mt-md {
+    margin-top: var(--spacing-md);
+}
+
+.mt-lg {
+    margin-top: var(--spacing-lg);
+}
+
+.mb-sm {
+    margin-bottom: var(--spacing-sm);
+}
+
+.mb-md {
+    margin-bottom: var(--spacing-md);
+}
+
+.mb-lg {
+    margin-bottom: var(--spacing-lg);
+}
+
+.pt-sm {
+    padding-top: var(--spacing-sm);
+}
+
+.pt-md {
+    padding-top: var(--spacing-md);
+}
+
+.pt-lg {
+    padding-top: var(--spacing-lg);
+}
+
+.pb-sm {
+    padding-bottom: var(--spacing-sm);
+}
+
+.pb-md {
+    padding-bottom: var(--spacing-md);
+}
+
+.pb-lg {
+    padding-bottom: var(--spacing-lg);
+}

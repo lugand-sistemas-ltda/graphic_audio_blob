@@ -1,0 +1,243 @@
+// ==============================================
+// REUSABLE MIXINS
+// ==============================================
+
+// Matrix panel container
+@mixin matrix-panel {
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid var(--color-border);
+    border-radius: var(--control-panel-border-radius);
+    font-family: var(--font-family-mono);
+    box-shadow: var(--shadow-outset), var(--shadow-inset);
+
+    // Scanline effect
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(0deg,
+                rgba(var(--theme-primary-rgb), 0.03) 0px,
+                rgba(0, 0, 0, 0.03) 1px,
+                rgba(var(--theme-primary-rgb), 0.03) 2px);
+        pointer-events: none;
+        z-index: 1;
+    }
+}
+
+// Matrix text with glow
+@mixin matrix-text($size: 'base') {
+    font-family: var(--font-family-mono);
+    color: var(--color-text);
+
+    @if $size =='xs' {
+        font-size: var(--font-size-xs);
+        text-shadow: var(--text-shadow-sm);
+    }
+
+    @else if $size =='sm' {
+        font-size: var(--font-size-sm);
+        text-shadow: var(--text-shadow-sm);
+    }
+
+    @else if $size =='lg' {
+        font-size: var(--font-size-lg);
+        text-shadow: var(--text-shadow-lg);
+    }
+
+    @else if $size =='xl' {
+        font-size: var(--font-size-xl);
+        text-shadow: var(--text-shadow-lg);
+    }
+
+    @else {
+        font-size: var(--font-size-base);
+        text-shadow: var(--text-shadow-md);
+    }
+}
+
+// Matrix button
+@mixin matrix-button {
+    background: var(--color-bg);
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--control-panel-border-radius);
+    font-family: var(--font-family-mono);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-shadow: var(--text-shadow-sm);
+
+    &:hover {
+        border-color: var(--color-text);
+        background: var(--color-bg-secondary);
+        box-shadow: var(--glow-md);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// Matrix input/slider
+@mixin matrix-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--color-text);
+        cursor: pointer;
+        box-shadow: var(--glow-md);
+        transition: all var(--transition-fast);
+
+        &:hover {
+            background: var(--color-accent);
+            box-shadow: var(--glow-lg);
+        }
+    }
+
+    &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--color-text);
+        cursor: pointer;
+        box-shadow: var(--glow-md);
+        border: none;
+
+        &:hover {
+            background: var(--color-accent);
+            box-shadow: var(--glow-lg);
+        }
+    }
+}
+
+// Flexbox utilities
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+// Progress bar
+@mixin matrix-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+
+    .progress-fill {
+        height: 100%;
+        background: var(--color-accent);
+        box-shadow: var(--glow-md);
+        transition: width var(--transition-fast);
+    }
+}
+
+// ==============================================
+// DRAGGABLE COMPONENT FAMILY MIXINS
+// ==============================================
+
+// Base container for all draggable components
+@mixin draggable-container {
+    @include matrix-panel;
+    width: var(--control-panel-width);
+    padding: 0;
+    @include flex-column;
+    gap: 0;
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
+}
+
+// Header for draggable components
+@mixin draggable-header {
+    @include flex-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+    background: rgba(var(--theme-primary-rgb), 0.05);
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+// Title for draggable components
+@mixin draggable-title {
+    @include matrix-text('sm');
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: var(--color-accent);
+    text-shadow: var(--text-shadow-md);
+}
+
+// Collapse toggle button for draggable components
+@mixin draggable-collapse-toggle {
+    @include matrix-button;
+    padding: 0.25em 0.75em;
+    font-size: var(--font-size-lg);
+    min-width: 2rem;
+    line-height: 1;
+}
+
+// Content wrapper for draggable components
+@mixin draggable-content {
+    padding: var(--spacing-lg);
+    @include flex-column;
+    gap: var(--spacing-lg);
+    max-height: calc(100vh - 150px); // Altura máxima: viewport - espaço para header e margens
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    // Estilização da scrollbar
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(var(--theme-primary-rgb), 0.05);
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(var(--theme-primary-rgb), 0.3);
+        border-radius: 4px;
+        transition: background var(--transition-base);
+
+        &:hover {
+            background: rgba(var(--theme-primary-rgb), 0.5);
+        }
+    }
+
+    // Firefox scrollbar
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--theme-primary-rgb), 0.3) rgba(var(--theme-primary-rgb), 0.05);
+}

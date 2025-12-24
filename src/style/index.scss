@@ -1,0 +1,38 @@
+// ==============================================
+// MAIN STYLESHEET - ORQUESTRADOR
+// ==============================================
+// Este arquivo apenas importa e organiza os módulos
+// Não adicione estilos diretamente aqui!
+
+// ============================================
+// 1. FUNDAÇÃO (ordem importa!)
+// ============================================
+
+// Temas - cores e paletas (PRIMEIRO!)
+@use './themes' as *;
+
+// Variáveis - estrutura e layout
+@use './variables' as *;
+
+// Mixins - funções reutilizáveis
+@use './mixins' as *;
+
+// Animations - animações globais
+@use './animations' as *;
+
+// ============================================
+// 2. ESTILOS BASE
+// ============================================
+
+// Base - elementos HTML nativos (a, p, h1, button, etc)
+@use './base' as *;
+
+// ============================================
+// 3. COMPONENTES CUSTOMIZADOS
+// ============================================
+
+// Custom - componentes específicos do projeto
+@use './custom' as *;
+
+// Chameleon Mode - efeito de gradientes RGB animados
+@use './chameleon' as *;

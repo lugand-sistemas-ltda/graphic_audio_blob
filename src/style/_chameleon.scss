@@ -1,0 +1,421 @@
+/**
+ * Modo Camaleão - Gradientes RGB Animados
+ * 
+ * Aplica gradientes arco-íris animados em bordas, textos e elementos
+ * quando a classe 'chameleon-mode' está ativa no documentElement
+ */
+
+// Variáveis padrão (serão sobrescritas pela animação)
+:root {
+    --chameleon-gradient-1: linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0);
+    --chameleon-gradient-2: linear-gradient(45deg, #ff8c00, #40e0d0, #8a2be2);
+    --chameleon-gradient-3: linear-gradient(225deg, #40e0d0, #8a2be2, #ff0080);
+    --chameleon-color-1: #ff0080;
+    --chameleon-color-2: #40e0d0;
+    --chameleon-color-3: #8a2be2;
+    --chameleon-border-gradient: conic-gradient(from 0deg, #ff0080, #ff8c00, #40e0d0, #8a2be2, #ff0080);
+}
+
+// Estilos aplicados quando o modo Camaleão está ativo
+.chameleon-mode {
+
+    // ========================================
+    // COMPONENTES DRAG-DROP
+    // ========================================
+
+    // Todos os componentes drag-drop
+    [v-draggable],
+    .main-control,
+    .sound-control,
+    .orb-effect-control,
+    .theme-selector,
+    .matrix-character-wrapper,
+    // MatrixCharacter usa wrapper
+    .debug-terminal,
+    .frequency-visualizer {
+        border: 2px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)) padding-box,
+            var(--chameleon-border-gradient) border-box !important;
+        background-origin: border-box !important;
+        animation: chameleon-pulse 3s ease-in-out infinite !important;
+    }
+
+    // Headers dos componentes
+    .main-control-header,
+    .sound-header,
+    .orb-header,
+    .theme-header,
+    .matrix-header,
+    .character-title,
+    // MatrixCharacter (CURRENT USER)
+    .terminal-header,
+    // DebugTerminal (SYSTEM MONITOR)
+    .visualizer-header {
+        // FrequencyVisualizer (FREQUENCY SPECTRUM)
+        border-bottom: 1px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) padding-box,
+            var(--chameleon-gradient-1) border-box !important;
+        background-origin: border-box !important;
+        background-clip: padding-box, border-box !important;
+    }
+
+    // Títulos dos componentes
+    .main-control-title,
+    .sound-title,
+    .orb-title,
+    .theme-title,
+    .matrix-title-text,
+    .character-title span,
+    // MatrixCharacter (CURRENT USER)
+    .terminal-title,
+    // DebugTerminal (SYSTEM MONITOR)
+    .visualizer-title {
+        // FrequencyVisualizer (FREQUENCY SPECTRUM)
+        background: var(--chameleon-gradient-1) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        animation: chameleon-text-glow 2s ease-in-out infinite !important;
+    }
+
+    // ========================================
+    // TÍTULO PRINCIPAL
+    // ========================================
+
+    .matrix-title {
+        h1 {
+            background: var(--chameleon-gradient-2) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            text-shadow: none !important;
+            animation: chameleon-title-glow 2.5s ease-in-out infinite !important;
+        }
+
+        .subtitle {
+            background: var(--chameleon-gradient-3) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            text-shadow: none !important;
+        }
+    }
+
+    // ========================================
+    // AUDIO CONTROLS (MATRIX MODE ACTIVE)
+    // ========================================
+
+    .audio-controls {
+        border: 2px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)) padding-box,
+            var(--chameleon-border-gradient) border-box !important;
+        animation: chameleon-pulse 3s ease-in-out infinite !important;
+
+        .mode-badge {
+            background: var(--chameleon-gradient-1) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            border: 1px solid transparent !important;
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)) padding-box,
+                var(--chameleon-gradient-2) border-box !important;
+        }
+    }
+
+    // ========================================
+    // COMPONENTES INTERNOS (MusicPlayer, Playlist)
+    // ========================================
+
+    // MusicPlayer
+    .music-player {
+        border: 1px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) padding-box,
+            var(--chameleon-gradient-2) border-box !important;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1) !important;
+    }
+
+    // Playlist Container
+    .playlist-container {
+        .playlist {
+            border: 1px solid transparent !important;
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)) padding-box,
+                var(--chameleon-gradient-3) border-box !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .playlist-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+
+            &:hover {
+                background: linear-gradient(90deg,
+                        rgba(var(--chameleon-color-1), 0.1),
+                        rgba(var(--chameleon-color-2), 0.1)) !important;
+            }
+
+            &.active {
+                background: linear-gradient(90deg,
+                        rgba(var(--chameleon-color-1), 0.2),
+                        rgba(var(--chameleon-color-2), 0.2)) !important;
+                border-left: 3px solid transparent !important;
+                border-image: var(--chameleon-gradient-1) 1 !important;
+            }
+        }
+    }
+
+    // ========================================
+    // BOTÕES E CONTROLES
+    // ========================================
+
+    button,
+    .matrix-button,
+    .toggle-button,
+    .nav-button,
+    .theme-item {
+        border: 1px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)) padding-box,
+            var(--chameleon-gradient-1) border-box !important;
+
+        &:hover {
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) padding-box,
+                var(--chameleon-gradient-2) border-box !important;
+            transform: scale(1.05) !important;
+        }
+
+        &.active {
+            background:
+                linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) padding-box,
+                var(--chameleon-gradient-3) border-box !important;
+        }
+    }
+
+    // ========================================
+    // INPUTS E SLIDERS
+    // ========================================
+
+    input[type="range"] {
+        &::-webkit-slider-track {
+            background: var(--chameleon-gradient-1) !important;
+        }
+
+        &::-webkit-slider-thumb {
+            border: 2px solid transparent !important;
+            background:
+                linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+                var(--chameleon-border-gradient) border-box !important;
+        }
+
+        &::-moz-range-track {
+            background: var(--chameleon-gradient-1) !important;
+        }
+
+        &::-moz-range-thumb {
+            border: 2px solid transparent !important;
+            background:
+                linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+                var(--chameleon-border-gradient) border-box !important;
+        }
+    }
+
+    // ========================================
+    // VISUALIZADOR DE FREQUÊNCIA
+    // ========================================
+
+    .frequency-bar {
+        background: var(--chameleon-gradient-2) !important;
+    }
+
+    // ========================================
+    // ESFERA PRINCIPAL & GRADIENTE
+    // ========================================
+
+    #sphere {
+        // Remove filtros de hue padrão e aumenta saturação
+        filter: saturate(1.8) brightness(1.1) !important;
+
+        circle {
+
+            // Cada camada com cor diferente do gradiente
+            // Opacidade variada para criar profundidade
+            &:nth-child(1) {
+                stroke: var(--chameleon-color-1) !important;
+                opacity: 0.9 !important;
+                animation: chameleon-circle-pulse-1 3s ease-in-out infinite !important;
+            }
+
+            &:nth-child(2) {
+                stroke: var(--chameleon-color-2) !important;
+                opacity: 0.85 !important;
+                animation: chameleon-circle-pulse-2 3.5s ease-in-out infinite !important;
+            }
+
+            &:nth-child(3) {
+                stroke: var(--chameleon-color-3) !important;
+                opacity: 0.8 !important;
+                animation: chameleon-circle-pulse-3 4s ease-in-out infinite !important;
+            }
+
+            &:nth-child(4) {
+                stroke: var(--chameleon-color-1) !important;
+                opacity: 0.75 !important;
+                animation: chameleon-circle-pulse-1 3.2s ease-in-out infinite !important;
+            }
+
+            &:nth-child(5) {
+                stroke: var(--chameleon-color-2) !important;
+                opacity: 0.7 !important;
+                animation: chameleon-circle-pulse-2 3.8s ease-in-out infinite !important;
+            }
+
+            &:nth-child(6) {
+                stroke: var(--chameleon-color-3) !important;
+                opacity: 0.65 !important;
+                animation: chameleon-circle-pulse-3 4.2s ease-in-out infinite !important;
+            }
+
+            &:nth-child(7) {
+                stroke: var(--chameleon-color-1) !important;
+                opacity: 0.6 !important;
+                animation: chameleon-circle-pulse-1 3.6s ease-in-out infinite !important;
+            }
+
+            &:nth-child(8) {
+                stroke: var(--chameleon-color-2) !important;
+                opacity: 0.55 !important;
+                animation: chameleon-circle-pulse-2 4.5s ease-in-out infinite !important;
+            }
+        }
+    }
+
+    // Gradiente radial de fundo (se existir)
+    .gradient-orb,
+    .visual-effect,
+    [class*="gradient"],
+    [id*="gradient"] {
+        // Adiciona um glow colorido ao redor do gradiente
+        filter: drop-shadow(0 0 30px var(--chameleon-color-1)) drop-shadow(0 0 60px var(--chameleon-color-2)) drop-shadow(0 0 90px var(--chameleon-color-3)) !important;
+        animation: chameleon-gradient-glow 4s ease-in-out infinite !important;
+    }
+
+    // ========================================
+    // SCROLLBARS
+    // ========================================
+
+    *::-webkit-scrollbar-thumb {
+        background: var(--chameleon-gradient-1) !important;
+    }
+
+    *::-webkit-scrollbar-track {
+        border: 1px solid transparent !important;
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)) padding-box,
+            var(--chameleon-gradient-2) border-box !important;
+    }
+}
+
+// ========================================
+// ANIMAÇÕES
+// ========================================
+
+@keyframes chameleon-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
+    }
+}
+
+@keyframes chameleon-text-glow {
+
+    0%,
+    100% {
+        filter: brightness(1) saturate(1);
+    }
+
+    50% {
+        filter: brightness(1.3) saturate(1.5);
+    }
+}
+
+@keyframes chameleon-title-glow {
+
+    0%,
+    100% {
+        filter: brightness(1.2) saturate(1.2);
+    }
+
+    50% {
+        filter: brightness(1.5) saturate(1.8);
+    }
+}
+
+// Animações para os círculos da esfera
+@keyframes chameleon-circle-pulse-1 {
+
+    0%,
+    100% {
+        stroke-opacity: 0.9;
+        stroke-width: 2;
+    }
+
+    50% {
+        stroke-opacity: 1;
+        stroke-width: 2.5;
+    }
+}
+
+@keyframes chameleon-circle-pulse-2 {
+
+    0%,
+    100% {
+        stroke-opacity: 0.85;
+        stroke-width: 2;
+    }
+
+    50% {
+        stroke-opacity: 1;
+        stroke-width: 2.8;
+    }
+}
+
+@keyframes chameleon-circle-pulse-3 {
+
+    0%,
+    100% {
+        stroke-opacity: 0.8;
+        stroke-width: 2;
+    }
+
+    50% {
+        stroke-opacity: 1;
+        stroke-width: 3;
+    }
+}
+
+// Animação para o glow do gradiente
+@keyframes chameleon-gradient-glow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 20px var(--chameleon-color-1)) drop-shadow(0 0 40px var(--chameleon-color-2)) drop-shadow(0 0 60px var(--chameleon-color-3));
+    }
+
+    33% {
+        filter: drop-shadow(0 0 40px var(--chameleon-color-2)) drop-shadow(0 0 60px var(--chameleon-color-3)) drop-shadow(0 0 80px var(--chameleon-color-1));
+    }
+
+    66% {
+        filter: drop-shadow(0 0 30px var(--chameleon-color-3)) drop-shadow(0 0 50px var(--chameleon-color-1)) drop-shadow(0 0 70px var(--chameleon-color-2));
+    }
+}

@@ -1,0 +1,357 @@
+// ==============================================
+// MATRIX THEME - COLOR TOKENS
+// ==============================================
+// Este arquivo gerencia todas as paletas de cores dos temas
+// Para criar novos temas, duplique o bloco :root e ajuste as cores
+
+:root {
+    // ============ MATRIX GREEN THEME (Default) ============
+
+    // Primary colors
+    --theme-primary: #00ff00;
+    --theme-primary-bright: #00ff41;
+    --theme-primary-dim: #008f11;
+    --theme-primary-dark: #003300;
+
+    // Background colors
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #001a00;
+
+    // RGB values (para usar com rgba)
+    --theme-primary-rgb: 0, 255, 0;
+    --theme-primary-bright-rgb: 0, 255, 65;
+
+    // ============ SEMANTIC COLORS ============
+    // Mapeamento semântico (não mude estes nomes)
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    // ============ BACKWARD COMPATIBILITY ============
+    // Aliases para componentes antigos (mantenha para compatibilidade)
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// ==============================================
+// AVAILABLE THEMES
+// ==============================================
+
+// Cyberpunk Purple Theme
+:root[data-theme="cyberpunk"] {
+    --theme-primary: #ff00ff;
+    --theme-primary-bright: #ff41ff;
+    --theme-primary-dim: #8f1188;
+    --theme-primary-dark: #330033;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a001a;
+    --theme-primary-rgb: 255, 0, 255;
+    --theme-primary-bright-rgb: 255, 65, 255;
+
+    // Semantic colors
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    // Backward compatibility
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Rustic Brown Theme (formerly Blade Runner)
+:root[data-theme="blade-runner"] {
+    --theme-primary: #8b4513;
+    --theme-primary-bright: #d2691e;
+    --theme-primary-dim: #654321;
+    --theme-primary-dark: #3e2723;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a0f0a;
+    --theme-primary-rgb: 139, 69, 19;
+    --theme-primary-bright-rgb: 210, 105, 30;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Tron Blue Theme
+:root[data-theme="tron"] {
+    --theme-primary: #00ffff;
+    --theme-primary-bright: #41ffff;
+    --theme-primary-dim: #118f8f;
+    --theme-primary-dark: #003333;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #001a1a;
+    --theme-primary-rgb: 0, 255, 255;
+    --theme-primary-bright-rgb: 65, 255, 255;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Hacker Red Theme
+:root[data-theme="hacker-red"] {
+    --theme-primary: #ff0000;
+    --theme-primary-bright: #ff4141;
+    --theme-primary-dim: #8f1111;
+    --theme-primary-dark: #330000;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a0000;
+    --theme-primary-rgb: 255, 0, 0;
+    --theme-primary-bright-rgb: 255, 65, 65;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Synthwave Pink Theme
+:root[data-theme="synthwave"] {
+    --theme-primary: #ff006e;
+    --theme-primary-bright: #ff5ca8;
+    --theme-primary-dim: #8f113c;
+    --theme-primary-dark: #330014;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a0010;
+    --theme-primary-rgb: 255, 0, 110;
+    --theme-primary-bright-rgb: 255, 92, 168;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Terminal Green (Amber) Theme
+:root[data-theme="terminal-amber"] {
+    --theme-primary: #ffb000;
+    --theme-primary-bright: #ffd700;
+    --theme-primary-dim: #8f6400;
+    --theme-primary-dark: #332400;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a1400;
+    --theme-primary-rgb: 255, 176, 0;
+    --theme-primary-bright-rgb: 255, 215, 0;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Tutifuti Pink Theme
+:root[data-theme="tutifuti"] {
+    --theme-primary: #c25a88;
+    --theme-primary-bright: #ff7eb3;
+    --theme-primary-dim: #8f3d63;
+    --theme-primary-dark: #4d1f34;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a0a12;
+    --theme-primary-rgb: 194, 90, 136;
+    --theme-primary-bright-rgb: 255, 126, 179;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Deep Blue Theme
+:root[data-theme="deep-blue"] {
+    --theme-primary: #1e3a8a;
+    --theme-primary-bright: #3b82f6;
+    --theme-primary-dim: #1e40af;
+    --theme-primary-dark: #0f172a;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #0a0f1e;
+    --theme-primary-rgb: 30, 58, 138;
+    --theme-primary-bright-rgb: 59, 130, 246;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Monochrome Gray Theme
+:root[data-theme="monochrome"] {
+    --theme-primary: #9ca3af;
+    --theme-primary-bright: #e5e7eb;
+    --theme-primary-dim: #6b7280;
+    --theme-primary-dark: #374151;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #111827;
+    --theme-primary-rgb: 156, 163, 175;
+    --theme-primary-bright-rgb: 229, 231, 235;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Ghost White Theme
+:root[data-theme="ghost"] {
+    --theme-primary: #f3f4f6;
+    --theme-primary-bright: #ffffff;
+    --theme-primary-dim: #d1d5db;
+    --theme-primary-dark: #9ca3af;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #0f0f0f;
+    --theme-primary-rgb: 243, 244, 246;
+    --theme-primary-bright-rgb: 255, 255, 255;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
+
+// Half-Life Orange Theme
+:root[data-theme="half-life"] {
+    --theme-primary: #ff6600;
+    --theme-primary-bright: #ff8c00;
+    --theme-primary-dim: #cc5200;
+    --theme-primary-dark: #662900;
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #1a0f00;
+    --theme-primary-rgb: 255, 102, 0;
+    --theme-primary-bright-rgb: 255, 140, 0;
+
+    --color-text: var(--theme-primary-bright);
+    --color-text-dim: var(--theme-primary-dim);
+    --color-bg: var(--theme-bg-primary);
+    --color-bg-secondary: var(--theme-bg-secondary);
+    --color-border: var(--theme-primary-dim);
+    --color-accent: var(--theme-primary);
+
+    --matrix-green: var(--theme-primary);
+    --matrix-green-bright: var(--theme-primary-bright);
+    --matrix-green-dim: var(--theme-primary-dim);
+    --matrix-green-dark: var(--theme-primary-dark);
+    --matrix-black: var(--theme-bg-primary);
+    --matrix-dark: var(--theme-bg-secondary);
+    --matrix-green-rgb: var(--theme-primary-rgb);
+    --matrix-green-bright-rgb: var(--theme-primary-bright-rgb);
+}
