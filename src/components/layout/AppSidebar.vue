@@ -31,11 +31,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import GlobalControls from './sidebar/GlobalControls.vue'
-import ComponentManager from './sidebar/ComponentManager.vue'
-import EffectsControl from './sidebar/EffectsControl.vue'
-import WindowControl from './sidebar/WindowControl.vue'
-import type { WindowId } from '../core/state/types'
+import GlobalControls from '../sidebar/GlobalControls.vue'
+import ComponentManager from '../sidebar/ComponentManager.vue'
+import EffectsControl from '../sidebar/EffectsControl.vue'
+import WindowControl from '../sidebar/WindowControl.vue'
+import type { WindowId } from '../../core/state/types'
 
 interface Props {
     windowId: WindowId

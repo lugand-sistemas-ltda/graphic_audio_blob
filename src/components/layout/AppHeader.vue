@@ -28,10 +28,10 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue'
-import { useGlobalState, updateWindow } from '../core/state'
-import { useGlobalAlerts } from '../composables/useGlobalAlerts'
-import { BaseButton } from './ui'
-import type { WindowId } from '../core/state/types'
+import { useGlobalState, updateWindow } from '../../core/state'
+import { useGlobalAlerts } from '../../composables/useGlobalAlerts'
+import { BaseButton } from '../ui'
+import type { WindowId } from '../../core/state/types'
 
 interface Props {
     windowId: WindowId
