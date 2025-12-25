@@ -7,9 +7,8 @@
                     <input v-if="isEditingTitle" v-model="editableTitle" @blur="saveTitle" @keyup.enter="saveTitle"
                         @keyup.esc="cancelEdit" class="title-input" ref="titleInput" maxlength="50" />
                     <span v-else class="title-text" @dblclick="startEditTitle">{{ windowTitle }}</span>
-                    <button v-if="!isEditingTitle" class="edit-button" @click="startEditTitle" title="Edit window name">
-                        ✏️
-                    </button>
+                    <BaseButton v-if="!isEditingTitle" variant="ghost" size="sm" icon="✏️" icon-only
+                        @click="startEditTitle" title="Edit window name" custom-class="edit-button" />
                     <span class="title-subtitle">SPECTRAL VISUALIZER</span>
                 </div>
             </div>
@@ -20,9 +19,8 @@
                     <span class="info-value">{{ shortWindowId }}</span>
                 </div>
 
-                <button v-if="canClose" class="close-button" @click="handleClose" title="Close Window">
-                    ✕
-                </button>
+                <BaseButton v-if="canClose" variant="danger" icon-only icon="✕" shadow @click="handleClose"
+                    title="Close Window" custom-class="close-button" />
             </div>
         </div>
     </header>
@@ -32,6 +30,7 @@
 import { computed, ref, nextTick } from 'vue'
 import { useGlobalState, updateWindow } from '../core/state'
 import { useGlobalAlerts } from '../composables/useGlobalAlerts'
+import { BaseButton } from './ui'
 import type { WindowId } from '../core/state/types'
 
 interface Props {
@@ -230,31 +229,11 @@ const cancelEdit = () => {
     }
 }
 
+// Customizações específicas para botões no header
 .close-button {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 0, 0, 0.1);
-    border: 1px solid rgba(255, 0, 0, 0.3);
-    border-radius: 4px;
-    color: #ff3333;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-        background: rgba(255, 0, 0, 0.2);
-        border-color: #ff3333;
-        box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-        transform: translateY(-2px);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
 }
 
 @media (max-width: 768px) {
@@ -275,8 +254,8 @@ const cancelEdit = () => {
     }
 
     .close-button {
-        width: 36px;
-        height: 36px;
+        width: 36px !important;
+        height: 36px !important;
     }
 }
 </style>

@@ -424,10 +424,22 @@ windowManager.openVisualWindow();
 
 ## 📚 Documentation
 
+### Architecture & Systems
+
 - [AUDIO_ARCHITECTURE.md](./AUDIO_ARCHITECTURE.md) - Audio system details
 - [THEME_ARCHITECTURE.md](./THEME_ARCHITECTURE.md) - Theme system details
 - [COMPONENT_ARCHITECTURE.md](./COMPONENT_ARCHITECTURE.md) - Component system
 - [WINDOW_MANAGEMENT.md](./WINDOW_MANAGEMENT.md) - Multi-window system
+- [ALERT_ARCHITECTURE.md](./ALERT_ARCHITECTURE.md) - Global alert system
+
+### Development Guidelines
+
+- [COLOR_SYSTEM.md](./COLOR_SYSTEM.md) - Centralized color management guide 🎨
+- [COMPONENT_PATTERNS.md](./COMPONENT_PATTERNS.md) - Component development patterns
+- [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Recent refactoring changes
+
+### Version History
+
 - [CHANGELOG_AMYSZKO.md](./CHANGELOG_AMYSZKO.md) - Version history
 
 ---

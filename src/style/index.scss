@@ -30,6 +30,9 @@
 // Borders - sistema global de bordas reutilizáveis
 @use './borders' as *;
 
+// Utilities - classes helper reutilizáveis (btn, card, shadow, etc)
+@use './utilities' as *;
+
 // ============================================
 // 3. COMPONENTES CUSTOMIZADOS
 // ============================================

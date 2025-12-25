@@ -71,11 +71,11 @@
     }
 
     &--error {
-        background: #ff0000;
+        background: var(--color-error);
     }
 
     &--warning {
-        background: #ffaa00;
+        background: var(--color-warning);
     }
 }
 

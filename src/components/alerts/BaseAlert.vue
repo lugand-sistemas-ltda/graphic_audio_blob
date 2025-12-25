@@ -37,10 +37,10 @@
 
             <!-- Buttons -->
             <div class="alert-actions">
-                <button v-for="button in buttons" :key="button.id" :class="['alert-button', `btn-${button.variant || 'primary'
-                    }`]" @click="handleButtonClick(button.id)">
+                <BaseButton v-for="button in buttons" :key="button.id" :variant="(button.variant as any) || 'primary'"
+                    :custom-class="`alert-button`" corners @click="handleButtonClick(button.id)">
                     {{ button.label }}
-                </button>
+                </BaseButton>
             </div>
         </div>
     </div>
@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { BaseButton } from '../ui'
 import type { AlertType, AlertButton } from '../../core/state/types'
 
 interface Props {
@@ -117,12 +118,12 @@ function handleButtonClick(buttonId: string) {
 <style scoped lang="scss">
 @use '../../style/variables' as *;
 
-// Cores específicas para cada tipo de alert
+// Cores específicas para cada tipo de alert (usando paleta centralizada)
 $alert-colors: (
-    warning: #ff9800,
-    success: #4caf50,
-    error: #f44336,
-    attention: #2196f3,
+    warning: var(--color-warning),
+    success: var(--color-success),
+    error: var(--color-error),
+    attention: var(--color-info),
     default: var(--color-text)
 );
 
@@ -423,7 +424,7 @@ $alert-colors: (
 }
 
 // ===================================
-// BUTTONS (fixos)
+// BUTTONS (usando BaseButton + custom styles)
 // ===================================
 .alert-actions {
     display: flex;
@@ -434,106 +435,11 @@ $alert-colors: (
     flex-wrap: wrap;
 }
 
+// Customizações específicas para botões dentro de alerts
 .alert-button {
-    padding: var(--spacing-md) var(--spacing-xl);
-    border-radius: 4px;
-    font-size: var(--font-size-md);
-    font-weight: bold;
-    font-family: var(--font-family-mono);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    // BaseButton já fornece a base
+    // Aqui apenas ajustes específicos de alert se necessário
     min-width: 110px;
-    letter-spacing: 1px;
-    position: relative;
-    border: 1px solid;
-    white-space: nowrap;
-
-    // Corner details on buttons
-    &::before,
-    &::after {
-        content: '';
-        position: absolute;
-        width: 5px;
-        height: 5px;
-        border: 1px solid currentColor;
-        opacity: 0.7;
-        transition: all 0.2s ease;
-    }
-
-    &::before {
-        top: -1px;
-        left: -1px;
-        border-right: none;
-        border-bottom: none;
-        border-top-left-radius: 1px;
-    }
-
-    &::after {
-        bottom: -1px;
-        right: -1px;
-        border-left: none;
-        border-top: none;
-        border-bottom-right-radius: 1px;
-    }
-
-    &.btn-primary {
-        background: rgba(var(--theme-primary-rgb), 0.15);
-        border-color: var(--color-text);
-        color: var(--color-text);
-        box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.2);
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.3);
-            box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.5);
-            transform: translateY(-2px);
-
-            &::before,
-            &::after {
-                opacity: 1;
-                box-shadow: 0 0 4px currentColor;
-            }
-        }
-    }
-
-    &.btn-secondary {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.3);
-        color: var(--color-text);
-
-        &:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--color-text);
-            transform: translateY(-2px);
-
-            &::before,
-            &::after {
-                opacity: 1;
-            }
-        }
-    }
-
-    &.btn-danger {
-        background: rgba(244, 67, 54, 0.15);
-        border-color: #f44336;
-        color: #ff6659;
-        box-shadow: 0 0 10px rgba(244, 67, 54, 0.2);
-
-        &:hover {
-            background: rgba(244, 67, 54, 0.25);
-            box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
-            transform: translateY(-2px);
-
-            &::before,
-            &::after {
-                opacity: 1;
-                box-shadow: 0 0 4px currentColor;
-            }
-        }
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
 }
 
 // ===================================
