@@ -1,446 +1,462 @@
-# 🎵 Graphic Audio Blob (GAB)
+# 🎵 Spectral Audio Visualizer
 
-> **Visualizador de áudio espectral em tempo real com sistema multi-window**  
-> Versão: 0.0.1 | Branch: amyszko (develop) | Stack: Vue 3 + TypeScript + Vite
+> **Multi-Window Audio Visualization System with Real-Time Synchronization**  
+> Version: 1.0.0-stable | Branch: stable | Stack: Vue 3 + TypeScript + Vite
 
 ---
 
-## 📖 Visão Geral
+## 📖 Overview
 
-**Graphic Audio Blob** é uma aplicação web avançada para visualização de áudio em tempo real com arquitetura profissional. Construída com **Vue 3**, **TypeScript** e **Vite**, oferece análise FFT de áudio, efeitos visuais espectrais sincronizados, sistema multi-window para dual-screen, e arquitetura modular escalável.
+**Spectral Audio Visualizer** is a professional web application for real-time audio visualization featuring a sophisticated **Provider/Consumer architecture** for multi-window support. Built with **Vue 3 Composition API**, **TypeScript**, and **Vite**, it delivers FFT audio analysis, synchronized visual effects, and seamless cross-window communication via BroadcastChannel API.
 
-### 🎯 Principais Funcionalidades
+### 🎯 Key Features
 
-- � **Visualização espectral avançada** - 8 camadas concêntricas reagindo a bandas de frequência (20Hz-22kHz)
-- 🪟 **Sistema multi-window** - Sincronização em tempo real via BroadcastChannel (zero latência)
-- 🎵 **Player de música completo** - Playlist automática, seek, controles de volume
-- � **Efeitos visuais 3D** - Orbe espectral com parallax de mouse, wobble effect, beat pulse
-- �🎭 **Temas dinâmicos** - Matrix (padrão), RGB Mode, Chameleon Mode adaptativo
-- 🎛️ **Sistema drag-and-drop** - Componentes arrastáveis com gerenciamento automático de z-index
-- � **Debug tools profissionais** - Terminal de monitoramento e visualizador de frequências
-- � **Arquitetura SCSS modular** - Design system completo com variáveis, mixins e animações
+- 🎵 **Single Audio Source** - MAIN window acts as sole provider (eliminates echo/delay)
+- 🪟 **Multi-Window System** - Unlimited child windows with real-time sync (60fps)
+- 📡 **BroadcastChannel IPC** - Zero-latency state synchronization across windows
+- 🎨 **Global Theme System** - Automatic theme application to all windows
+- 🎛️ **Component Manager** - Per-window component management (drag & drop, visibility)
+- 🎵 **FFT Audio Analysis** - 8-band frequency spectrum (20Hz-22kHz)
+- 🌈 **Dynamic Themes** - Matrix (default), RGB Mode, Chameleon Mode
+- 🖱️ **Drag & Drop** - Components with automatic z-index management
+- 📊 **Debug Tools** - Real-time frequency visualizer and monitoring terminal
 
 ---
 
 ## 🚀 Quick Start
 
-### Pré-requisitos
+### Prerequisites
 
 - Node.js >= 18
-- npm ou yarn
+- npm or yarn
+- Modern browser with BroadcastChannel API support
 
-### Instalação e Execução
+### Installation
 
 ```bash
-# Clonar o repositório
+# Clone the repository
 git clone https://github.com/lugand-sistemas-ltda/graphic_audio_blob.git
 cd graphic_audio_blob
 
-# Instalar dependências
+# Checkout stable branch
+git checkout stable
+
+# Install dependencies
 npm install
 
-# Executar em modo desenvolvimento (hot-reload)
+# Run development server (hot-reload enabled)
 npm run dev
 
-# Build para produção
+# Build for production
 npm run build
 
-# Preview do build de produção
+# Preview production build
 npm run preview
 ```
 
-### Adicionar Músicas
+### Adding Music
 
-Coloque arquivos `.mp3` em `/src/assets/music/` - serão carregados automaticamente pela playlist.
+Place `.mp3` files in `/src/assets/music/` - they'll be automatically loaded into the playlist.
 
 ---
 
-## 🏗️ Arquitetura do Projeto
+## 🏗️ Architecture
 
-### Estrutura de Diretórios
+### Provider/Consumer Pattern
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     MAIN WINDOW (Provider)                   │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  • Detects: isMainWindow = true                        │ │
+│  │  • Creates: <audio> element (SINGLE SOURCE!)           │ │
+│  │  • Analyzes: FFT 512 @ 60fps                           │ │
+│  │  • Broadcasts: GLOBAL_AUDIO_DATA, THEME_CHANGE         │ │
+│  │  • Controls: Play/Pause/Volume/Track                   │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           │ BroadcastChannel (60fps)
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  CHILD WINDOWS (Consumers)                   │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  • Detects: isMainWindow = false                       │ │
+│  │  • NO <audio> element                                  │ │
+│  │  • Receives: frequencyData, theme, playback state      │ │
+│  │  • Renders: Components with global data               │ │
+│  │  • Can: Send commands (play/pause/volume)             │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Window Type Detection
+
+Four independent checks ensure correct window identification:
+
+1. **Query Parameter**: `?childWindow=true` in URL
+2. **Vue Router**: `route.query.childWindow === 'true'`
+3. **Window Opener**: `window.opener !== null`
+4. **Route Path**: `/window` or `/visual` routes
+
+```typescript
+// App.vue - Direct detection (no inject dependency)
+const detectIsMainWindow = (): boolean => {
+  const hasChildParamRouter = route.query.childWindow === "true";
+  const hash = window.location.hash;
+  const hashParams = new URLSearchParams(hash.split("?")[1] || "");
+  const hasChildParamHash = hashParams.get("childWindow") === "true";
+  const hasOpener = !!window.opener;
+  const isChildRoute =
+    route.path.startsWith("/window") || route.path.startsWith("/visual");
+
+  return (
+    !hasChildParamRouter && !hasChildParamHash && !hasOpener && !isChildRoute
+  );
+};
+```
+
+### Directory Structure
 
 ```
 src/
-├── 📱 App.vue                    # Orquestrador central (provide/inject)
-├── 🔧 main.ts                    # Bootstrap (Pinia, Router, Diretivas)
+├── 📱 App.vue                    # Root orchestrator (audio owner, theme, provides)
+├── 🔧 main.ts                    # Bootstrap (Pinia, Router, Directives)
 │
-├── 🧩 components/                # Componentes Vue (19 componentes)
-│   ├── MusicPlayer.vue           # Player completo (track info, controls, volume)
-│   ├── Playlist.vue              # Lista de músicas expansível
-│   ├── AudioControls.vue         # Controles de áudio (deprecated)
-│   ├── FrequencyVisualizer.vue   # 8 barras de frequência em tempo real
-│   ├── DebugTerminal.vue         # Terminal de monitoramento Matrix
-│   ├── OrbEffectControl.vue      # Controles da esfera (size, reactivity)
-│   ├── ThemeSelector.vue         # Seletor de temas dinâmicos
-│   ├── MatrixCharacter.vue       # Personagem 3D girando (moeda)
-│   ├── MainControl.vue           # Container pai dos controles
-│   ├── VisualControls.vue        # Controles de efeitos visuais
-│   ├── SoundControl.vue          # Controles de som
-│   └── sidebar/                  # Componentes da sidebar
-│       ├── ComponentManager.vue  # Gerenciador de visibilidade
-│       ├── WindowControl.vue     # Controle multi-window
-│       └── ...
+├── 🧩 components/                # Vue components (20+ components)
+│   ├── MusicPlayer.vue           # Complete player (track info, controls, volume)
+│   ├── FrequencyVisualizer.vue   # 8-band frequency bars
+│   ├── ThemeSelector.vue         # Dynamic theme selector
+│   ├── DebugTerminal.vue         # Matrix-style monitoring terminal
+│   ├── sidebar/                  # Sidebar components
+│   │   ├── ComponentManager.vue  # Per-window component visibility
+│   │   ├── WindowControl.vue     # Multi-window management
+│   │   └── GlobalControls.vue    # Global theme/RGB/Chameleon
+│   └── ...
 │
-├── 🎮 composables/               # Composition API (13 composables)
-│   ├── useAudioAnalyzer.ts      # 🎵 Core: FFT 512, beat detection, 8 bandas
-│   ├── useSpectralVisualEffect.ts # � Efeito espectral (8 camadas concêntricas)
-│   ├── usePlaylist.ts           # 📀 Auto-load de /assets/music/*.mp3
-│   ├── useComponentManager.ts   # 🧩 Visibilidade + collapse (localStorage)
-│   ├── useDraggable.ts          # 🖱️ Drag-and-drop + z-index automático
-│   ├── useWindowManager.ts      # � Multi-window (integrado via core/sync)
-│   ├── useTheme.ts              # 🎨 Sistema de temas
-│   ├── useRgbMode.ts            # 🌈 Rotação HSL contínua
-│   └── useChameleonMode.ts      # 🦎 Cores adaptativas ao áudio
+├── 🎮 composables/               # Composition API hooks
+│   ├── useAudioAnalyzer.ts      # 🎵 FFT 512, beat detection, 8 bands
+│   ├── useWindowType.ts          # 🪟 Window detection (4 checks)
+│   ├── useSpectralVisualEffect.ts # 🌈 8-layer spectral effects
+│   ├── usePlaylist.ts            # 📀 Auto-load music files
+│   ├── useComponentManager.ts    # 🧩 Visibility + collapse (localStorage)
+│   ├── useDraggable.ts           # 🖱️ Drag-and-drop + z-index
+│   ├── useTheme.ts               # 🎨 Theme system
+│   ├── useRgbMode.ts             # 🌈 HSL rotation
+│   └── useChameleonMode.ts       # 🦎 Audio-reactive colors
 │
-├── 🔌 core/                      # Sistemas fundamentais
-│   ├── state/                    # Estado global compartilhado
-│   │   ├── types.ts              # WindowConfig, ComponentState, StateAction
-│   │   ├── useGlobalState.ts     # Hook de estado centralizado
+├── 🔌 core/                      # Core systems
+│   ├── global/                   # Global state managers
+│   │   ├── useGlobalAudio.ts     # Audio state + BroadcastChannel
+│   │   ├── useGlobalTheme.ts     # Theme state + sync
 │   │   └── index.ts
-│   ├── sync/                     # Sistema multi-window (BroadcastChannel)
-│   │   ├── types.ts              # SyncMessage, AudioSyncData, WindowRole
-│   │   ├── useBroadcastSync.ts   # Low-level: broadcast + heartbeat
-│   │   ├── useWindowManager.ts   # High-level: API de sincronização
+│   ├── state/                    # Global state management
+│   │   ├── types.ts              # WindowConfig, ComponentState, etc
+│   │   ├── useGlobalState.ts     # componentsByWindow, windows
 │   │   └── index.ts
-│   └── drag/
-│       └── useCrossWindowDrag.ts # Drag entre janelas (experimental)
+│   ├── sync/                     # Multi-window synchronization
+│   │   ├── useBroadcastSync.ts   # BroadcastChannel wrapper
+│   │   ├── useWindowManager.ts   # High-level window API
+│   │   └── types.ts
+│   └── drag/                     # Cross-window drag & drop
+│       └── useCrossWindowDrag.ts
 │
-├── 🎨 style/                     # SCSS modular (Design System)
-│   ├── index.scss                # 📦 Orquestrador (imports na ordem)
-│   ├── _themes.scss              # 🎨 Paletas (Matrix, Cyberpunk, etc)
-│   ├── _variables.scss           # 📏 Design tokens (spacing, typography)
-│   ├── _mixins.scss              # 🔧 matrix-panel, matrix-text, etc
-│   ├── _animations.scss          # 💫 Keyframes (blink, pulse, glitch)
-│   ├── _base.scss                # 📝 Estilos HTML base
-│   ├── _custom.scss              # 🎯 Componentes do projeto
-│   └── _chameleon.scss           # 🦎 Modo cameleon
+├── 📄 views/                     # View components
+│   ├── HomeView.vue              # Main view (renders components per window)
+│   ├── VisualView.vue            # Visual-only view
+│   └── GenericWindow.vue         # Generic window view
 │
-├── 🗂️ views/                     # Rotas Vue Router
-│   ├── HomeView.vue              # / - Dashboard principal
-│   ├── VisualView.vue            # /visual - Tela cheia para 2º monitor
-│   └── GenericWindow.vue         # /window - Janela customizável
+├── 🎨 style/                     # SCSS modules
+│   ├── index.scss                # Main stylesheet
+│   ├── _variables.scss           # Design tokens
+│   ├── _mixins.scss              # Reusable mixins
+│   ├── _themes.scss              # Theme definitions
+│   ├── _animations.scss          # Keyframe animations
+│   └── ...
 │
-├── 🛣️ router/index.ts            # Hash mode, 3 rotas
-├── 🏪 store/index.ts             # Pinia (placeholder - pouco usado)
-├── 🎯 utils/defaultPositions.ts  # Posições iniciais de componentes
-└── 🎬 directives/vDraggable.ts   # Diretiva v-draggable global
+└── 🗂️ config/
+    └── availableComponents.ts    # Component registry
 ```
 
 ---
 
-## 🧩 Sistemas Principais
+## 🎛️ Core APIs
 
-### 1️⃣ **Sistema de Áudio - `useAudioAnalyzer.ts`**
-
-**Análise em tempo real usando Web Audio API:**
+### Global Audio
 
 ```typescript
-interface AudioFrequencyData {
-  bass: number; // Graves (0-255)
-  mid: number; // Médios (0-255)
-  treble: number; // Agudos (0-255)
-  overall: number; // Volume geral (0-255)
-  beat: boolean; // Beat detectado
-  raw: Uint8Array; // Dados FFT brutos
-  frequencyBands: number[]; // 8 bandas espectrais ⭐
-}
+import { useGlobalAudio } from "@/core/global";
+
+const globalAudio = useGlobalAudio();
+
+// State (reactive)
+globalAudio.state.value.isPlaying;
+globalAudio.state.value.volume;
+globalAudio.state.value.currentTrackIndex;
+globalAudio.state.value.frequencyData.bass;
+globalAudio.state.value.frequencyData.frequencyBands;
+
+// Controls (works from any window)
+globalAudio.play(windowId);
+globalAudio.pause(windowId);
+globalAudio.setVolume(0.7, windowId);
+globalAudio.nextTrack(windowId);
 ```
 
-**Especificações técnicas:**
-
-- **FFT Size**: 512 bins de frequência
-- **Smoothing**: 0.8 (suavização temporal)
-- **Taxa de atualização**: 60 FPS (requestAnimationFrame)
-- **Beat detection**: Threshold adaptativo (aumentos súbitos de volume > 200)
-- **Cooldown de beat**: 300ms (evita falsos positivos)
-
-**8 Bandas de Frequência (divisão logarítmica):**
-
-```
-Banda 0: 20-60Hz    (Sub-bass)
-Banda 1: 60-250Hz   (Bass)
-Banda 2: 250-500Hz  (Low-mid)
-Banda 3: 500-2kHz   (Mid)
-Banda 4: 2-4kHz     (High-mid)
-Banda 5: 4-6kHz     (Presence)
-Banda 6: 6-10kHz    (Brilliance)
-Banda 7: 10-22kHz   (Air)
-```
-
-**Controles disponíveis:**
+### Global Theme
 
 ```typescript
-audio.play()                    // Iniciar reprodução
-audio.pause()                   // Pausar
-audio.seek(time: number)        // Pular para posição
-audio.setVolume(volume: number) // Ajustar volume (0-1)
-audio.setBeatSensitivity(s)     // Threshold de beat (50-300)
+import { useGlobalTheme } from "@/core/global";
+
+const globalTheme = useGlobalTheme();
+
+// Current theme
+globalTheme.state.value.currentTheme; // 'matrix' | 'cyberpunk' | 'neon' | ...
+
+// Change theme (applies to all windows)
+globalTheme.setTheme("cyberpunk");
+
+// RGB Mode
+globalTheme.state.value.rgbMode.enabled;
+globalTheme.toggleRgbMode();
+
+// Chameleon Mode
+globalTheme.state.value.chameleonMode.enabled;
+globalTheme.toggleChameleonMode();
+```
+
+### Global State
+
+```typescript
+import {
+  useGlobalState,
+  addComponentToWindow,
+  getWindowComponents,
+} from "@/core/state";
+
+const { state } = useGlobalState();
+
+// Add component to window
+addComponentToWindow(windowId, "frequency-visualizer");
+
+// Get active components
+const components = getWindowComponents(windowId);
 ```
 
 ---
 
-### 2️⃣ **Sistema de Visualização Espectral - `useSpectralVisualEffect.ts`**
+## 🔧 Creating New Components
 
-**8 camadas concêntricas reagindo ao espectro de áudio:**
-
-```typescript
-interface SpectralLayer {
-  frequency: number; // Valor atual (interpolado)
-  targetFrequency: number; // Valor alvo (do áudio)
-  radius: number; // Raio base da camada
-  color: { h; s; l }; // Cor HSL dinâmica
-  wobble: number; // Distorção senoidal
-}
-```
-
-**Sistema de cores HSL dinâmico:**
-
-```typescript
-// Mapeamento: Agudos (vermelho) → Graves (azul/roxo)
-baseHue = 360 - (layerIndex / 8) * 280;
-
-// Intensidade afeta saturação e luminosidade
-saturation = 70 + (frequency / 255) * 30; // 70%-100%
-lightness = 30 + (frequency / 255) * 30; // 30%-60%
-```
-
-**Efeitos visuais:**
-
-- ✨ **Parallax 3D**: Mouse controla offset do gradiente (profundidade)
-- 🌊 **Wobble effect**: Distorção senoidal + reação ao áudio
-- 💥 **Beat pulse**: Body inteiro pulsa (scale 1.02) no beat
-- 🎨 **Cores adaptativas**: HSL baseado em intensidade de frequência
-- 📐 **Responsivo**: Tamanho baseado em % da diagonal da viewport
-
-**Cálculo de tamanho responsivo:**
-
-```typescript
-// Diagonal da tela = tamanho máximo
-maxScreenSize = √(width² + height²) / 2
-
-// Slider controla 20%-100% do tamanho máximo
-baseSize = maxScreenSize * (sphereSize/500) * 0.6
-
-// Volume adiciona variação suave (até +30%)
-finalSize = baseSize + (baseSize * 0.3 * volumeRatio)
-```
-
----
-
-### 3️⃣ **Sistema Multi-Window - `useWindowManager.ts`**
-
-**Sincronização em tempo real via BroadcastChannel API (nativo do browser):**
-
-**Arquitetura em camadas:**
-
-```
-┌─────────────────────────────────┐
-│ useWindowManager (High-Level)   │ ← API específica do app
-├─────────────────────────────────┤
-│ useBroadcastSync (Low-Level)    │ ← BroadcastChannel + Heartbeat
-├─────────────────────────────────┤
-│ BroadcastChannel API (Browser)  │ ← Nativo (zero latência)
-└─────────────────────────────────┘
-```
-
-**Features implementadas:**
-
-- ✅ **Heartbeat system**: Janelas enviam "estou viva" a cada 3s
-- ✅ **Auto-detecção**: Janelas inativas detectadas após 10s sem heartbeat
-- ✅ **Sincronização de áudio**: 8 bandas de frequência + beat (60 FPS)
-- ✅ **Sincronização de controles**: Play/pause/volume/track/seek
-- ✅ **Sincronização de temas**: Mudanças de tema propagadas
-- ✅ **Window roles**: main, visual, controls, grid
-
-**Uso típico (setup dual-screen):**
-
-```typescript
-// Monitor 1 (Principal) - Rota: /
-- MainControl, MusicPlayer, Playlist
-- ThemeSelector, DebugTerminal
-- Todos os controles
-
-// Monitor 2 (Visual) - Rota: /visual
-- Apenas efeitos visuais fullscreen
-- Recebe dados de áudio via sync
-- Sem controles (projeção/livestream)
-```
-
-**API:**
-
-```typescript
-const wm = useWindowManager({ enableLogging: false });
-
-wm.windowCount; // Número de janelas
-wm.isMultiWindow; // Mais de 1 janela?
-wm.openVisualWindow(); // Abre /visual
-wm.syncAudioData(data); // Envia áudio para outras janelas
-wm.onAudioData((data) => {}); // Recebe áudio de outras janelas
-```
-
-**Limitações:**
-
-- ⚠️ Mesmo domínio apenas (segurança do browser)
-- ⚠️ Popup blocker (usuário precisa permitir)
-- ⚠️ Browser support: Chrome, Firefox, Edge, Safari 15.4+
-
----
-
-### 4️⃣ **Sistema de Componentes - `useComponentManager.ts`**
-
-**Gerenciamento centralizado de visibilidade e estado:**
-
-```typescript
-interface ManagedComponent {
-  id: string;
-  name: string;
-  category: "visual" | "audio" | "debug" | "system";
-  visible: boolean;
-  collapsibleId?: string; // ID do useCollapsible
-}
-```
-
-**Funcionalidades:**
-
-```typescript
-// Registro (automático ao montar componente)
-componentManager.register(id, name, category);
-
-// Controle individual
-componentManager.toggle(id); // Alterna visibilidade
-componentManager.show(id); // Mostrar
-componentManager.hide(id); // Esconder
-componentManager.collapse(id); // Colapsar
-componentManager.expand(id); // Expandir
-
-// Controle global
-componentManager.showAll(); // Mostrar todos
-componentManager.hideAll(); // Esconder todos
-componentManager.collapseAll(); // Colapsar todos
-componentManager.expandAll(); // Expandir todos
-
-// Estado
-componentManager.isVisible(id); // Retorna boolean
-componentManager.listComponents(); // Lista todos registrados
-```
-
-**Persistência:**
-
-- ✅ Estado salvo em `localStorage` automaticamente
-- ✅ Restaurado ao recarregar página
-- ✅ Snapshot de visibilidade para restore após `hideAll()`
-
----
-
-### 5️⃣ **Sistema de Drag-and-Drop - `useDraggable.ts` + `vDraggable`**
-
-**Diretiva global para componentes arrastáveis:**
+Components automatically consume global audio:
 
 ```vue
+<script setup lang="ts">
+import { computed } from "vue";
+import { useGlobalAudio } from "@/core/global";
+
+const globalAudio = useGlobalAudio();
+
+// Reactive audio data (updates 60x/second)
+const bassLevel = computed(() => globalAudio.state.value.frequencyData.bass);
+const isPlaying = computed(() => globalAudio.state.value.isPlaying);
+const frequencyBands = computed(
+  () => globalAudio.state.value.frequencyData.frequencyBands
+);
+
+// Example: Bass-reactive size
+const size = computed(() => {
+  const bass = bassLevel.value;
+  return `${100 + (bass / 255) * 200}px`;
+});
+</script>
+
 <template>
-  <div v-draggable class="my-component">Arraste-me!</div>
+  <div class="my-component" :style="{ width: size, height: size }">
+    Bass: {{ bassLevel.toFixed(0) }}
+  </div>
 </template>
 ```
 
-**Features:**
+---
 
-- ✅ **Z-index automático**: Componente clicado vem para frente
-- ✅ **Posições persistidas**: Salvamento em localStorage
-- ✅ **Smooth dragging**: Transform CSS (GPU accelerated)
-- ✅ **Boundary detection**: Não sai da tela
-- ✅ **Cross-window**: Experimental (drag entre janelas)
+## 📡 Data Flow
 
-**Integração com `useZIndex`:**
+### MAIN Window
 
-```typescript
-const zIndexManager = useZIndex()
+```
+User interacts → Play button
+  ↓
+globalAudio.play(windowId)
+  ↓
+BroadcastChannel.postMessage('GLOBAL_AUDIO_PLAY')
+  ↓
+<audio>.play() → analyser.getByteFrequencyData()
+  ↓
+globalAudio.updateFrequencyData(data) @ 60fps
+  ↓
+BroadcastChannel.postMessage('GLOBAL_AUDIO_DATA')
+  ↓
+ALL WINDOWS receive update
+```
 
-// Z-index scale
---z-index-base: 1
---z-index-panel: 10
---z-index-modal: 100
---z-index-dropdown: 200
---z-index-tooltip: 300
+### CHILD Windows
 
-// Ao clicar em componente
-zIndexManager.bringToFront(componentId)  // +1 no z-index
+```
+BroadcastChannel.onMessage('GLOBAL_AUDIO_DATA')
+  ↓
+globalAudio.state.value.frequencyData = data
+  ↓
+Components' computed() detect change
+  ↓
+Vue reactivity triggers re-render
+  ↓
+Visual effects update (60fps)
 ```
 
 ---
 
-### 6️⃣ **Sistema de Temas**
+## 🎨 Theming
 
-**3 sistemas de temas simultâneos:**
+### Available Themes
 
-#### A) **Temas Estáticos** (`_themes.scss`)
+- **Matrix** (default) - Green phosphor CRT aesthetic
+- **Cyberpunk** - Neon pink and blue
+- **Neon** - Vibrant colors
+- **Ghost** - Minimalist white
+- **Retrowave** - 80s synthwave
+- **RGB Mode** - Continuous HSL rotation
+- **Chameleon Mode** - Audio-reactive colors
 
-```scss
-:root {
-  --theme-primary: #00ff00; // Matrix green (padrão)
-  --theme-primary-bright: #41ff41;
-  --theme-primary-dim: #008f11;
-}
+### Theme Application
 
-:root[data-theme="cyberpunk"] {
-  --theme-primary: #ff00ff; // Rosa neon
-}
+```typescript
+// App.vue watches theme and applies globally
+watch(
+  () => globalTheme.state.value.currentTheme,
+  (theme) => {
+    if (theme === "matrix") {
+      delete document.documentElement.dataset.theme;
+    } else {
+      document.documentElement.dataset.theme = theme;
+    }
+  },
+  { immediate: true }
+);
 ```
 
-**Trocar tema:**
+All windows receive theme changes instantly via BroadcastChannel.
+
+---
+
+## 🪟 Multi-Window Guide
+
+### Opening Windows
+
+1. **From UI**: Click "New Window" button in MainControl
+2. **Programmatic**:
+
+```typescript
+import { useWindowManager } from "@/core/sync";
+
+const windowManager = useWindowManager();
+
+// Open generic window
+windowManager.openGenericWindow();
+
+// Open visual window
+windowManager.openVisualWindow();
+```
+
+### Window Lifecycle
+
+- **MAIN closes** → All child windows remain independent (no cascade close yet)
+- **CHILD closes** → No impact on MAIN or other children
+- **MAIN reload** → Children maintain connection via BroadcastChannel
+
+### Window Detection Logs
 
 ```javascript
-document.documentElement.setAttribute("data-theme", "cyberpunk");
-```
+// MAIN Window
+[App.vue] 🔍 Detecting isMainWindow DIRECTLY: {
+    path: "/",
+    hasChildParam: false,
+    isChildRoute: false,
+    hasOpener: false,
+    isMain: true
+}
 
-#### B) **RGB Mode** (`useRgbMode.ts`)
-
-- Rotação contínua de HSL (0°-360°)
-- Atualização a cada 50ms
-- Efeito arco-íris suave
-
-#### C) **Chameleon Mode** (`useChameleonMode.ts`)
-
-- Cores baseadas em frequências de áudio
-- Bass → Red, Mid → Green, Treble → Blue
-- Transições suaves interpoladas
-
----
-
-### 7️⃣ **Sistema de Playlist - `usePlaylist.ts`**
-
-**Auto-carregamento de músicas:**
-
-```typescript
-// Vite glob import automático
-const musicFiles = import.meta.glob("/src/assets/music/*.mp3", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-
-// Converte para Track[]
-interface Track {
-  id: string;
-  title: string; // Nome do arquivo sem .mp3
-  file: string; // URL do arquivo
+// CHILD Window
+[App.vue] 🔍 Detecting isMainWindow DIRECTLY: {
+    path: "/window",
+    hasChildParam: true,
+    isChildRoute: true,
+    hasOpener: true,
+    isMain: false
 }
 ```
 
-**API:**
+---
 
-```typescript
-const playlist = usePlaylist();
+## 🧪 Testing
 
-playlist.tracks; // ref<Track[]>
-playlist.currentTrack; // computed<Track>
-playlist.currentTrackIndex; // ref<number>
-playlist.hasNext; // computed<boolean>
-playlist.hasPrevious; // computed<boolean>
+### Test Scenario 1: Audio Sync
 
-playlist.nextTrack(); // Avançar
-playlist.previousTrack(); // Voltar
-playlist.selectTrack(index); // Selecionar específica
-```
+1. Open MAIN window
+2. Open 2+ child windows
+3. Play music in MAIN
+4. ✅ Sound plays only once (no echo)
+5. ✅ All windows show same frequency data
+
+### Test Scenario 2: Theme Sync
+
+1. Open MAIN and child windows
+2. Change theme in any window
+3. ✅ Theme applies to all windows instantly
+
+### Test Scenario 3: Component Independence
+
+1. Add FrequencyVisualizer to MAIN
+2. Add FrequencyVisualizer to child
+3. ✅ Both show same data (synchronized)
+4. ✅ Can be dragged independently
+
+---
+
+## 📚 Documentation
+
+- [AUDIO_ARCHITECTURE.md](./AUDIO_ARCHITECTURE.md) - Audio system details
+- [THEME_ARCHITECTURE.md](./THEME_ARCHITECTURE.md) - Theme system details
+- [COMPONENT_ARCHITECTURE.md](./COMPONENT_ARCHITECTURE.md) - Component system
+- [WINDOW_MANAGEMENT.md](./WINDOW_MANAGEMENT.md) - Multi-window system
+- [CHANGELOG_AMYSZKO.md](./CHANGELOG_AMYSZKO.md) - Version history
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 🙏 Acknowledgments
+
+- Vue.js team for the amazing framework
+- Web Audio API for FFT analysis
+- BroadcastChannel API for IPC
+
+---
+
+**Built with ❤️ by Lugand Sistemas Ltda**
 
 **Integração com áudio:**
 

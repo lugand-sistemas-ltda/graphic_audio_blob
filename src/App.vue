@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { onMounted, onUnmounted, watch, ref, provide, inject } from 'vue'
 import { useAudioAnalyzer } from './composables/useAudioAnalyzer'
 import { useSpectralVisualEffect } from './composables/useSpectralVisualEffect'
@@ -8,21 +8,78 @@ import { useComponentManager } from './composables/useComponentManager'
 import { useRgbMode } from './composables/useRgbMode'
 import { useChameleonMode } from './composables/useChameleonMode'
 import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
-import { useGlobalAudio } from './core/global'
+import { useGlobalAudio, useGlobalTheme } from './core/global'
 import { AVAILABLE_COMPONENTS } from './config/availableComponents'
 import LoadingScreen from './components/LoadingScreen.vue'
 
-// Detecta se é janela main ou filha (MainLayout já fez provide)
-const isMainWindow = inject<boolean>('isMainWindow', true)
+// ========================================
+// DETECÇÃO DE WINDOW TYPE (DIRETO - SEM INJECT!)
+// ========================================
+const route = useRoute()
+
+/**
+ * ⚠️ CRITICAL: Detecção síncrona e direta
+ * NÃO usa inject porque App.vue executa ANTES do MainLayout
+ */
+const detectIsMainWindow = (): boolean => {
+    // 1. Verifica query param do VueRouter
+    const hasChildParamRouter = route.query.childWindow === 'true'
+
+    // 2. Parseia hash manualmente (VueRouter usa hash mode)
+    const hash = window.location.hash
+    const hashQueryString = hash.includes('?') ? hash.split('?')[1] : ''
+    const hashParams = new URLSearchParams(hashQueryString)
+    const hasChildParamHash = hashParams.get('childWindow') === 'true'
+
+    // 3. Verifica window.opener
+    const hasOpener = !!window.opener
+
+    // 4. Verifica se é rota de child window
+    const isChildRoute = route.path.startsWith('/window') || route.path.startsWith('/visual')
+
+    const hasChildParam = hasChildParamRouter || hasChildParamHash
+    const isMain = !hasChildParam && !hasOpener && !isChildRoute
+
+    console.log('[App.vue] 🔍 Detecting isMainWindow DIRECTLY:', {
+        path: route.path,
+        hasChildParamRouter,
+        hasChildParamHash,
+        hasOpener,
+        isChildRoute,
+        isMain,
+        fullUrl: window.location.href
+    })
+
+    return isMain
+}
+
+const isMainWindow = detectIsMainWindow()
 const injectedWindowId = inject<string | null>('windowId', null)
 
-// ID da janela (usa injected se disponível, senão gera novo)
-const windowId = injectedWindowId || 'main-' + Date.now()
+// ID da janela
+const windowId = injectedWindowId || (isMainWindow ? 'main-' : 'child-') + Date.now()
 
 // ========================================
 // GLOBAL AUDIO (Todas as janelas)
 // ========================================
 const globalAudio = useGlobalAudio()
+
+// ========================================
+// GLOBAL THEME (Todas as janelas)
+// ========================================
+const globalTheme = useGlobalTheme()
+
+// Watch tema global e aplica automaticamente (TODAS as janelas)
+watch(() => globalTheme.state.value.currentTheme, (theme) => {
+    console.log('[App.vue] 🎨 Applying theme globally:', theme)
+
+    // Aplica tema no DOM
+    if (theme === 'matrix') {
+        delete document.documentElement.dataset.theme
+    } else {
+        document.documentElement.dataset.theme = theme
+    }
+}, { immediate: true })
 
 // Flag para indicar se esta janela é o audio owner
 const isAudioOwner = ref(false)
@@ -121,9 +178,19 @@ provide('audio', audio)
 provide('globalAudio', globalAudio)
 provide('visualEffect', visualEffect)
 provide('spherePosition', spherePosition)
+
+// ⚠️ DEPRECATED: Esses provides não são mais necessários
+// Componentes devem usar GlobalAudio diretamente:
+// const globalAudio = useGlobalAudio()
+// const volume = computed(() => globalAudio.state.value.volume)
+// const frequencyBands = computed(() => globalAudio.state.value.frequencyData.frequencyBands)
+// const beatDetected = computed(() => globalAudio.state.value.frequencyData.beat)
+//
+// Mantidos apenas para backward compatibility temporária:
 provide('currentVolume', currentVolume)
 provide('frequencyBands', frequencyBands)
 provide('beatDetected', beatDetected)
+
 provide('handlers', {
     handleTogglePlay,
     handleNext,
@@ -142,7 +209,7 @@ const updateDebugData = () => {
     const newPosition = visualEffect.getSpherePosition()
     spherePosition.value = { ...newPosition }
 
-    // Atualiza dados de frequência do globalAudio
+    // Atualiza dados de frequência do globalAudio (TODAS as janelas consomem daqui)
     const data = globalAudio.state.value.frequencyData
     if (data) {
         // Cria novo array para garantir reatividade
@@ -177,110 +244,202 @@ onMounted(async () => {
     })
 
     // ========================================
-    // AUDIO OWNER LOGIC
+    // AUDIO OWNER LOGIC - APENAS MAIN WINDOW
     // ========================================
-    // Verifica se já existe um audio owner
-    if (globalAudio.hasAudioOwner.value) {
-        console.log('[App.vue] This window is a CONSUMER (not audio owner):', windowId)
-    } else {
-        // Tenta registrar como audio owner
-        const registered = globalAudio.registerAudioOwner(windowId)
 
-        if (!registered) {
-            console.warn('[App.vue] Failed to register as audio owner (already exists):', windowId)
+    console.log('[App.vue] 🎵 Audio initialization check:', {
+        windowId,
+        isMainWindow,
+        hasOwner: globalAudio.hasAudioOwner.value,
+        currentOwner: globalAudio.state.value.audioOwner,
+        windowOpener: !!window.opener,
+        queryParam: window.location.href
+    })
+
+    // ⚠️ CRITICAL: Verificação de segurança adicional
+    if (!isMainWindow) {
+        console.log('[App.vue] ⚠️ NOT MAIN WINDOW - Skipping audio owner registration')
+        console.log('[App.vue] 📡 This window will be a CONSUMER only')
+    }
+
+    if (isMainWindow) {
+        // ========================================
+        // MAIN WINDOW: Audio Provider (Owner)
+        // ========================================
+        console.log('[App.vue] 🎯 MAIN WINDOW - Attempting to register as audio owner...')
+
+        // Verificação dupla: só registra se NÃO há owner OU se o owner somos nós
+        const existingOwner = globalAudio.state.value.audioOwner
+        if (existingOwner && existingOwner !== windowId) {
+            console.error('[App.vue] ❌ CONFLICT: Another window is already audio owner:', existingOwner)
+            console.error('[App.vue] 🚫 This window will NOT create audio element')
+            console.error('[App.vue] 📡 Falling back to CONSUMER mode')
         } else {
-            // Sucesso! Esta janela é o audio owner
-            isAudioOwner.value = true
-            console.log('[App.vue] This window is the AUDIO OWNER:', windowId)
+            const registered = globalAudio.registerAudioOwner(windowId)
 
-            // Inicializa <audio> element físico e playlist
-            audio = useAudioAnalyzer()
-            const playlist = usePlaylist()
+            if (registered) {
+                isAudioOwner.value = true
+                console.log('[App.vue] ✅ MAIN window registered as AUDIO OWNER')
+                console.log('[App.vue] 🎧 Creating physical <audio> element...')
 
-            // Carrega tracks no globalAudio
-            globalAudio.setTracks(playlist.tracks.value.map(t => ({
-                name: t.title,
-                file: t.file
-            })))
+                // Cria elemento <audio> físico (APENAS aqui!)
+                audio = useAudioAnalyzer()
+                const playlist = usePlaylist()
 
-            // Carrega track atual se houver
-            const currentTrack = globalAudio.currentTrack.value
-            if (currentTrack) {
-                await audio.initAudio(currentTrack.file)
-            }
+                console.log('[App.vue] 📻 <audio> element created successfully')
 
-            // ========================================
-            // SYNC LOOP: Audio Data → GlobalAudio
-            // ========================================
-            const syncAudioData = () => {
-                if (!audio) return
+                // Carrega tracks no GlobalAudio (estado compartilhado)
+                globalAudio.setTracks(playlist.tracks.value.map(t => ({
+                    name: t.title,
+                    file: t.file
+                })))
 
-                const data = audio.getFrequencyData()
-                if (data) {
-                    globalAudio.updateFrequencyData({
-                        bass: data.bass || 0,
-                        mid: data.mid || 0,
-                        treble: data.treble || 0,
-                        overall: data.overall || 0,
-                        beat: data.beat || false,
-                        frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
-                        raw: data.raw || new Uint8Array(0)
-                    })
+                console.log('[App.vue] 🎶 Tracks loaded into GlobalAudio:', playlist.tracks.value.length)
+
+                // Carrega track inicial
+                const currentTrack = globalAudio.currentTrack.value
+                if (currentTrack) {
+                    console.log('[App.vue] 🎼 Loading initial track:', currentTrack.name)
+                    await audio.initAudio(currentTrack.file)
                 }
 
-                // Atualiza tempo de playback
-                if (audio.audioElement.value) {
-                    globalAudio.updateTime(
-                        audio.audioElement.value.currentTime,
-                        audio.audioElement.value.duration
-                    )
-                }
+                // ========================================
+                // SYNC LOOP: Physical Audio → GlobalAudio
+                // Envia dados de frequência via broadcast 60x/segundo
+                // ========================================
+                let syncFrameId: number | null = null
 
-                requestAnimationFrame(syncAudioData)
-            }
-            syncAudioData()
+                const syncAudioData = () => {
+                    if (!audio) return
 
-            // ========================================
-            // WATCH: GlobalAudio Commands → Physical Audio
-            // ========================================
-
-            // Play/Pause
-            watch(() => globalAudio.state.value.isPlaying, async (playing) => {
-                if (!audio) return
-                if (playing && !audio.isPlaying.value) {
-                    await audio.play()
-                } else if (!playing && audio.isPlaying.value) {
-                    audio.pause()
-                }
-            })
-
-            // Seek
-            watch(() => globalAudio.state.value.currentTime, (time) => {
-                if (!audio || !audio.audioElement.value) return
-                // Evita loop infinito: só atualiza se diferença > 1s
-                const diff = Math.abs(audio.audioElement.value.currentTime - time)
-                if (diff > 1) {
-                    audio.seek(time)
-                }
-            })
-
-            // Volume
-            watch(() => globalAudio.state.value.volume, (vol) => {
-                if (!audio) return
-                audio.setVolume(vol)
-            })
-
-            // Track Change
-            watch(() => globalAudio.state.value.currentTrackIndex, async () => {
-                const track = globalAudio.currentTrack.value
-                if (track && audio) {
-                    await audio.initAudio(track.file)
-                    if (globalAudio.state.value.isPlaying) {
-                        await audio.play()
+                    const data = audio.getFrequencyData()
+                    if (data) {
+                        // Atualiza GlobalAudio (que faz broadcast automático)
+                        globalAudio.updateFrequencyData({
+                            bass: data.bass || 0,
+                            mid: data.mid || 0,
+                            treble: data.treble || 0,
+                            overall: data.overall || 0,
+                            beat: data.beat || false,
+                            frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
+                            raw: data.raw || new Uint8Array(0)
+                        })
                     }
+
+                    // Atualiza tempo de playback
+                    if (audio.audioElement.value) {
+                        globalAudio.updateTime(
+                            audio.audioElement.value.currentTime,
+                            audio.audioElement.value.duration
+                        )
+                    }
+
+                    syncFrameId = requestAnimationFrame(syncAudioData)
                 }
-            })
+
+                console.log('[App.vue] 📡 Starting audio data broadcast loop (60fps)...')
+                syncAudioData()
+
+                // Cleanup ao desmontar
+                onUnmounted(() => {
+                    if (syncFrameId) {
+                        cancelAnimationFrame(syncFrameId)
+                    }
+                    globalAudio.unregisterAudioOwner(windowId)
+                    console.log('[App.vue] 🧹 MAIN window unmounted - audio owner unregistered')
+                })
+
+                // ========================================
+                // WATCH: GlobalAudio Commands → Physical Audio
+                // Controles podem vir de QUALQUER janela
+                // ========================================
+
+                // Play/Pause
+                watch(() => globalAudio.state.value.isPlaying, async (playing) => {
+                    if (!audio) return
+
+                    if (playing && !audio.isPlaying.value) {
+                        console.log('[App.vue] ▶️ Playing audio (command from any window)')
+                        await audio.play()
+                    } else if (!playing && audio.isPlaying.value) {
+                        console.log('[App.vue] ⏸️ Pausing audio (command from any window)')
+                        audio.pause()
+                    }
+                })
+
+                // Volume
+                watch(() => globalAudio.state.value.volume, (vol) => {
+                    if (!audio) return
+                    console.log('[App.vue] 🔊 Volume changed:', vol)
+                    audio.setVolume(vol)
+                })
+
+                // Seek
+                watch(() => globalAudio.state.value.currentTime, (time) => {
+                    if (!audio || !audio.audioElement.value) return
+
+                    // Evita loop: só atualiza se diferença > 1s
+                    const diff = Math.abs(audio.audioElement.value.currentTime - time)
+                    if (diff > 1) {
+                        console.log('[App.vue] ⏭️ Seeking to:', time)
+                        audio.seek(time)
+                    }
+                })
+
+                // Track Change
+                watch(() => globalAudio.state.value.currentTrackIndex, async () => {
+                    const track = globalAudio.currentTrack.value
+                    if (track && audio) {
+                        console.log('[App.vue] 🎵 Loading new track:', track.name)
+                        await audio.initAudio(track.file)
+                        if (globalAudio.state.value.isPlaying) {
+                            await audio.play()
+                        }
+                    }
+                })
+
+                console.log('[App.vue] ✅ MAIN window audio setup complete')
+            } else {
+                console.error('[App.vue] ❌ MAIN window failed to register as audio owner!')
+                console.error('[App.vue] ⚠️ Another window is already the owner:', globalAudio.state.value.audioOwner)
+                console.error('[App.vue] 📡 Falling back to CONSUMER mode')
+            }
+        } // Fecha bloco verificação de existingOwner
+
+    } else {
+        // ========================================
+        // SECONDARY WINDOW: Audio Consumer
+        // ========================================
+        console.log('[App.vue] 📱 SECONDARY window - CONSUMER mode')
+        console.log('[App.vue] ⏳ Waiting for GlobalAudio to be ready...')
+
+        // ⚠️ CRITICAL: Aguarda GlobalAudio ter um owner antes de prosseguir
+        // Isso evita race conditions onde múltiplas janelas tentam ser owner
+        const waitForAudioOwner = async () => {
+            let attempts = 0
+            const maxAttempts = 50 // 5 segundos max
+
+            while (!globalAudio.hasAudioOwner.value && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+                attempts++
+            }
+
+            if (globalAudio.hasAudioOwner.value) {
+                console.log('[App.vue] ✅ GlobalAudio ready - Owner:', globalAudio.state.value.audioOwner)
+                console.log('[App.vue] 📡 Subscribing to audio data from MAIN window')
+            } else {
+                console.warn('[App.vue] ⚠️ Timeout waiting for audio owner')
+                console.warn('[App.vue] 📡 Will still listen for broadcasts')
+            }
         }
+
+        waitForAudioOwner()
+
+        // NÃO cria <audio> element
+        // Apenas consome globalAudio.state.value via BroadcastChannel
+        // Componentes lerão diretamente de globalAudio.state.value.frequencyData
+
+        console.log('[App.vue] ✅ CONSUMER window ready - listening to broadcasts')
     }
 
     // ========================================

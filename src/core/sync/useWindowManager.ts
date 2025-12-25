@@ -215,11 +215,14 @@ export function useWindowManager(config?: { enableLogging?: boolean }) {
 
         try {
             const baseUrl = window.location.origin + window.location.pathname
-            const fullUrl = `${baseUrl}#${route}`
+            // ✅ CRITICAL: Adiciona query param para identificar como child window
+            const separator = route.includes('?') ? '&' : '?'
+            const fullUrl = `${baseUrl}#${route}${separator}childWindow=true`
             const newWindow = window.open(fullUrl, title, finalFeatures)
 
             if (newWindow) {
                 newWindow.focus()
+                console.log('[WindowManager] ✅ Child window opened:', fullUrl)
                 return newWindow
             } else {
                 console.error('[WindowManager] Failed to open window (popup blocked?)')

@@ -27,10 +27,71 @@ export function useWindowType() {
 
     /**
      * Detecta se é janela main ou filha
-     * Main: não tem window.opener e não tem query param childWindow
+     * 
+     * Uma janela é MAIN se:
+     * 1. Foi a primeira a carregar (opener é null)
+     * 2. NÃO tem query param childWindow=true
+     * 3. NÃO foi aberta por window.open()
+     * 
+     * Janelas FILHAS sempre têm childWindow=true na URL
      */
     const isMainWindow = computed(() => {
-        return !window.opener && !route.query.childWindow
+        // ⚠️ CRITICAL: VueRouter usa hash mode (#/route?param=value)
+        // Precisamos parsear o hash manualmente
+
+        // 1. Verifica query do VueRouter (melhor fonte)
+        const hasChildParamRouter = route.query.childWindow === 'true'
+
+        // 2. Fallback: parseia hash manualmente
+        const hash = window.location.hash // Ex: "#/window?childWindow=true"
+        const hashQueryString = hash.includes('?') ? hash.split('?')[1] : ''
+        const hashParams = new URLSearchParams(hashQueryString)
+        const hasChildParamHash = hashParams.get('childWindow') === 'true'
+
+        // 3. Verifica window.opener
+        const hasOpener = !!window.opener
+
+        // 4. Verifica se é rota de child window (/window, /visual)
+        const isChildRoute = route.path.startsWith('/window') || route.path.startsWith('/visual')
+
+        const hasChildParam = hasChildParamRouter || hasChildParamHash
+        const isMain = !hasChildParam && !hasOpener && !isChildRoute
+
+        console.log('[useWindowType] 🔍 Detecting window type:', {
+            path: route.path,
+            vueRouterQuery: route.query,
+            hasChildParamRouter,
+            hash,
+            hashQueryString,
+            hasChildParamHash,
+            hasChildParam,
+            hasOpener,
+            isChildRoute,
+            isMain,
+            fullUrl: window.location.href
+        })
+
+        // Se tem query param childWindow=true, é definitivamente FILHA
+        if (hasChildParam) {
+            console.log('[useWindowType] ✅ CHILD WINDOW detected (childWindow=true in URL)')
+            return false
+        }
+
+        // Se é rota de child window, é definitivamente FILHA
+        if (isChildRoute) {
+            console.log('[useWindowType] ✅ CHILD WINDOW detected (child route: /window or /visual)')
+            return false
+        }
+
+        // Se foi aberta por outra janela (window.opener existe), é FILHA
+        if (hasOpener) {
+            console.log('[useWindowType] ✅ CHILD WINDOW detected (has window.opener)')
+            return false
+        }
+
+        // Caso contrário, é MAIN
+        console.log('[useWindowType] ✅ MAIN WINDOW detected (no childWindow param, no opener, not child route)')
+        return true
     })
 
     /**
@@ -48,40 +109,23 @@ export function useWindowType() {
 
     /**
      * Configuração de renderização baseada no tipo
+     * 
+     * ⚠️ CRITICAL: Usa isMainWindow (computed) para determinar comportamento
      */
     const windowConfig = computed<WindowConfig>(() => {
         const type = windowType.value
+        const isMain = isMainWindow.value
 
-        // Janela MAIN (principal)
-        if (type === 'main') {
-            return {
-                type: 'main',
-                isMainWindow: true,
-                shouldRenderHeader: true,
-                shouldRenderSidebar: true,
-                shouldRenderPlayer: true, // Player físico com <audio>
-                shouldRenderTitlebar: false,
-                shouldRenderConfig: false
-            }
-        }
+        console.log('[useWindowType] 📋 Building window config:', {
+            type,
+            isMain,
+            path: route.path
+        })
 
-        // Janela VISUAL (apenas efeitos visuais)
-        if (type === 'visual') {
+        // ⚠️ CRITICAL: Se NÃO é MAIN, sempre retorna config de CHILD
+        if (!isMain) {
             return {
-                type: 'visual',
-                isMainWindow: false,
-                shouldRenderHeader: false,
-                shouldRenderSidebar: false,
-                shouldRenderPlayer: false, // SEM player físico
-                shouldRenderTitlebar: true, // Barra de título customizada
-                shouldRenderConfig: true // Painel de configuração
-            }
-        }
-
-        // Janela GENERIC (componentes customizados)
-        if (type === 'generic') {
-            return {
-                type: 'generic',
+                type,
                 isMainWindow: false,
                 shouldRenderHeader: false,
                 shouldRenderSidebar: false,
@@ -91,13 +135,13 @@ export function useWindowType() {
             }
         }
 
-        // Fallback
+        // Janela MAIN (principal) - só se isMain === true
         return {
             type: 'main',
             isMainWindow: true,
             shouldRenderHeader: true,
             shouldRenderSidebar: true,
-            shouldRenderPlayer: true,
+            shouldRenderPlayer: true, // Player físico com <audio>
             shouldRenderTitlebar: false,
             shouldRenderConfig: false
         }

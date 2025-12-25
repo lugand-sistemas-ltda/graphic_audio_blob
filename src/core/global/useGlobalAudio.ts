@@ -286,7 +286,14 @@ function createGlobalAudioState() {
     })
 
     onMessage('GLOBAL_AUDIO_OWNER', ({ windowId }: { windowId: string }) => {
-        state.value.audioOwner = windowId
+        // ⚠️ CRITICAL: Só aceita se não há owner OU se somos nós mesmos
+        if (!state.value.audioOwner || state.value.audioOwner === windowId) {
+            state.value.audioOwner = windowId
+            console.log('[GlobalAudio] Audio owner accepted via broadcast:', windowId)
+        } else {
+            console.warn('[GlobalAudio] ⚠️ Ignoring GLOBAL_AUDIO_OWNER - already have owner:', state.value.audioOwner)
+            console.warn('[GlobalAudio] ⚠️ Attempted registration from:', windowId)
+        }
     })
 
     onMessage('GLOBAL_AUDIO_OWNER_REMOVED', ({ windowId }: { windowId: string }) => {

@@ -16,23 +16,40 @@ import type { Track } from '../composables/usePlaylist'
 // ========================================
 const windowId = inject<string>('windowId', 'unknown')
 
-// Global Audio (funciona em TODAS as janelas)
+// ========================================
+// GLOBAL AUDIO - FONTE ÚNICA DE ÁUDIO
+// Todos os componentes consomem daqui (não do inject!)
+// ========================================
 const globalAudio = useGlobalAudio()
 
-// Visual Effect (injetado do App.vue)
+// Computed: Dados de frequência do GlobalAudio (broadcast automático)
+const frequencyBands = computed(() => globalAudio.state.value.frequencyData.frequencyBands)
+const beatDetected = computed(() => globalAudio.state.value.frequencyData.beat)
+const currentVolume = computed(() => globalAudio.state.value.volume)
+
+// Visual Effect (ainda injetado - será refatorado depois se necessário)
 const visualEffect = inject<any>('visualEffect', null)
 const spherePosition = inject<any>('spherePosition', null)
-const currentVolume = inject<any>('currentVolume', null)
-const frequencyBands = inject<any>('frequencyBands', null)
-const beatDetected = inject<any>('beatDetected', null)
 
 // Debug
-console.log('[HomeView] Dependencies:', {
+console.log('[HomeView] 🎯 Dependencies:', {
     windowId,
     globalAudio: !!globalAudio,
     visualEffect: !!visualEffect,
-    frequencyBands: !!frequencyBands
+    hasFrequencyData: globalAudio.state.value.frequencyData.frequencyBands.length > 0
 })
+
+// DEBUG: Monitora dados de áudio
+watch(() => globalAudio.state.value.frequencyData, (data) => {
+    if (data.overall > 0) {
+        console.log('[HomeView] 📊 Receiving audio data:', {
+            bass: data.bass.toFixed(0),
+            mid: data.mid.toFixed(0),
+            treble: data.treble.toFixed(0),
+            beat: data.beat
+        })
+    }
+}, { deep: true })
 
 // ========================================
 // COMPONENTES DO GLOBALSTATE (Fonte única da verdade)
@@ -194,11 +211,11 @@ const hasPrevious = computed(() => {
         <!-- Debug Terminal -->
         <DebugTerminal v-if="showDebugTerminal && visualEffect" :sphere-position="spherePosition || { x: 50, y: 50 }"
             :sphere-size="visualEffect.getSphereSize()" :sphere-reactivity="visualEffect.getSphereReactivity()"
-            :is-playing="isPlaying" :current-time="currentTime" :duration="duration"
-            :volume="currentVolume?.value || 0.7" :beat-detected="beatDetected?.value || false" :layer-count="8" />
+            :is-playing="isPlaying" :current-time="currentTime" :duration="duration" :volume="currentVolume"
+            :beat-detected="beatDetected" :layer-count="8" />
 
-        <!-- Frequency Visualizer -->
-        <FrequencyVisualizer v-if="showFrequencyVisualizer" :frequency-bands="frequencyBands || []" />
+        <!-- Frequency Visualizer - GLOBAL AUDIO SOURCE -->
+        <FrequencyVisualizer v-if="showFrequencyVisualizer" :frequency-bands="frequencyBands" />
     </div>
 </template>
 
