@@ -42,7 +42,7 @@ const handleClose = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 
 .window-titlebar {
     position: fixed;

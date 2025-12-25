@@ -167,7 +167,7 @@ const toggleVisibility = (componentId: string) => {
 </script>
 
 <style scoped lang="scss">
-@use '../../style/variables' as *;
+@use '../../style/base/variables' as *;
 
 .component-manager {
     padding: var(--spacing-md);

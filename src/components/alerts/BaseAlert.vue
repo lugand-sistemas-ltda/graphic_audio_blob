@@ -116,7 +116,7 @@ function handleButtonClick(buttonId: string) {
 </script>
 
 <style scoped lang="scss">
-@use '../../style/variables' as *;
+@use '../../style/base/variables' as *;
 
 // Cores específicas para cada tipo de alert (usando paleta centralizada)
 $alert-colors: (

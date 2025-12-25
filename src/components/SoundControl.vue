@@ -60,7 +60,7 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 @use '../style/mixins' as *;
 
 .sound-control {

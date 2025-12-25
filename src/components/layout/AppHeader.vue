@@ -99,7 +99,7 @@ const cancelEdit = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 
 .app-header {
     position: fixed;

@@ -96,7 +96,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 
 .visual-view {
     position: fixed;

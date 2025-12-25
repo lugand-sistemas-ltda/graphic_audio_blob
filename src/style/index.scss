@@ -12,7 +12,7 @@
 @use './themes' as *;
 
 // Variáveis - estrutura e layout
-@use './variables' as *;
+@use './base/variables' as *;
 
 // Mixins - funções reutilizáveis
 @use './mixins' as *;
@@ -25,20 +25,20 @@
 // ============================================
 
 // Base - elementos HTML nativos (a, p, h1, button, etc)
-@use './base' as *;
+@use './base/base' as *;
 
 // Borders - sistema global de bordas reutilizáveis
-@use './borders' as *;
+@use './utilities/borders' as *;
 
 // Utilities - classes helper reutilizáveis (btn, card, shadow, etc)
-@use './utilities' as *;
+@use './utilities/utilities' as *;
 
 // ============================================
-// 3. COMPONENTES CUSTOMIZADOS
+// 3. LAYOUT E COMPONENTES
 // ============================================
 
-// Custom - componentes específicos do projeto
-@use './custom' as *;
+// Layout - estilos de estrutura geral
+@use './layout/layout' as *;
 
 // Alerts - família de componentes de alertas
 @use './alerts' as *;

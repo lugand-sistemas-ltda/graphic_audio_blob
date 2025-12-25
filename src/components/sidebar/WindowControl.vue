@@ -53,7 +53,7 @@ const formatRole = (role: string): string => {
 </script>
 
 <style scoped lang="scss">
-@use '../../style/variables' as *;
+@use '../../style/base/variables' as *;
 
 .window-control {
     padding: var(--spacing-md);

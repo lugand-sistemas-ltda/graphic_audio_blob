@@ -214,7 +214,7 @@ const getCategoryIcon = (category: string): string => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 @use '../style/mixins' as *;
 
 .window-config-panel {

@@ -159,7 +159,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 
 .generic-window {
     position: fixed;

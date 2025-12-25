@@ -59,7 +59,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 
 .app-sidebar {
     position: fixed;

@@ -180,7 +180,7 @@ const formatRole = (role: string): string => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/variables' as *;
+@use '../style/base/variables' as *;
 @use '../style/mixins' as *;
 
 .main-control {
