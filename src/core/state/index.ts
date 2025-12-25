@@ -12,11 +12,17 @@ export type {
     ComponentState,
     GlobalState,
     StateAction,
-    GlobalStateConfig
+    GlobalStateConfig,
+    AlertId,
+    AlertType,
+    AlertConfig,
+    AlertButton,
+    AlertState
 } from './types'
 
 export {
     useGlobalState,
+    dispatch,
     registerWindow,
     updateWindow,
     removeWindow,

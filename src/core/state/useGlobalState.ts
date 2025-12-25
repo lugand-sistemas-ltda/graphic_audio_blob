@@ -27,6 +27,7 @@ const DEFAULT_CONFIG: Required<GlobalStateConfig> = {
 const globalState = reactive<GlobalState>({
     windows: {},
     componentsByWindow: {}, // windowId → componentId → ComponentState
+    alertsByWindow: {}, // windowId → alertId → AlertState
     draggedComponent: {
         id: null,
         sourceWindowId: null,
@@ -216,10 +217,39 @@ function applyAction(action: StateAction) {
             break
         }
 
+        case 'ALERT_SHOW': {
+            const { windowId, alert } = action.payload
+            if (!globalState.alertsByWindow[windowId]) {
+                globalState.alertsByWindow[windowId] = {}
+            }
+            globalState.alertsByWindow[windowId][alert.id] = alert
+            log(`Alert shown: ${alert.id} in window ${windowId}`, alert)
+            break
+        }
+
+        case 'ALERT_HIDE': {
+            const { windowId, alertId } = action.payload
+            if (globalState.alertsByWindow[windowId]?.[alertId]) {
+                delete globalState.alertsByWindow[windowId][alertId]
+                log(`Alert hidden: ${alertId} in window ${windowId}`)
+            }
+            break
+        }
+
+        case 'ALERT_RESPONDED': {
+            const { windowId, alertId, buttonId } = action.payload
+            if (globalState.alertsByWindow[windowId]?.[alertId]) {
+                globalState.alertsByWindow[windowId][alertId].responded = true
+                log(`Alert responded: ${alertId} in window ${windowId}, button: ${buttonId}`)
+            }
+            break
+        }
+
         case 'STATE_SYNC': {
             // Full state sync (usado para inicialização)
             Object.assign(globalState.windows, action.payload.windows)
             Object.assign(globalState.componentsByWindow, action.payload.componentsByWindow)
+            Object.assign(globalState.alertsByWindow, action.payload.alertsByWindow)
             break
         }
     }
@@ -230,7 +260,7 @@ function applyAction(action: StateAction) {
 /**
  * Dispatch de ação (local + broadcast)
  */
-function dispatch(action: StateAction) {
+export function dispatch(action: StateAction) {
     applyAction(action)
     broadcast('GLOBAL_STATE_ACTION', action)
 }

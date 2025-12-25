@@ -34,5 +34,8 @@
 // Custom - componentes específicos do projeto
 @use './custom' as *;
 
+// Alerts - família de componentes de alertas
+@use './alerts' as *;
+
 // Chameleon Mode - efeito de gradientes RGB animados
 @use './chameleon' as *;

@@ -1,0 +1,124 @@
+// ==============================================
+// ALERT SYSTEM STYLES
+// ==============================================
+// Estilos específicos para a família de componentes Alert
+
+:root {
+    // Z-index para alerts (acima de tudo)
+    --z-alert: 10000;
+
+    // Cores específicas para cada tipo de alert
+    --alert-warning: #ff9800;
+    --alert-warning-rgb: 255, 152, 0;
+    --alert-success: #4caf50;
+    --alert-success-rgb: 76, 175, 80;
+    --alert-error: #f44336;
+    --alert-error-rgb: 244, 67, 54;
+    --alert-attention: #2196f3;
+    --alert-attention-rgb: 33, 150, 243;
+}
+
+// Estilos globais para alerts
+.base-alert {
+
+    // Prevent scroll when alert is open
+    body:has(&) {
+        overflow: hidden;
+    }
+}
+
+// Scroll customizado para mensagens longas
+.alert-message {
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(var(--theme-primary-rgb), 0.5);
+        border-radius: 4px;
+
+        &:hover {
+            background: rgba(var(--theme-primary-rgb), 0.7);
+        }
+    }
+}
+
+// Estados especiais para alerts
+.alert-content {
+
+    // Destaque extra para alerts de erro
+    &:has(.label-error) {
+        border-color: var(--alert-error);
+        box-shadow: 0 10px 40px rgba(var(--alert-error-rgb), 0.4);
+        animation: errorPulse 2s ease-in-out infinite;
+    }
+
+    // Sucesso com brilho verde
+    &:has(.label-success) {
+        border-color: var(--alert-success);
+        box-shadow: 0 10px 40px rgba(var(--alert-success-rgb), 0.4);
+    }
+
+    // Warning com brilho laranja
+    &:has(.label-warning) {
+        border-color: var(--alert-warning);
+        box-shadow: 0 10px 40px rgba(var(--alert-warning-rgb), 0.4);
+    }
+
+    // Attention com brilho azul
+    &:has(.label-attention) {
+        border-color: var(--alert-attention);
+        box-shadow: 0 10px 40px rgba(var(--alert-attention-rgb), 0.4);
+    }
+}
+
+@keyframes errorPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 10px 40px rgba(var(--alert-error-rgb), 0.4);
+    }
+
+    50% {
+        box-shadow: 0 10px 40px rgba(var(--alert-error-rgb), 0.8);
+    }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+    .base-alert {
+        padding: var(--spacing-md);
+    }
+
+    .alert-content {
+        max-height: 90vh;
+    }
+
+    .alert-icon {
+        font-size: 2rem !important;
+    }
+
+    .alert-title {
+        font-size: var(--font-size-lg) !important;
+    }
+
+    .alert-type-label {
+        font-size: var(--font-size-xs) !important;
+    }
+
+    .alert-message {
+        font-size: var(--font-size-sm) !important;
+    }
+}
+
+// Dark mode adaptations (se necessário no futuro)
+@media (prefers-color-scheme: dark) {
+    .alert-content {
+        background: rgba(0, 0, 0, 0.98);
+    }
+}

@@ -8,11 +8,17 @@ export type WindowId = string
 // ID único de componente
 export type ComponentId = string
 
+// ID único de alert
+export type AlertId = string
+
 // Efeitos visuais disponíveis
 export type VisualEffect = 'gradient' | 'particles' | 'waveform' | 'tunnel' | 'fractals'
 
 // Layout de janela
 export type WindowLayout = 'free' | 'grid' | 'fullscreen'
+
+// Tipos de alert disponíveis (cada um com sua cor característica)
+export type AlertType = 'warning' | 'success' | 'error' | 'attention' | 'default'
 
 // Configuração de uma janela
 export interface WindowConfig {
@@ -45,11 +51,51 @@ export interface ComponentState {
     zIndex: number // Z-index nesta janela
 }
 
+// Configuração inicial
+export interface GlobalStateConfig {
+    persistKey?: string
+    enableLogging?: boolean
+}
+
+// ===================================
+// ALERT SYSTEM TYPES
+// ===================================
+
+// Botão de alert
+export interface AlertButton {
+    id: string
+    label: string
+    variant?: 'primary' | 'secondary' | 'danger'
+    action?: () => void | Promise<void>
+}
+
+// Configuração de um alert
+export interface AlertConfig {
+    id: AlertId
+    type: AlertType
+    title?: string
+    message: string | string[] // Pode ser string simples ou array de parágrafos
+    icon?: string // Emoji ou ícone
+    buttons?: AlertButton[] // Se não fornecido, usa botão OK padrão
+    closable?: boolean // Mostra botão X no canto superior direito (default: true)
+    onClose?: () => void
+    createdAt: number
+}
+
+// Estado de alert em uma janela
+export interface AlertState extends AlertConfig {
+    windowId: WindowId
+    visible: boolean
+    responded: boolean // Se o usuário já interagiu
+}
+
 // Estado global completo
 export interface GlobalState {
     windows: Record<WindowId, WindowConfig>
     // Agora: windowId → componentId → state
     componentsByWindow: Record<WindowId, Record<ComponentId, ComponentState>>
+    // Sistema de alerts: windowId → alertId → AlertState
+    alertsByWindow: Record<WindowId, Record<AlertId, AlertState>>
     draggedComponent: {
         id: ComponentId | null
         sourceWindowId: WindowId | null
@@ -70,10 +116,7 @@ export type StateAction =
     | { type: 'DRAG_STARTED'; payload: { id: ComponentId; windowId: WindowId } }
     | { type: 'DRAG_MOVED'; payload: { mousePosition: { x: number; y: number } } }
     | { type: 'DRAG_ENDED'; payload: { id: ComponentId; windowId: WindowId | null; transform: ComponentTransform } }
+    | { type: 'ALERT_SHOW'; payload: { windowId: WindowId; alert: AlertState } }
+    | { type: 'ALERT_HIDE'; payload: { windowId: WindowId; alertId: AlertId } }
+    | { type: 'ALERT_RESPONDED'; payload: { windowId: WindowId; alertId: AlertId; buttonId: string } }
     | { type: 'STATE_SYNC'; payload: GlobalState }
-
-// Configuração inicial
-export interface GlobalStateConfig {
-    persistKey?: string
-    enableLogging?: boolean
-}

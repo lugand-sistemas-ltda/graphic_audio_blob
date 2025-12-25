@@ -7,6 +7,7 @@ import MatrixCharacter from '../components/MatrixCharacter.vue'
 import DebugTerminal from '../components/DebugTerminal.vue'
 import FrequencyVisualizer from '../components/FrequencyVisualizer.vue'
 import ThemeSelector from '../components/ThemeSelector.vue'
+import AlertContainer from '../components/alerts/AlertContainer.vue'
 import { useGlobalAudio } from '../core/global'
 import { getWindowComponents } from '../core/state'
 import type { Track } from '../composables/usePlaylist'
@@ -189,6 +190,9 @@ const hasPrevious = computed(() => {
 
 <template>
     <div class="home-view">
+        <!-- Alert System (UNIVERSAL - gerencia alerts desta janela) -->
+        <AlertContainer :window-id="windowId" />
+
         <!-- Sound Control (UNIVERSAL - funciona em todas as janelas) -->
         <SoundControl v-if="showSoundControl" :tracks="tracks" :current-track="currentTrack"
             :current-track-index="currentTrackIndex" :is-playing="isPlaying" :current-time="currentTime"

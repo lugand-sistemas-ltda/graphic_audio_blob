@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue'
 import { useGlobalState, updateWindow } from '../core/state'
+import { useGlobalAlerts } from '../composables/useGlobalAlerts'
 import type { WindowId } from '../core/state/types'
 
 interface Props {
@@ -40,6 +41,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { state } = useGlobalState()
+const alerts = useGlobalAlerts(props.windowId)
 
 // Edição de título
 const isEditingTitle = ref(false)
@@ -59,10 +61,19 @@ const canClose = computed(() => {
 const handleClose = () => {
     if (!canClose.value) return
 
-    const confirmed = confirm('Close this window?')
-    if (confirmed) {
-        window.close()
-    }
+    // Usa o novo sistema de alerts com tipo 'attention'
+    alerts.showConfirm(
+        'Are you sure you want to close this window? All unsaved changes will be lost.',
+        'Close Window',
+        () => {
+            // Confirmado - fecha a janela
+            window.close()
+        },
+        () => {
+            // Cancelado - não faz nada
+            console.log('[AppHeader] Window close cancelled by user')
+        }
+    )
 }
 
 // Funções de edição de título
