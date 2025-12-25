@@ -16,21 +16,34 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { useComponentManager } from '../../composables/useComponentManager'
-import { getWindowComponents } from '../../core/state/useGlobalState'
+import { getWindowComponents, updateComponentInWindow } from '../../core/state/useGlobalState'
 
-const { toggleAllVisibility, allHidden } = useComponentManager()
 const windowId = inject<string>('windowId', '')
 
-// Obtém apenas os componentes ativos (que estão na janela atual)
-const activeComponents = computed(() => {
-    const windowComponents = getWindowComponents(windowId)
-    return windowComponents.map(wc => wc.id)
+// Obtém componentes ativos desta janela do GlobalState (fonte única da verdade)
+const activeComponents = computed(() => getWindowComponents(windowId))
+
+// Verifica se TODOS os componentes estão ocultos
+const allHidden = computed(() => {
+    if (activeComponents.value.length === 0) return false
+    return activeComponents.value.every(comp => !comp.visible)
 })
 
 const handleToggleAllVisibility = () => {
-    // Passa apenas os IDs dos componentes ativos
-    toggleAllVisibility(activeComponents.value)
+    const shouldBeVisible = allHidden.value // Se estão escondidos, vamos mostrar
+
+    console.log('[GlobalControls] 🔄 Toggle All Visibility:', {
+        windowId,
+        currentAllHidden: allHidden.value,
+        newVisible: shouldBeVisible,
+        componentsCount: activeComponents.value.length,
+        components: activeComponents.value.map(c => ({ id: c.id, visible: c.visible }))
+    })
+
+    // Atualiza visibilidade de TODOS os componentes desta janela no GlobalState
+    activeComponents.value.forEach(comp => {
+        updateComponentInWindow(windowId, comp.id, { visible: shouldBeVisible })
+    })
 }
 </script>
 

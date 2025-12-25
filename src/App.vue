@@ -97,7 +97,7 @@ useRgbMode()
 useChameleonMode()
 
 // Inicializa o estado global
-useGlobalState()
+useGlobalState({ enableLogging: true }) // Habilitado para debug
 
 // Inicializa o efeito visual espectral com dados de áudio GLOBAL
 // TODAS as janelas podem ter efeitos visuais usando frequencyData do globalAudio

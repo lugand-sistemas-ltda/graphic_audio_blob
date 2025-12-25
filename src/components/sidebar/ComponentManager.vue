@@ -59,29 +59,31 @@ import {
     getWindowComponents,
     addComponentToWindow,
     removeComponentFromWindow,
-    toggleComponentVisibility
+    updateComponentInWindow
 } from '../../core/state'
-import { useComponentManager } from '../../composables/useComponentManager'
 import { AVAILABLE_COMPONENTS } from '../../config/availableComponents'
 import type { WindowId } from '../../core/state/types'
 
 // Injeta windowId do contexto
 const windowId = inject<WindowId>('windowId', 'unknown')
 
-const componentManager = useComponentManager()
 const showPicker = ref(false)
 
-// Window components (componentes DESTA janela no GlobalState)
+// Window components (componentes DESTA janela no GlobalState - fonte única da verdade)
 const windowComponents = computed(() => getWindowComponents(windowId))
 
-// Active components (componentes desta janela que estão registrados)
+// Active components (componentes desta janela com informações completas)
 const activeComponents = computed(() => {
     return AVAILABLE_COMPONENTS.filter(comp =>
         windowComponents.value.some(wc => wc.id === comp.id)
-    ).map(comp => ({
-        ...comp,
-        visible: componentManager.isVisible(comp.id)
-    }))
+    ).map(comp => {
+        // Busca o estado no GlobalState
+        const state = windowComponents.value.find(wc => wc.id === comp.id)
+        return {
+            ...comp,
+            visible: state?.visible ?? true
+        }
+    })
 })
 
 // Available components (componentes que PODEM ser adicionados NESTA janela)
@@ -123,36 +125,44 @@ const getCategoryIcon = (category: string): string => {
 
 // Actions
 const addComponent = (componentId: string) => {
-    // 1. Adiciona ao GlobalState (ownership nesta janela)
+    console.log('[ComponentManager] Adding component:', componentId, 'to window:', windowId)
+
+    // Adiciona ao GlobalState com posição default e visível
     addComponentToWindow(windowId, componentId, {
         id: componentId,
         transform: { x: 100, y: 100 },
         visible: true,
         collapsed: false,
-        zIndex: 1
+        zIndex: 10
     })
-
-    // 2. Torna visível no ComponentManager (UI local)
-    componentManager.setVisibility(componentId, true)
 
     showPicker.value = false
 }
 
 const removeComponent = (componentId: string) => {
-    // 1. Remove do GlobalState (ownership)
-    removeComponentFromWindow(windowId, componentId)
+    console.log('[ComponentManager] Removing component:', componentId, 'from window:', windowId)
 
-    // 2. Esconde no ComponentManager (UI local)
-    componentManager.setVisibility(componentId, false)
+    // Remove do GlobalState
+    removeComponentFromWindow(windowId, componentId)
 }
 
 const toggleVisibility = (componentId: string) => {
-    // Toggle visibilidade visual (UI local)
-    const newVisibility = !componentManager.isVisible(componentId)
-    componentManager.toggleVisibility(componentId)
+    // Busca estado atual no GlobalState
+    const currentState = windowComponents.value.find(c => c.id === componentId)
+    const newVisibility = !currentState?.visible
 
-    // Sincroniza com GlobalState
-    toggleComponentVisibility(windowId, componentId, newVisibility)
+    console.log('[ComponentManager] 👁️ Toggling visibility:', {
+        componentId,
+        windowId,
+        currentVisible: currentState?.visible,
+        newVisible: newVisibility,
+        allComponents: windowComponents.value.map(c => ({ id: c.id, visible: c.visible }))
+    })
+
+    // Atualiza visibilidade no GlobalState (fonte única da verdade)
+    updateComponentInWindow(windowId, componentId, { visible: newVisibility })
+
+    console.log('[ComponentManager] ✅ Visibility updated in GlobalState')
 }
 </script>
 

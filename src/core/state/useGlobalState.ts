@@ -171,6 +171,9 @@ function applyAction(action: StateAction) {
             const { windowId, componentId, updates } = action.payload
             if (globalState.componentsByWindow[windowId]?.[componentId]) {
                 Object.assign(globalState.componentsByWindow[windowId][componentId], updates)
+                log(`Component updated: ${componentId} in window ${windowId}`, updates)
+            } else {
+                console.warn(`[GlobalState] Component ${componentId} not found in window ${windowId}`)
             }
             break
         }
@@ -179,6 +182,9 @@ function applyAction(action: StateAction) {
             const { windowId, componentId, visible } = action.payload
             if (globalState.componentsByWindow[windowId]?.[componentId]) {
                 globalState.componentsByWindow[windowId][componentId].visible = visible
+                log(`Component visibility toggled: ${componentId} in window ${windowId} -> ${visible}`)
+            } else {
+                console.warn(`[GlobalState] Component ${componentId} not found in window ${windowId} for visibility toggle`)
             }
             break
         }
