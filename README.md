@@ -426,21 +426,22 @@ windowManager.openVisualWindow();
 
 ### Architecture & Systems
 
-- [AUDIO_ARCHITECTURE.md](./AUDIO_ARCHITECTURE.md) - Audio system details
-- [THEME_ARCHITECTURE.md](./THEME_ARCHITECTURE.md) - Theme system details
-- [COMPONENT_ARCHITECTURE.md](./COMPONENT_ARCHITECTURE.md) - Component system
-- [WINDOW_MANAGEMENT.md](./WINDOW_MANAGEMENT.md) - Multi-window system
-- [ALERT_ARCHITECTURE.md](./ALERT_ARCHITECTURE.md) - Global alert system
+- [AUDIO_ARCHITECTURE.md](./docs/architecture/AUDIO_ARCHITECTURE.md) - Audio system details
+- [THEME_ARCHITECTURE.md](./docs/architecture/THEME_ARCHITECTURE.md) - Theme system details
+- [COMPONENT_ARCHITECTURE.md](./docs/architecture/COMPONENT_ARCHITECTURE.md) - Component system
+- [WINDOW_MANAGEMENT.md](./docs/architecture/WINDOW_MANAGEMENT.md) - Multi-window system
+- [ALERT_ARCHITECTURE.md](./docs/architecture/ALERT_ARCHITECTURE.md) - Global alert system
+- [COLOR_SYSTEM.md](./docs/architecture/COLOR_SYSTEM.md) - Centralized color management 🎨
 
 ### Development Guidelines
 
-- [COLOR_SYSTEM.md](./COLOR_SYSTEM.md) - Centralized color management guide 🎨
-- [COMPONENT_PATTERNS.md](./COMPONENT_PATTERNS.md) - Component development patterns
-- [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Recent refactoring changes
+- [COMPONENT_PATTERNS.md](./docs/guides/COMPONENT_PATTERNS.md) - Component development patterns
 
 ### Version History
 
-- [CHANGELOG_AMYSZKO.md](./CHANGELOG_AMYSZKO.md) - Version history
+- [CHANGELOG_AMYSZKO.md](./docs/changelogs/CHANGELOG_AMYSZKO.md) - Version history
+- [CHANGELOG_COLOR_SYSTEM.md](./docs/changelogs/CHANGELOG_COLOR_SYSTEM.md) - Color system refactoring
+- [REFACTORING_SUMMARY.md](./docs/changelogs/REFACTORING_SUMMARY.md) - Recent refactoring changes
 
 ---
 
