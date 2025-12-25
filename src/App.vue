@@ -10,7 +10,7 @@ import { useChameleonMode } from './composables/useChameleonMode'
 import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
 import { useGlobalAudio, useGlobalTheme } from './core/global'
 import { AVAILABLE_COMPONENTS } from './config/availableComponents'
-import LoadingScreen from './components/LoadingScreen.vue'
+import LoadingScreen from './components/ui/feedback/LoadingScreen.vue'
 
 // ========================================
 // DETECÇÃO DE WINDOW TYPE (DIRETO - SEM INJECT!)
