@@ -1,0 +1,75 @@
+// ===================================
+// GLOBAL BORDER UTILITIES
+// ===================================
+// Sistema global de bordas reutilizável para toda aplicação
+// Uso: adicione a classe correspondente ao elemento
+
+// Borda suave padrão (usada em cards, drag-drop, etc)
+.border-soft {
+    border-radius: 4px;
+}
+
+// Borda mais suave (para elementos menores)
+.border-soft-sm {
+    border-radius: 3px;
+}
+
+// Borda extra suave (para elementos muito pequenos)
+.border-soft-xs {
+    border-radius: 2px;
+}
+
+// Borda angular (sem arredondamento)
+.border-angular {
+    border-radius: 0;
+}
+
+// Borda com cantos levemente cortados (estilo cyberpunk)
+.border-cut {
+    border-radius: 2px;
+}
+
+// Borda arredondada completa (para botões circulares, avatars)
+.border-rounded {
+    border-radius: 50%;
+}
+
+// Borda com estilo de componente (padrão drag-drop)
+.border-component {
+    border-radius: 4px;
+    border: 1px solid rgba(var(--theme-primary-rgb), 0.3);
+    box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.1);
+
+    &:hover {
+        border-color: rgba(var(--theme-primary-rgb), 0.5);
+        box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.2);
+    }
+}
+
+// Borda para cards
+.border-card {
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+// Borda para botões
+.border-button {
+    border-radius: 3px;
+}
+
+// Borda para inputs
+.border-input {
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:focus {
+        border-color: var(--color-theme-primary);
+        box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb), 0.2);
+    }
+}
+
+// Borda para modals/alerts
+.border-modal {
+    border-radius: 4px;
+}

@@ -1,21 +1,33 @@
 <template>
     <div class="base-alert" :class="[`alert-${type}`, { closing }]" @click.self="handleBackdropClick">
         <div class="alert-content" :class="{ shake: shouldShake }">
-            <!-- Close Button -->
-            <button v-if="closable" class="alert-close" @click="handleClose" title="Close">
-                ✕
-            </button>
-
-            <!-- Icon -->
-            <div v-if="icon" class="alert-icon" :class="`icon-${type}`">
-                {{ icon }}
+            <!-- Decorative Corners -->
+            <div class="corner corner-top-left" :class="`corner-${type}`"></div>
+            <div class="corner corner-top-right" :class="`corner-${type}`">
+                <!-- Close Button (integrated in corner) -->
+                <button v-if="closable" class="alert-close" @click="handleClose" title="Close">
+                    ✕
+                </button>
             </div>
+            <div class="corner corner-bottom-left" :class="`corner-${type}`"></div>
+            <div class="corner corner-bottom-right" :class="`corner-${type}`"></div>
 
-            <!-- Title with Type Label -->
+            <!-- Top Border -->
+            <div class="alert-border alert-border-top" :class="`border-${type}`"></div>
+
+            <!-- Bottom Border -->
+            <div class="alert-border alert-border-bottom" :class="`border-${type}`"></div>
+
+            <!-- Header: Icon + Type Label (unified) -->
             <div class="alert-header">
-                <span v-if="title" class="alert-title">{{ title }}</span>
-                <span class="alert-type-label" :class="`label-${type}`">{{ typeLabel }}</span>
+                <div class="alert-type-badge" :class="`badge-${type}`">
+                    <span v-if="icon" class="badge-icon">{{ icon }}</span>
+                    <span class="badge-label">{{ typeLabel }}</span>
+                </div>
             </div>
+
+            <!-- Title -->
+            <div v-if="title" class="alert-title">{{ title }}</div>
 
             <!-- Message -->
             <div class="alert-message">
@@ -108,136 +120,274 @@ function handleButtonClick(buttonId: string) {
 // Cores específicas para cada tipo de alert
 $alert-colors: (
     warning: #ff9800,
-    // Laranja
     success: #4caf50,
-    // Verde
     error: #f44336,
-    // Vermelho
     attention: #2196f3,
-    // Azul
-    default: var(--color-text) // Cor do tema
+    default: var(--color-text)
 );
 
+// ===================================
+// BACKDROP
+// ===================================
 .base-alert {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: var(--z-alert, 10000);
     animation: fadeIn 0.3s ease;
+    padding: var(--spacing-lg);
+    overflow: hidden;
 
     &.closing {
         animation: fadeOut 0.3s ease forwards;
     }
 }
 
+// ===================================
+// ALERT CONTENT (container principal)
+// ===================================
 .alert-content {
     position: relative;
-    background: rgba(0, 0, 0, 0.95);
-    border: 2px solid var(--color-text);
-    border-radius: 8px;
-    padding: var(--spacing-xl);
-    min-width: 400px;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 40px rgba(var(--theme-primary-rgb), 0.3);
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.98);
+    border: 1px solid var(--color-text);
+    border-radius: 4px;
+    padding: 0;
+    min-width: 420px;
+    max-width: min(700px, 90vw);
+    max-height: min(85vh, calc(100vh - 60px));
+    width: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(var(--theme-primary-rgb), 0.2);
     animation: slideIn 0.3s ease;
+    overflow: hidden;
 
     &.shake {
         animation: shake 0.5s ease;
     }
 }
 
-.alert-close {
+// ===================================
+// DECORATIVE CORNERS (fixos)
+// ===================================
+.corner {
     position: absolute;
-    top: var(--spacing-md);
-    right: var(--spacing-md);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: var(--color-text);
+    width: 40px;
+    height: 40px;
+    background: rgba(var(--theme-primary-rgb), 0.08);
+    border: 1px solid;
+    z-index: 10;
+    border-radius: 4px;
     transition: all 0.2s ease;
 
-    &:hover {
-        background: rgba(255, 0, 0, 0.2);
-        border-color: #ff0000;
-        color: #ff0000;
-        transform: scale(1.1);
+    &.corner-top-left {
+        top: -1px;
+        left: -1px;
     }
-}
 
-.alert-icon {
-    font-size: 3rem;
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
-    animation: iconPulse 0.6s ease;
+    &.corner-top-right {
+        top: -1px;
+        right: -1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-    @each $type,
-    $color in $alert-colors {
-        &.icon-#{$type} {
-            color: $color;
-            filter: drop-shadow(0 0 10px $color);
+    &.corner-bottom-left {
+        bottom: -1px;
+        left: -1px;
+    }
+
+    &.corner-bottom-right {
+        bottom: -1px;
+        right: -1px;
+    }
+
+    // Cores por tipo
+    @each $type, $color in $alert-colors {
+        &.corner-#{$type} {
+            border-color: rgba($color, 0.5);
+            background: rgba($color, 0.08);
+            box-shadow: 0 0 12px rgba($color, 0.4);
         }
     }
 }
 
-.alert-header {
+// ===================================
+// CLOSE BUTTON (inside corner)
+// ===================================
+.alert-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 0, 0, 0.15);
+    border: none;
+    color: var(--color-text);
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
     align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    border-radius: 4px;
+
+    &:hover {
+        background: rgba(255, 0, 0, 0.3);
+        transform: scale(1.05);
+        text-shadow: 0 0 10px currentColor;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
 }
 
+// ===================================
+// HORIZONTAL BORDERS (fixos)
+// ===================================
+.alert-border {
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    z-index: 5;
+
+    &.alert-border-top {
+        top: 0;
+    }
+
+    &.alert-border-bottom {
+        bottom: 0;
+    }
+
+    // Cores por tipo
+    @each $type, $color in $alert-colors {
+        &.border-#{$type} {
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    $color 15%,
+                    $color 85%,
+                    transparent 100%);
+            box-shadow: 0 0 15px rgba($color, 0.8),
+                0 0 10px rgba($color, 0.6),
+                0 0 5px rgba($color, 0.4);
+        }
+    }
+}
+
+// ===================================
+// HEADER: TYPE BADGE (fixo)
+// ===================================
+.alert-header {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.alert-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: 4px;
+    font-family: var(--font-family-mono);
+    font-weight: bold;
+    font-size: var(--font-size-sm);
+    letter-spacing: 2px;
+    border: 1px solid;
+    position: relative;
+
+    .badge-icon {
+        font-size: var(--font-size-xl);
+        line-height: 1;
+        filter: drop-shadow(0 0 6px currentColor);
+        animation: iconPulse 0.6s ease;
+    }
+
+    .badge-label {
+        line-height: 1;
+    }
+
+    // Cores por tipo
+    @each $type, $color in $alert-colors {
+        &.badge-#{$type} {
+            color: $color;
+            border-color: $color;
+            background: rgba($color, 0.1);
+            box-shadow: 0 0 20px rgba($color, 0.3),
+                inset 0 0 20px rgba($color, 0.05);
+
+            &::before,
+            &::after {
+                content: '';
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: $color;
+                box-shadow: 0 0 4px $color;
+                border-radius: 1px;
+            }
+
+            &::before {
+                top: -2px;
+                left: -2px;
+            }
+
+            &::after {
+                top: -2px;
+                right: -2px;
+            }
+        }
+    }
+}
+
+// ===================================
+// TITLE (fixo)
+// ===================================
 .alert-title {
     font-size: var(--font-size-xl);
     font-weight: bold;
     color: var(--color-text);
     text-align: center;
     font-family: var(--font-family-mono);
+    padding: 0 var(--spacing-lg) var(--spacing-md);
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.5);
+    flex-shrink: 0;
+    word-wrap: break-word;
 }
 
-.alert-type-label {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: 4px;
-    font-size: var(--font-size-sm);
-    font-weight: bold;
-    font-family: var(--font-family-mono);
-    letter-spacing: 2px;
-    text-align: center;
-
-    @each $type,
-    $color in $alert-colors {
-        &.label-#{$type} {
-            color: $color;
-            border: 1px solid $color;
-            background: rgba($color, 0.1);
-            box-shadow: 0 0 10px rgba($color, 0.3);
-        }
-    }
-}
-
+// ===================================
+// MESSAGE (scrollable area)
+// ===================================
 .alert-message {
     color: var(--color-text);
     font-size: var(--font-size-md);
-    line-height: 1.6;
-    margin-bottom: var(--spacing-xl);
+    line-height: 1.8;
     text-align: center;
+    opacity: 0.9;
+    padding: 0 var(--spacing-xl);
+    margin: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    word-wrap: break-word;
+    word-break: break-word;
 
     p {
         margin: var(--spacing-md) 0;
@@ -250,12 +400,38 @@ $alert-colors: (
             margin-bottom: 0;
         }
     }
+
+    // Scroll customizado (tema)
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(var(--theme-primary-rgb), 0.05);
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(var(--theme-primary-rgb), 0.6);
+        border-radius: 3px;
+        transition: background 0.2s ease;
+
+        &:hover {
+            background: rgba(var(--theme-primary-rgb), 0.8);
+        }
+    }
 }
 
+// ===================================
+// BUTTONS (fixos)
+// ===================================
 .alert-actions {
     display: flex;
     gap: var(--spacing-md);
     justify-content: center;
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+    flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .alert-button {
@@ -266,41 +442,92 @@ $alert-colors: (
     font-family: var(--font-family-mono);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 100px;
+    min-width: 110px;
+    letter-spacing: 1px;
+    position: relative;
+    border: 1px solid;
+    white-space: nowrap;
+
+    // Corner details on buttons
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border: 1px solid currentColor;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+    }
+
+    &::before {
+        top: -1px;
+        left: -1px;
+        border-right: none;
+        border-bottom: none;
+        border-top-left-radius: 1px;
+    }
+
+    &::after {
+        bottom: -1px;
+        right: -1px;
+        border-left: none;
+        border-top: none;
+        border-bottom-right-radius: 1px;
+    }
 
     &.btn-primary {
-        background: rgba(var(--theme-primary-rgb), 0.2);
-        border: 2px solid var(--color-text);
+        background: rgba(var(--theme-primary-rgb), 0.15);
+        border-color: var(--color-text);
         color: var(--color-text);
+        box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.2);
 
         &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.4);
-            box-shadow: 0 0 15px rgba(var(--theme-primary-rgb), 0.5);
+            background: rgba(var(--theme-primary-rgb), 0.3);
+            box-shadow: 0 0 20px rgba(var(--theme-primary-rgb), 0.5);
             transform: translateY(-2px);
+
+            &::before,
+            &::after {
+                opacity: 1;
+                box-shadow: 0 0 4px currentColor;
+            }
         }
     }
 
     &.btn-secondary {
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.3);
         color: var(--color-text);
 
         &:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-color: var(--color-text);
             transform: translateY(-2px);
+
+            &::before,
+            &::after {
+                opacity: 1;
+            }
         }
     }
 
     &.btn-danger {
-        background: rgba(255, 0, 0, 0.2);
-        border: 2px solid #ff0000;
-        color: #ff0000;
+        background: rgba(244, 67, 54, 0.15);
+        border-color: #f44336;
+        color: #ff6659;
+        box-shadow: 0 0 10px rgba(244, 67, 54, 0.2);
 
         &:hover {
-            background: rgba(255, 0, 0, 0.3);
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            background: rgba(244, 67, 54, 0.25);
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
             transform: translateY(-2px);
+
+            &::before,
+            &::after {
+                opacity: 1;
+                box-shadow: 0 0 4px currentColor;
+            }
         }
     }
 
@@ -309,7 +536,9 @@ $alert-colors: (
     }
 }
 
-// Animations
+// ===================================
+// ANIMATIONS
+// ===================================
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -332,7 +561,7 @@ $alert-colors: (
 
 @keyframes slideIn {
     from {
-        transform: translateY(-50px) scale(0.9);
+        transform: translateY(-30px) scale(0.95);
         opacity: 0;
     }
 
@@ -354,14 +583,14 @@ $alert-colors: (
     50%,
     70%,
     90% {
-        transform: translateX(-10px);
+        transform: translateX(-8px);
     }
 
     20%,
     40%,
     60%,
     80% {
-        transform: translateX(10px);
+        transform: translateX(8px);
     }
 }
 
@@ -373,22 +602,86 @@ $alert-colors: (
     }
 
     50% {
-        transform: scale(1.1);
+        transform: scale(1.2);
     }
 }
 
-// Responsive
+// ===================================
+// RESPONSIVE
+// ===================================
 @media (max-width: 768px) {
+    .base-alert {
+        padding: var(--spacing-md);
+    }
+
     .alert-content {
         min-width: 90vw;
-        padding: var(--spacing-lg);
+        max-width: 90vw;
+        max-height: calc(100vh - 40px);
+    }
+
+    .alert-header {
+        padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+    }
+
+    .alert-type-badge {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+
+        .badge-icon {
+            font-size: var(--font-size-lg);
+        }
+    }
+
+    .alert-title {
+        font-size: var(--font-size-lg);
+        padding: 0 var(--spacing-md) var(--spacing-sm);
+    }
+
+    .alert-message {
+        font-size: var(--font-size-sm);
+        padding: 0 var(--spacing-md);
     }
 
     .alert-actions {
         flex-direction: column;
+        padding: var(--spacing-md);
 
         .alert-button {
             width: 100%;
+            min-width: auto;
+        }
+    }
+
+    .corner {
+        width: 36px;
+        height: 36px;
+    }
+
+    .alert-close {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+
+    .alert-border {
+        left: 36px;
+        right: 36px;
+    }
+}
+
+@media (max-width: 480px) {
+    .alert-content {
+        min-width: 95vw;
+        max-width: 95vw;
+    }
+
+    .alert-type-badge {
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+
+        .badge-icon {
+            font-size: var(--font-size-md);
         }
     }
 }

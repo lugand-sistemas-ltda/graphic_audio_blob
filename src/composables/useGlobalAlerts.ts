@@ -39,6 +39,13 @@ export function useGlobalAlerts(windowId: WindowId) {
     function showAlert(config: Omit<AlertConfig, 'id' | 'createdAt'>): AlertId {
         const alertId = generateAlertId()
 
+        console.log('[useGlobalAlerts] 🔔 showAlert called:', {
+            windowId,
+            alertId,
+            type: config.type,
+            title: config.title
+        })
+
         // Botões padrão se não fornecido
         const buttons: AlertButton[] = config.buttons || [
             {
@@ -67,6 +74,8 @@ export function useGlobalAlerts(windowId: WindowId) {
             type: 'ALERT_SHOW',
             payload: { windowId, alert }
         })
+
+        console.log('[useGlobalAlerts] ✅ Alert dispatched to GlobalState')
 
         return alertId
     }

@@ -27,6 +27,9 @@
 // Base - elementos HTML nativos (a, p, h1, button, etc)
 @use './base' as *;
 
+// Borders - sistema global de bordas reutilizáveis
+@use './borders' as *;
+
 // ============================================
 // 3. COMPONENTES CUSTOMIZADOS
 // ============================================

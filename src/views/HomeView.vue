@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, computed, watch } from 'vue'
+import { inject, computed, watch, onMounted } from 'vue'
 import SoundControl from '../components/SoundControl.vue'
 import OrbEffectControl from '../components/OrbEffectControl.vue'
 import AudioControls from '../components/AudioControls.vue'
@@ -10,12 +10,14 @@ import ThemeSelector from '../components/ThemeSelector.vue'
 import AlertContainer from '../components/alerts/AlertContainer.vue'
 import { useGlobalAudio } from '../core/global'
 import { getWindowComponents } from '../core/state'
+import { useGlobalAlerts } from '../composables/useGlobalAlerts'
 import type { Track } from '../composables/usePlaylist'
 
 // ========================================
 // DEPENDÊNCIAS UNIVERSAIS (Todas as janelas)
 // ========================================
 const windowId = inject<string>('windowId', 'unknown')
+const alerts = useGlobalAlerts(windowId)
 
 // ========================================
 // GLOBAL AUDIO - FONTE ÚNICA DE ÁUDIO
@@ -99,6 +101,72 @@ const handleBeatSensitivityChange = (sensitivity: number) => {
     // TODO: Implementar beat sensitivity no globalAudio
     console.log('[HomeView] Beat sensitivity:', sensitivity)
 }
+
+// ========================================
+// WELCOME ALERT (apenas para janela principal)
+// ========================================
+onMounted(() => {
+    console.log('[HomeView] 🎉 Mounted! WindowId:', windowId)
+
+    // Verifica se é janela principal (windowId começa com 'main-')
+    if (windowId.startsWith('main-')) {
+        console.log('[HomeView] 👋 Showing welcome alert for main window')
+
+        setTimeout(() => {
+            alerts.showAlert({
+                type: 'default',
+                title: 'Welcome to Graphic Audio Blob',
+                message: `
+                    <strong>Welcome to the ultimate audio visualization experience!</strong>
+                    <br><br>
+                    <strong>🎵 What is Graphic Audio Blob?</strong><br>
+                    A cutting-edge, real-time audio visualization system built with Vue 3 and TypeScript. 
+                    This application transforms your music into mesmerizing visual effects, creating an 
+                    immersive audiovisual experience that responds dynamically to every beat, frequency, 
+                    and rhythm of your favorite tracks.
+                    <br><br>
+                    <strong>✨ Key Features:</strong><br>
+                    • <strong>Multi-Window Architecture:</strong> Open multiple synchronized visualization windows<br>
+                    • <strong>Global Audio Sync:</strong> Perfect synchronization across all windows using BroadcastChannel<br>
+                    • <strong>Real-time Analysis:</strong> Advanced FFT frequency analysis with beat detection<br>
+                    • <strong>Dynamic Components:</strong> Drag & drop components between windows<br>
+                    • <strong>Theme System:</strong> Multiple color themes with Chameleon mode (animated RGB gradients)<br>
+                    • <strong>Visual Effects:</strong> Orb effects, frequency visualizers, matrix characters, and more<br>
+                    • <strong>Playlist Management:</strong> Full music player with playlist control<br>
+                    <br>
+                    <strong>🎯 Purpose:</strong><br>
+                    This system is designed for music lovers, VJs, streamers, and anyone who wants to add 
+                    a visual dimension to their audio experience. Whether you're hosting a party, creating 
+                    content, or just enjoying your music collection, Graphic Audio Blob brings your audio to life.
+                    <br><br>
+                    <strong>🚀 Getting Started:</strong><br>
+                    1. Load your music using the playlist controls<br>
+                    2. Adjust visual effects using the control panels<br>
+                    3. Open new windows via Window Config for multi-screen setups<br>
+                    4. Customize themes to match your style<br>
+                    5. Drag components between windows to create your perfect layout<br>
+                    <br>
+                    <strong>💡 Pro Tips:</strong><br>
+                    • Use <strong>Chameleon Mode</strong> for dynamic color-shifting effects<br>
+                    • Adjust <strong>Beat Sensitivity</strong> to fine-tune visual reactivity<br>
+                    • Create <strong>multiple windows</strong> for multi-monitor setups<br>
+                    • All windows stay perfectly synchronized automatically<br>
+                    <br>
+                    <em>Built with ❤️ using Vue 3, TypeScript, and modern web technologies.</em>
+                `,
+                icon: '👋',
+                buttons: [
+                    { id: 'got-it', label: 'Got It!', variant: 'primary' }
+                ],
+                closable: true
+            })
+
+            console.log('[HomeView] ✅ Welcome alert dispatched!')
+        }, 1000) // 1 segundo de delay para garantir que tudo está carregado
+    } else {
+        console.log('[HomeView] ℹ️ Not main window, skipping welcome alert')
+    }
+})
 
 const handleSphereSize = (size: number) => {
     visualEffect?.setSphereSize(size)
