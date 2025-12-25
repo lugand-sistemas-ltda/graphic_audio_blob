@@ -126,7 +126,7 @@ const cancelEdit = () => {
     .title-text {
         font-size: var(--font-size-md);
         font-weight: bold;
-        color: var(--color-theme-primary);
+        color: var(--color-text);
         text-shadow: var(--text-shadow-md);
         letter-spacing: 1px;
         cursor: pointer;
@@ -140,9 +140,9 @@ const cancelEdit = () => {
     .title-input {
         font-size: var(--font-size-md);
         font-weight: bold;
-        color: var(--color-theme-primary);
+        color: var(--color-text);
         background: rgba(var(--theme-primary-rgb), 0.1);
-        border: 1px solid var(--color-theme-primary);
+        border: 1px solid var(--color-text);
         border-radius: 4px;
         padding: 4px 8px;
         font-family: var(--font-family-mono);
@@ -185,7 +185,7 @@ const cancelEdit = () => {
 
     .title-subtitle {
         font-size: var(--font-size-xs);
-        color: var(--color-text-dim);
+        color: var(--color-text);
         letter-spacing: 2px;
         opacity: 0.7;
     }
@@ -209,12 +209,12 @@ const cancelEdit = () => {
     font-size: var(--font-size-sm);
 
     .info-label {
-        color: var(--color-text-dim);
+        color: var(--color-text);
         opacity: 0.7;
     }
 
     .info-value {
-        color: var(--color-theme-primary);
+        color: var(--color-text);
         font-weight: bold;
     }
 }
