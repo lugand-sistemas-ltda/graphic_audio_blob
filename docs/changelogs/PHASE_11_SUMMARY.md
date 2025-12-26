@@ -9,6 +9,7 @@
 ## 🎯 Objetivo
 
 Revisão final da estrutura de pastas para garantir:
+
 1. ✅ Zero arquivos "soltos" (`utils/`, `config/`)
 2. ✅ Separação clara entre código genérico e específico
 3. ✅ Organização de bootstrap (`app/`)
@@ -21,16 +22,19 @@ Revisão final da estrutura de pastas para garantir:
 ### Issues Identificadas (via `tree`)
 
 1. **`src/utils/defaultPositions.ts`**
+
    - ❌ Não é util genérico
    - ✅ É específico de drag-and-drop
    - **Solução**: Mover para `features/drag-and-drop/utils/`
 
 2. **`src/components/sidebar/`** (4 componentes)
+
    - ❌ Não são componentes genéricos
    - ✅ São específicos de window-management
    - **Solução**: Mover para `features/window-management/components/`
 
 3. **`src/components/ui/`** (componentes UI)
+
    - ❌ Misturados com componentes app-specific
    - ✅ São componentes genéricos reutilizáveis
    - **Solução**: Mover para `shared/components/ui/`
@@ -47,14 +51,17 @@ Revisão final da estrutura de pastas para garantir:
 ### ✅ Step 1: Move Feature-Specific Utils
 
 **Ação**:
+
 ```bash
 git mv src/utils/defaultPositions.ts src/features/drag-and-drop/utils/
 ```
 
 **Arquivos Afetados**:
+
 - ✅ `vDraggable.ts` - import atualizado
 
 **Resultado**:
+
 - `src/utils/` vazio (será removido)
 - defaultPositions.ts agora está com sua feature
 
@@ -63,21 +70,25 @@ git mv src/utils/defaultPositions.ts src/features/drag-and-drop/utils/
 ### ✅ Step 2: Consolidate Window-Management Components
 
 **Ação**:
+
 ```bash
 git mv src/components/sidebar/* src/features/window-management/components/
 ```
 
 **Componentes Movidos**:
+
 1. `ComponentManager.vue` (picker de componentes)
 2. `EffectsControl.vue` (controle de efeitos visuais)
 3. `GlobalControls.vue` (controles globais)
 4. `WindowControl.vue` (controle de janelas)
 
 **Arquivos Afetados**:
+
 - ✅ `AppSidebar.vue` - imports atualizados para barrel export
 - ✅ `window-management/index.ts` - barrel export expandido
 
 **Resultado**:
+
 - 6 componentes agora em `window-management/components/`
 - `src/components/sidebar/` vazio (será removido)
 
@@ -86,22 +97,26 @@ git mv src/components/sidebar/* src/features/window-management/components/
 ### ✅ Step 3: Relocate Generic UI to Shared
 
 **Ação**:
+
 ```bash
 git mv src/components/ui/ src/shared/components/ui/
 ```
 
 **Componentes Movidos**:
+
 - `BaseButton.vue` (botão genérico)
 - `LoadingScreen.vue` (tela de loading)
 - `ui/index.ts` (barrel export)
 
 **Arquivos Afetados**:
+
 - ✅ `App.vue` - LoadingScreen import atualizado
 - ✅ `BaseAlert.vue` - BaseButton import atualizado
 - ✅ `AppHeader.vue` - BaseButton import atualizado
 - ✅ `shared/index.ts` - re-export de UI components
 
 **Resultado**:
+
 - Componentes UI genéricos agora em `shared/`
 - Separação clara: `components/` = app-specific, `shared/` = genérico
 
@@ -110,11 +125,13 @@ git mv src/components/ui/ src/shared/components/ui/
 ### ✅ Step 4: Organize Layout Components
 
 **Ação**:
+
 ```bash
 git mv src/components/MainControl.vue src/components/layout/
 ```
 
 **Resultado**:
+
 - Todos os componentes de layout consolidados em `components/layout/`
 - `MainControl.vue` não estava sendo usado (sem imports para atualizar)
 
@@ -123,6 +140,7 @@ git mv src/components/MainControl.vue src/components/layout/
 ### ✅ Step 5: Create App Bootstrap Directory
 
 **Ação**:
+
 ```bash
 mkdir src/app/
 git mv src/config/ src/app/config/
@@ -130,12 +148,14 @@ git mv src/router/ src/app/router/
 ```
 
 **Arquivos Afetados**:
+
 - ✅ `main.ts` - router import atualizado
 - ✅ `App.vue` - availableComponents import atualizado
 - ✅ `ComponentManager.vue` - availableComponents import atualizado
 - ✅ `router/index.ts` - imports de layouts/views atualizados
 
 **Resultado**:
+
 - Bootstrap da aplicação isolado em `app/`
 - Estrutura mais clara: `app/` = config + routing
 
@@ -144,15 +164,18 @@ git mv src/router/ src/app/router/
 ### ✅ Step 6: Cleanup Empty Directories
 
 **Ação**:
+
 ```bash
 # Git removeu automaticamente diretórios vazios
 ```
 
 **Diretórios Removidos**:
+
 - `src/utils/` (vazio após mover defaultPositions)
 - `src/components/sidebar/` (vazio após mover 4 componentes)
 
 **Resultado**:
+
 - Zero diretórios vazios na estrutura
 
 ---
@@ -161,14 +184,14 @@ git mv src/router/ src/app/router/
 
 ### Movimentações de Arquivos
 
-| Origem | Destino | Motivo |
-|--------|---------|--------|
-| `utils/defaultPositions.ts` | `features/drag-and-drop/utils/` | Feature-specific |
-| `components/sidebar/*` (4 files) | `features/window-management/components/` | Feature-specific |
-| `components/ui/` | `shared/components/ui/` | Generic reusable |
-| `components/MainControl.vue` | `components/layout/` | Layout consolidation |
-| `config/` | `app/config/` | Bootstrap organization |
-| `router/` | `app/router/` | Bootstrap organization |
+| Origem                           | Destino                                  | Motivo                 |
+| -------------------------------- | ---------------------------------------- | ---------------------- |
+| `utils/defaultPositions.ts`      | `features/drag-and-drop/utils/`          | Feature-specific       |
+| `components/sidebar/*` (4 files) | `features/window-management/components/` | Feature-specific       |
+| `components/ui/`                 | `shared/components/ui/`                  | Generic reusable       |
+| `components/MainControl.vue`     | `components/layout/`                     | Layout consolidation   |
+| `config/`                        | `app/config/`                            | Bootstrap organization |
+| `router/`                        | `app/router/`                            | Bootstrap organization |
 
 ### Imports Atualizados
 
@@ -211,7 +234,7 @@ src/
 │       └── ui/            # ⬆️ Movido de components/ui/
 │
 ├── components/            # App-specific apenas
-│   ├── alerts/           
+│   ├── alerts/
 │   └── layout/            # ⬆️ +MainControl.vue
 │
 └── core/, layouts/, views/, style/, assets/ (sem mudanças)
@@ -222,6 +245,7 @@ src/
 ## ✅ Validação
 
 ### Build Status
+
 ```bash
 npm run build
 # ✅ 7 erros pré-existentes apenas
@@ -229,6 +253,7 @@ npm run build
 ```
 
 ### Erros Pré-Existentes (esperados)
+
 1. AppSidebar.vue: 'watch' não usado (warning)
 2. AppSidebar.vue: 'props' não usado (warning)
 3. DebugTerminal.vue: Tipo de argumento (type error)
@@ -242,6 +267,7 @@ npm run build
 ## 🏆 Resultados
 
 ### Antes (Fase 10)
+
 ```
 src/
 ├── config/              # ❌ Solto na raiz
@@ -254,6 +280,7 @@ src/
 ```
 
 ### Depois (Fase 11)
+
 ```
 src/
 ├── app/                 # ✅ Bootstrap isolado
@@ -276,12 +303,14 @@ src/
 ## 📈 Métricas
 
 ### Organização de Arquivos
+
 - **Arquivos movidos**: 11
 - **Diretórios criados**: 3 (`app/`, `drag-and-drop/utils/`, `shared/components/`)
 - **Diretórios removidos**: 2 (`utils/`, `components/sidebar/`)
 - **Imports corrigidos**: 15
 
 ### Arquitetura
+
 - **Features**: 6 (todas auto-contidas)
 - **Layers**: 5 (app, features, core, shared, components)
 - **Separação**: 100% (genérico vs específico)
@@ -291,18 +320,22 @@ src/
 ## 🎓 Lições Aprendidas
 
 ### 1. **`shared/` vs `components/`**
+
 - **shared/**: Código genérico, zero acoplamento, pode virar biblioteca
 - **components/**: Código específico da app, acoplado ao domínio
 
 ### 2. **`utils/` é um Anti-Pattern**
+
 - Utils genéricos → `shared/composables/`
 - Utils específicos → `features/{feature}/utils/`
 
 ### 3. **Bootstrap Merece Diretório Próprio**
+
 - `app/` para config e routing
 - Separação clara de responsabilidades
 
 ### 4. **Feature-Sliced Design + DDD = 💪**
+
 - FSD para features isoladas
 - DDD para core/business logic
 - Shared para código genérico
@@ -312,9 +345,11 @@ src/
 ## 📚 Documentação Atualizada
 
 ✅ Criada:
+
 - `docs/architecture/FINAL_ARCHITECTURE.md` (este arquivo)
 
 ✅ Referências:
+
 - [Component Architecture](./COMPONENT_ARCHITECTURE.md)
 - [Window Management](./WINDOW_MANAGEMENT.md)
 - [Refactoring Summary](../changelogs/REFACTORING_SUMMARY.md)
@@ -324,12 +359,14 @@ src/
 ## 🚀 Próximos Passos (Opcional)
 
 ### Melhorias Futuras (não urgentes)
+
 1. Corrigir 7 erros pré-existentes (types + unused vars)
 2. Extrair `shared/` para biblioteca standalone
 3. Adicionar testes unitários (Vitest)
 4. Documentar barrel exports
 
 ### Arquitetura COMPLETA ✅
+
 - Estrutura pronta para escalar
 - Separação clara de responsabilidades
 - Zero arquivos soltos

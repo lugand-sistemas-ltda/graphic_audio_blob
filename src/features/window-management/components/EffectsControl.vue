@@ -52,7 +52,7 @@ const toggleEffect = (effect: VisualEffect) => {
 </script>
 
 <style scoped lang="scss">
-@use '../../style/base/variables' as *;
+@use '../../../style/base/variables' as *;
 
 .effects-control {
     padding: var(--spacing-md);
