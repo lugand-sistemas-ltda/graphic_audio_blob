@@ -81,7 +81,9 @@ onMounted(() => {
         layout: 'fullscreen',
         backgroundColor: '#000000',
         createdAt: now,
-        lastActive: now
+        lastActive: now,
+        activeComponents: [],
+        allComponentsHidden: false
     })
 
     setTimeout(() => {

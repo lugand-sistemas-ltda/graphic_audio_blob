@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { GlobalControls, ComponentManager, EffectsControl, WindowControl } from '../../features/window-management'
 import type { WindowId } from '../../core/state/types'
 
@@ -38,7 +38,7 @@ interface Props {
     windowId: WindowId
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const collapsed = ref(false)
 

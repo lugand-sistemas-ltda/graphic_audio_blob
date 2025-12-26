@@ -139,7 +139,9 @@ onMounted(() => {
         layout: 'free',
         backgroundColor: '#000000',
         createdAt: now,
-        lastActive: now
+        lastActive: now,
+        activeComponents: [],
+        allComponentsHidden: false
     })
 
     // Inicializa efeitos se necessário
