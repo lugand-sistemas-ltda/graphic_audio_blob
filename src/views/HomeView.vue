@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { inject, computed, watch, onMounted } from 'vue'
 import { SoundControl, AudioControls } from '../features/audio-player'
-import OrbEffectControl from '../components/OrbEffectControl.vue'
-import MatrixCharacter from '../components/MatrixCharacter.vue'
+import { OrbEffectControl, MatrixCharacter, FrequencyVisualizer } from '../features/visual-effects'
 import DebugTerminal from '../components/DebugTerminal.vue'
-import FrequencyVisualizer from '../components/FrequencyVisualizer.vue'
 import ThemeSelector from '../components/ThemeSelector.vue'
 import AlertContainer from '../components/alerts/AlertContainer.vue'
 import { useGlobalAudio } from '../core/global'

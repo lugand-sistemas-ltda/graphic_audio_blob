@@ -34,8 +34,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, unref } from 'vue'
-import { useCollapsible } from '../composables/useCollapsible'
-import { useVisibilityReload } from '../composables/useVisibilityReload'
+import { useCollapsible } from '../../../composables/useCollapsible'
+import { useVisibilityReload } from '../../../composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'frequency-visualizer', initialState: true })
 
@@ -127,8 +127,8 @@ const averageLevel = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .frequency-visualizer {
     @include draggable-container;

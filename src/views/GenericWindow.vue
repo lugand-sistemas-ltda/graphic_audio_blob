@@ -40,7 +40,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWindowManager } from '../core/sync'
 import { useGlobalState, registerWindow, getWindowComponents } from '../core/state'
-import { useSpectralVisualEffect } from '../composables/useSpectralVisualEffect'
+import { useSpectralVisualEffect } from '../features/visual-effects'
 import WindowTitlebar from '../components/WindowTitlebar.vue'
 import WindowConfig from '../components/WindowConfig.vue'
 

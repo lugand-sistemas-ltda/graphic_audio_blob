@@ -25,8 +25,8 @@
 </template>
 
 <script setup lang="ts">
-import { useCollapsible } from '../composables/useCollapsible'
-import { useVisibilityReload } from '../composables/useVisibilityReload'
+import { useCollapsible } from '../../../composables/useCollapsible'
+import { useVisibilityReload } from '../../../composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'matrix-character', initialState: true })
 
@@ -38,9 +38,9 @@ useVisibilityReload({
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
-@use '../style/animations' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
+@use '../../../style/animations' as *;
 
 .matrix-character-wrapper {
     @include draggable-container;

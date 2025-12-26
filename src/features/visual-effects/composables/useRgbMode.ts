@@ -1,5 +1,5 @@
 import { ref, onUnmounted, inject, watch, computed } from 'vue'
-import { useGlobalTheme } from '../core/global'
+import { useGlobalTheme } from '../../../core/global'
 
 const rgbAnimationId = ref<number | null>(null)
 const currentHue = ref(0)

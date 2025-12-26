@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useWindowManager } from '../core/sync'
-import { useSpectralVisualEffect } from '../composables/useSpectralVisualEffect'
+import { useSpectralVisualEffect } from '../features/visual-effects'
 import { registerWindow } from '../core/state'
 import WindowConfig from '../components/WindowConfig.vue'
 

@@ -1,5 +1,5 @@
 import { ref, onUnmounted, inject, watch, computed } from 'vue'
-import { useGlobalTheme } from '../core/global'
+import { useGlobalTheme } from '../../../core/global'
 
 const chameleonAnimationId = ref<number | null>(null)
 

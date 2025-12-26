@@ -28,8 +28,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VisualControls from './VisualControls.vue'
-import { useCollapsible } from '../composables/useCollapsible'
-import { useVisibilityReload } from '../composables/useVisibilityReload'
+import { useCollapsible } from '../../../composables/useCollapsible'
+import { useVisibilityReload } from '../../../composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'orb-effect-control', initialState: true })
 
@@ -53,8 +53,8 @@ const handleBeatSensitivityChange = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .orb-effect-control {
     @include draggable-container;
