@@ -60,8 +60,8 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .sound-control {
     @include draggable-container;
