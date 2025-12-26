@@ -118,10 +118,10 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { useCollapsible } from '../shared'
-import { useComponentManager } from '../features/window-management'
-import { useWindowManager } from '../core/sync'
-import { getWindowComponents } from '../core/state/useGlobalState'
+import { useCollapsible } from '../../shared'
+import { useComponentManager } from '../../features/window-management'
+import { useWindowManager } from '../../core/sync'
+import { getWindowComponents } from '../../core/state/useGlobalState'
 
 const { isExpanded, toggle: toggleExpanded } = useCollapsible({ id: 'main-control', initialState: true })
 

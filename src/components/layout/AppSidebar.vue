@@ -30,11 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import GlobalControls from '../sidebar/GlobalControls.vue'
-import ComponentManager from '../sidebar/ComponentManager.vue'
-import EffectsControl from '../sidebar/EffectsControl.vue'
-import WindowControl from '../sidebar/WindowControl.vue'
+import { ref, watch, onUnmounted } from 'vue'
+import { GlobalControls, ComponentManager, EffectsControl, WindowControl } from '../../features/window-management'
 import type { WindowId } from '../../core/state/types'
 
 interface Props {
@@ -52,7 +49,6 @@ const toggleCollapse = () => {
 }
 
 // Cleanup ao desmontar
-import { onUnmounted } from 'vue'
 onUnmounted(() => {
     document.body.classList.remove('sidebar-collapsed')
 })

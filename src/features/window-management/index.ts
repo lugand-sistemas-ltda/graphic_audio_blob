@@ -9,11 +9,16 @@
  * - Window visibility and reload
  * - Window type detection
  * - Z-index management
+ * - Sidebar components (ComponentManager, EffectsControl, etc)
  */
 
 // Components
 export { default as WindowConfig } from './components/WindowConfig.vue'
 export { default as WindowTitlebar } from './components/WindowTitlebar.vue'
+export { default as ComponentManager } from './components/ComponentManager.vue'
+export { default as EffectsControl } from './components/EffectsControl.vue'
+export { default as GlobalControls } from './components/GlobalControls.vue'
+export { default as WindowControl } from './components/WindowControl.vue'
 
 // Composables
 export { useComponentManager } from './composables/useComponentManager'

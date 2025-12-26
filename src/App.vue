@@ -7,8 +7,8 @@ import { usePlaylist } from './features/audio-player/composables/usePlaylist'
 import { useComponentManager } from './features/window-management'
 import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
 import { useGlobalAudio, useGlobalTheme } from './core/global'
-import { AVAILABLE_COMPONENTS } from './config/availableComponents'
-import LoadingScreen from './components/ui/feedback/LoadingScreen.vue'
+import { AVAILABLE_COMPONENTS } from './app/config/availableComponents'
+import LoadingScreen from './shared/components/ui/feedback/LoadingScreen.vue'
 
 // ========================================
 // DETECÇÃO DE WINDOW TYPE (DIRETO - SEM INJECT!)

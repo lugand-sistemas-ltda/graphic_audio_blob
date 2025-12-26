@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useComponentValidator } from '../../../shared'
+import { useComponentValidator } from '../../../'
 
 /**
  * BaseButton - Micro-componente de botão reutilizável

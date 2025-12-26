@@ -30,7 +30,7 @@
 import { computed, ref, nextTick } from 'vue'
 import { useGlobalState, updateWindow } from '../../core/state'
 import { useGlobalAlerts } from '../../shared'
-import { BaseButton } from '../ui'
+import { BaseButton } from '../../shared/components/ui'
 import type { WindowId } from '../../core/state/types'
 
 interface Props {

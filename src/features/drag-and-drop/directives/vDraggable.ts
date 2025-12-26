@@ -1,5 +1,5 @@
 import type { Directive, DirectiveBinding } from 'vue'
-import { getInitialPosition } from '../../../utils/defaultPositions'
+import { getInitialPosition } from '../utils/defaultPositions'
 import { useZIndex } from '../../window-management'
 
 interface DraggableBindingValue {

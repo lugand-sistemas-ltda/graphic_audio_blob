@@ -60,9 +60,9 @@ import {
     addComponentToWindow,
     removeComponentFromWindow,
     updateComponentInWindow
-} from '../../core/state'
-import { AVAILABLE_COMPONENTS } from '../../config/availableComponents'
-import type { WindowId } from '../../core/state/types'
+} from '../../../core/state'
+import { AVAILABLE_COMPONENTS } from '../../../app/config/availableComponents'
+import type { WindowId } from '../../../core/state/types'
 
 // Injeta windowId do contexto
 const windowId = inject<WindowId>('windowId', 'unknown')

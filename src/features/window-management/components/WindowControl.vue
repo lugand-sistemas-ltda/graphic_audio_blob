@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useWindowManager } from '../../core/sync'
+import { useWindowManager } from '../../../core/sync'
 
 const windowManager = useWindowManager()
 const windowCount = windowManager.windowCount

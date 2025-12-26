@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './style/index.scss'
 import App from './App.vue'
-import router from './router'
+import router from './app/router'
 import { vDraggable } from './features/drag-and-drop'
 
 const app = createApp(App)

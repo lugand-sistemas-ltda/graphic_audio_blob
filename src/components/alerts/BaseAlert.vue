@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { BaseButton } from '../ui'
+import { BaseButton } from '../../shared/components/ui'
 import type { AlertType, AlertButton } from '../../core/state/types'
 
 interface Props {

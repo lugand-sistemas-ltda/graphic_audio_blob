@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import MainLayout from '../layouts/MainLayout.vue'
-import HomeView from '../views/HomeView.vue'
+import MainLayout from '../../layouts/MainLayout.vue'
+import HomeView from '../../views/HomeView.vue'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),

@@ -29,8 +29,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useGlobalState, toggleWindowEffect } from '../../core/state'
-import type { WindowId, VisualEffect } from '../../core/state/types'
+import { useGlobalState, toggleWindowEffect } from '../../../core/state'
+import type { WindowId, VisualEffect } from '../../../core/state/types'
 
 interface Props {
     windowId: WindowId

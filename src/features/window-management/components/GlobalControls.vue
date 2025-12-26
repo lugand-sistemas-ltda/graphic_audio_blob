@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { getWindowComponents, updateComponentInWindow } from '../../core/state/useGlobalState'
+import { getWindowComponents, updateComponentInWindow } from '../../../core/state/useGlobalState'
 
 const windowId = inject<string>('windowId', '')
 
