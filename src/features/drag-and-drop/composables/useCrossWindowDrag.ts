@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useGlobalState, startDrag, updateDragPosition, endDrag, moveComponent } from '../state'
-import type { WindowId, ComponentId, ComponentTransform } from '../state/types'
+import { useGlobalState, startDrag, updateDragPosition, endDrag, moveComponent } from '../../../core/state'
+import type { WindowId, ComponentId, ComponentTransform } from '../../../core/state/types'
 
 /**
  * Cross-Window Drag & Drop System
