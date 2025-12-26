@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useCollapsible } from '../composables/useCollapsible'
-import { useComponentManager } from '../composables/useComponentManager'
+import { useComponentManager } from '../features/window-management'
 import { useWindowManager } from '../core/sync'
 import { getWindowComponents } from '../core/state/useGlobalState'
 

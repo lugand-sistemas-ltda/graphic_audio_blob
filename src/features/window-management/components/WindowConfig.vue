@@ -105,9 +105,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useGlobalState, updateWindow, toggleWindowEffect, getWindowComponents, moveComponent } from '../core/state'
+import { useGlobalState, updateWindow, toggleWindowEffect, getWindowComponents, moveComponent } from '../../../core/state'
 import { useComponentManager } from '../composables/useComponentManager'
-import type { WindowId, VisualEffect } from '../core/state/types'
+import type { WindowId, VisualEffect } from '../../../core/state/types'
 
 interface Props {
     windowId: WindowId
@@ -214,8 +214,8 @@ const getCategoryIcon = (category: string): string => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .window-config-panel {
     position: fixed;

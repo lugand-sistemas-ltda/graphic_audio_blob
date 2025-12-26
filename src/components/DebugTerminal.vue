@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, unref, computed } from 'vue'
 import { useCollapsible } from '../composables/useCollapsible'
-import { useVisibilityReload } from '../composables/useVisibilityReload'
+import { useVisibilityReload } from '../features/window-management'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'debug-terminal', initialState: true })
 

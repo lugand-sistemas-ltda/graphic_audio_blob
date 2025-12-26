@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useCollapsible } from '../../../composables/useCollapsible'
-import { useVisibilityReload } from '../../../composables/useVisibilityReload'
+import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'frequency-visualizer', initialState: true })
 

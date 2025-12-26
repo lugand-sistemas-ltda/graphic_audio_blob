@@ -11,8 +11,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useGlobalState } from '../core/state'
-import type { WindowId } from '../core/state/types'
+import { useGlobalState } from '../../../core/state'
+import type { WindowId } from '../../../core/state/types'
 
 interface Props {
     windowId: WindowId
@@ -42,7 +42,7 @@ const handleClose = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
+@use '../../../style/base/variables' as *;
 
 .window-titlebar {
     position: fixed;

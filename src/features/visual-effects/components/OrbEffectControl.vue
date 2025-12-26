@@ -29,7 +29,7 @@
 import { ref } from 'vue'
 import VisualControls from './VisualControls.vue'
 import { useCollapsible } from '../../../composables/useCollapsible'
-import { useVisibilityReload } from '../../../composables/useVisibilityReload'
+import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'orb-effect-control', initialState: true })
 

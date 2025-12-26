@@ -24,7 +24,7 @@ import { inject, provide, ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppSidebar from '../components/layout/AppSidebar.vue'
-import { useWindowType } from '../composables/useWindowType'
+import { useWindowType } from '../features/window-management'
 import { useWindowManager } from '../core/sync'
 
 // Detecta tipo de janela

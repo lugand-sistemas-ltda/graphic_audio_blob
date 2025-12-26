@@ -41,8 +41,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWindowManager } from '../core/sync'
 import { useGlobalState, registerWindow, getWindowComponents } from '../core/state'
 import { useSpectralVisualEffect } from '../features/visual-effects'
-import WindowTitlebar from '../components/WindowTitlebar.vue'
-import WindowConfig from '../components/WindowConfig.vue'
+import { WindowTitlebar, WindowConfig } from '../features/window-management'
 
 // ID único para esta janela genérica
 const genericWindowId = ref(`window-${Date.now()}`)

@@ -27,7 +27,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useWindowManager } from '../core/sync'
 import { useSpectralVisualEffect } from '../features/visual-effects'
 import { registerWindow } from '../core/state'
-import WindowConfig from '../components/WindowConfig.vue'
+import { WindowConfig } from '../features/window-management'
 
 // ID único para esta janela visual
 const visualWindowId = 'visual-' + Date.now()

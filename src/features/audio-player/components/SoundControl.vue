@@ -26,7 +26,7 @@ import MusicPlayer from './MusicPlayer.vue'
 import Playlist from './Playlist.vue'
 import type { Track } from '../composables/usePlaylist'
 import { useCollapsible } from '../../../composables/useCollapsible'
-import { useVisibilityReload } from '../../../composables/useVisibilityReload'
+import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'sound-control', initialState: true })
 

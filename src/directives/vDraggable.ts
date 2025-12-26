@@ -1,6 +1,6 @@
 import type { Directive, DirectiveBinding } from 'vue'
 import { getInitialPosition } from '../utils/defaultPositions'
-import { useZIndex } from '../composables/useZIndex'
+import { useZIndex } from '../features/window-management'
 
 interface DraggableBindingValue {
     /** ID único para persistir posição */
