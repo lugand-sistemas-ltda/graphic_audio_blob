@@ -9,27 +9,33 @@ Bem-vindo à documentação técnica completa do projeto!
 Documentos que descrevem a arquitetura técnica e padrões de design:
 
 ### Core Systems
+
 - [**AUDIO_ARCHITECTURE.md**](./architecture/AUDIO_ARCHITECTURE.md)
+
   - Sistema de áudio Provider/Consumer
   - FFT analysis e sincronização multi-window
   - BroadcastChannel API
 
 - [**WINDOW_MANAGEMENT.md**](./architecture/WINDOW_MANAGEMENT.md)
+
   - Arquitetura multi-window
   - Window roles (main, secondary)
   - State synchronization
 
 - [**COMPONENT_ARCHITECTURE.md**](./architecture/COMPONENT_ARCHITECTURE.md)
+
   - Estrutura de componentes
   - Component Manager system
   - Lifecycle e eventos
 
 - [**ALERT_ARCHITECTURE.md**](./architecture/ALERT_ARCHITECTURE.md)
+
   - Sistema de alertas globais
   - BaseAlert component
   - Alert types e customização
 
 - [**THEME_ARCHITECTURE.md**](./architecture/THEME_ARCHITECTURE.md)
+
   - Sistema de temas dinâmicos
   - Theme switching
   - CSS variables strategy
@@ -58,11 +64,13 @@ Documentos para desenvolvedores que trabalham no projeto:
 Histórico de mudanças e refatorações:
 
 - [**CHANGELOG_AMYSZKO.md**](./changelogs/CHANGELOG_AMYSZKO.md)
+
   - Histórico completo de versões
   - Features implementadas por versão
   - Bug fixes e melhorias
 
 - [**CHANGELOG_COLOR_SYSTEM.md**](./changelogs/CHANGELOG_COLOR_SYSTEM.md)
+
   - v0.0.5 - Sistema de cores centralizado
   - Refatoração de variáveis CSS
   - Eliminação de cores hardcoded
@@ -102,32 +110,37 @@ docs/
 ## 🚀 Quick Links
 
 ### Para Novos Desenvolvedores
+
 1. Leia [../README.md](../README.md) (overview do projeto)
 2. Entenda [COMPONENT_ARCHITECTURE.md](./architecture/COMPONENT_ARCHITECTURE.md)
 3. Siga [COMPONENT_PATTERNS.md](./guides/COMPONENT_PATTERNS.md)
 4. Consulte [COLOR_SYSTEM.md](./architecture/COLOR_SYSTEM.md) ao trabalhar com estilos
 
 ### Para Debugging
+
 1. [AUDIO_ARCHITECTURE.md](./architecture/AUDIO_ARCHITECTURE.md) - Problemas de áudio
 2. [WINDOW_MANAGEMENT.md](./architecture/WINDOW_MANAGEMENT.md) - Sincronização entre janelas
 3. [ALERT_ARCHITECTURE.md](./architecture/ALERT_ARCHITECTURE.md) - Sistema de notificações
 
 ### Para Refatoração
+
 1. [COMPONENT_PATTERNS.md](./guides/COMPONENT_PATTERNS.md) - Padrões a seguir
 2. [COLOR_SYSTEM.md](./architecture/COLOR_SYSTEM.md) - Gestão de cores
-3. [CHANGELOG_*.md](./changelogs/) - Histórico de refatorações
+3. [CHANGELOG\_\*.md](./changelogs/) - Histórico de refatorações
 
 ---
 
 ## 📌 Convenções
 
 ### Atualização de Docs
+
 - ✅ **SEMPRE** atualize a documentação ao fazer mudanças arquiteturais
 - ✅ Adicione exemplos de código quando aplicável
 - ✅ Mantenha diagramas atualizados
 - ✅ Documente decisões técnicas importantes
 
 ### Nomenclatura
+
 - **Architecture docs**: Descrevem **COMO** o sistema funciona
 - **Guides**: Descrevem **COMO USAR** o sistema
 - **Changelogs**: Descrevem **O QUE MUDOU**
