@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, unref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useCollapsible } from '../../../composables/useCollapsible'
 import { useVisibilityReload } from '../../../composables/useVisibilityReload'
 
@@ -53,7 +53,12 @@ const props = defineProps<Props>()
 
 // Unwrap frequencyBands se for um ref
 const bands = computed(() => {
-    const rawBands = unref(props.frequencyBands)
+    const rawBands = props.frequencyBands
+    // Verifica se é um objeto com propriedade 'value' (ref)
+    if (rawBands && typeof rawBands === 'object' && 'value' in rawBands) {
+        return Array.isArray(rawBands.value) ? rawBands.value : []
+    }
+    // Senão, é um array direto
     return Array.isArray(rawBands) ? rawBands : []
 })
 
