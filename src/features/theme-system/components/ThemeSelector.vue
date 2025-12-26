@@ -69,9 +69,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { useGlobalTheme } from '../core/global'
-import { useCollapsible } from '../composables/useCollapsible'
-import { useVisibilityReload } from '../features/window-management'
+import { useGlobalTheme } from '../../../core/global'
+import { useCollapsible } from '../../../composables/useCollapsible'
+import { useVisibilityReload } from '../../window-management'
 
 const { currentTheme, availableThemes, setTheme, getCurrentThemeInfo, nextTheme, previousTheme } = useTheme()
 
@@ -107,8 +107,8 @@ const selectTheme = (themeId: string) => {
 </script>
 
 <style scoped lang="scss">
-@use '../style/base/variables' as *;
-@use '../style/mixins' as *;
+@use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .theme-selector {
     @include draggable-container;

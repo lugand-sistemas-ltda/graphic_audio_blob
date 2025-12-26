@@ -1,5 +1,5 @@
 import { watch, inject, computed } from 'vue'
-import { useGlobalTheme } from '../core/global'
+import { useGlobalTheme } from '../../../core/global'
 
 export interface Theme {
     id: string
