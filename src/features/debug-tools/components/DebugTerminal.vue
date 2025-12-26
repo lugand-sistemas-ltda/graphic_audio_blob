@@ -38,7 +38,7 @@
             <div class="terminal-line separator">
                 <span class="var-name">beat.detected:</span>
                 <span class="var-value beat-indicator" :class="{ pulse: beatDetected }">{{ beatDetected ? '■' : '□'
-                    }}</span>
+                }}</span>
             </div>
             <div class="terminal-line">
                 <span class="var-name">layers.active:</span>
@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, unref, computed } from 'vue'
-import { useCollapsible } from '../../../composables/useCollapsible'
+import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'debug-terminal', initialState: true })

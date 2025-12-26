@@ -70,7 +70,7 @@
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
 import { useGlobalTheme } from '../../../core/global'
-import { useCollapsible } from '../../../composables/useCollapsible'
+import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management'
 
 const { currentTheme, availableThemes, setTheme, getCurrentThemeInfo, nextTheme, previousTheme } = useTheme()

@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCollapsible } from '../../../composables/useCollapsible'
+import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'matrix-character', initialState: true })

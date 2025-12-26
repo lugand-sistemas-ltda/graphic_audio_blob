@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VisualControls from './VisualControls.vue'
-import { useCollapsible } from '../../../composables/useCollapsible'
+import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'orb-effect-control', initialState: true })

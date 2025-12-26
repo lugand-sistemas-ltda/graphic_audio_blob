@@ -7,7 +7,7 @@ import { ThemeSelector } from '../features/theme-system'
 import AlertContainer from '../components/alerts/AlertContainer.vue'
 import { useGlobalAudio } from '../core/global'
 import { getWindowComponents } from '../core/state'
-import { useGlobalAlerts } from '../composables/useGlobalAlerts'
+import { useGlobalAlerts } from '../shared'
 import type { Track } from '../features/audio-player/composables/usePlaylist'
 
 // ========================================

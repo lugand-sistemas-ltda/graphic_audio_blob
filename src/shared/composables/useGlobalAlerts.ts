@@ -1,12 +1,12 @@
 import { computed } from 'vue'
-import { useGlobalState, dispatch } from '../core/state'
+import { useGlobalState, dispatch } from '../../core/state'
 import type {
     WindowId,
     AlertId,
     AlertConfig,
     AlertButton,
     AlertState
-} from '../core/state/types'
+} from '../../core/state/types'
 
 /**
  * Composable para gerenciar Alerts globalmente

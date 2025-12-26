@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import BaseAlert from './BaseAlert.vue'
-import { useGlobalAlerts } from '../../composables/useGlobalAlerts'
+import { useGlobalAlerts } from '../../shared'
 import type { WindowId } from '../../core/state/types'
 
 interface Props {
