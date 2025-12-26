@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, unref, computed } from 'vue'
+import { ref, onMounted, onUnmounted, unref, computed, type MaybeRef } from 'vue'
 import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management'
 
@@ -69,7 +69,7 @@ useVisibilityReload({
 })
 
 interface Props {
-    spherePosition: { x: number; y: number } | { value: { x: number; y: number } }
+    spherePosition: MaybeRef<{ x: number; y: number }>
     sphereSize: number
     sphereReactivity: number
     isPlaying: boolean

@@ -40,7 +40,7 @@ export function useCrossWindowDrag(options: DragOptions) {
         dragStartPos.value = { x: e.clientX, y: e.clientY }
 
         // Pega posição atual do componente
-        const component = state.components[componentId]
+        const component = state.componentsByWindow[windowId]?.[componentId]
         if (component) {
             elementStartPos.value = {
                 x: component.transform.x,
@@ -89,7 +89,7 @@ export function useCrossWindowDrag(options: DragOptions) {
     /**
      * Mouse saiu da janela durante drag
      */
-    const handleMouseLeave = (e: MouseEvent) => {
+    const handleMouseLeave = (_e: MouseEvent) => {
         if (!isDragging.value) return
 
         // Componente está sendo arrastado para fora

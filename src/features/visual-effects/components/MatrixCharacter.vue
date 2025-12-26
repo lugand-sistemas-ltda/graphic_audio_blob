@@ -11,10 +11,10 @@
                 <div class="character-container">
                     <div class="character-spinner">
                         <div class="character-front">
-                            <img src="../assets/images/character.jpeg" alt="Character" class="character-image" />
+                            <img src="../../../assets/images/character.jpeg" alt="Character" class="character-image" />
                         </div>
                         <div class="character-back">
-                            <img src="../assets/images/character.jpeg" alt="Character" class="character-image" />
+                            <img src="../../../assets/images/character.jpeg" alt="Character" class="character-image" />
                         </div>
                     </div>
                 </div>
