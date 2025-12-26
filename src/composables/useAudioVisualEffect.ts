@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted } from 'vue'
-import type { AudioFrequencyData } from './useAudioAnalyzer'
+import type { AudioFrequencyData } from '../features/audio-player/composables/useAudioAnalyzer'
 
 interface EffectOptions {
     audioDataProvider?: () => AudioFrequencyData | null

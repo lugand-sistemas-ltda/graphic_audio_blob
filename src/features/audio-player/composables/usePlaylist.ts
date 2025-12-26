@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { broadcast, onMessage } from '../core/sync/useBroadcastSync'
+import { broadcast, onMessage } from '../../../core/sync/useBroadcastSync'
 
 export interface Track {
     id: string

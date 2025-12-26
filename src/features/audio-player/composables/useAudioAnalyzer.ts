@@ -1,5 +1,5 @@
 import { ref, onUnmounted, inject } from 'vue'
-import { broadcast, onMessage } from '../core/sync/useBroadcastSync'
+import { broadcast, onMessage } from '../../../core/sync/useBroadcastSync'
 
 export interface AudioFrequencyData {
     bass: number       // Graves (0-255)

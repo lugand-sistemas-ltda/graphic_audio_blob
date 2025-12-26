@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, watch, onMounted } from 'vue'
-import SoundControl from '../components/SoundControl.vue'
+import { SoundControl, AudioControls } from '../features/audio-player'
 import OrbEffectControl from '../components/OrbEffectControl.vue'
-import AudioControls from '../components/AudioControls.vue'
 import MatrixCharacter from '../components/MatrixCharacter.vue'
 import DebugTerminal from '../components/DebugTerminal.vue'
 import FrequencyVisualizer from '../components/FrequencyVisualizer.vue'
@@ -11,7 +10,7 @@ import AlertContainer from '../components/alerts/AlertContainer.vue'
 import { useGlobalAudio } from '../core/global'
 import { getWindowComponents } from '../core/state'
 import { useGlobalAlerts } from '../composables/useGlobalAlerts'
-import type { Track } from '../composables/usePlaylist'
+import type { Track } from '../features/audio-player/composables/usePlaylist'
 
 // ========================================
 // DEPENDÊNCIAS UNIVERSAIS (Todas as janelas)

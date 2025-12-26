@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { broadcast, onMessage } from '../core/sync/useBroadcastSync'
+import { broadcast, onMessage } from '../../../core/sync/useBroadcastSync'
 
 /**
  * Composable para sincronizar controles do player entre janelas

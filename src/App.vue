@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
 import { onMounted, onUnmounted, watch, ref, provide, inject } from 'vue'
-import { useAudioAnalyzer } from './composables/useAudioAnalyzer'
+import { useAudioAnalyzer } from './features/audio-player/composables/useAudioAnalyzer'
 import { useSpectralVisualEffect } from './composables/useSpectralVisualEffect'
-import { usePlaylist } from './composables/usePlaylist'
+import { usePlaylist } from './features/audio-player/composables/usePlaylist'
 import { useComponentManager } from './composables/useComponentManager'
 import { useRgbMode } from './composables/useRgbMode'
 import { useChameleonMode } from './composables/useChameleonMode'

@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted, watch } from 'vue'
-import type { AudioFrequencyData } from './useAudioAnalyzer'
+import type { AudioFrequencyData } from '../features/audio-player/composables/useAudioAnalyzer'
 import { useGlobalState } from '../core/state'
 
 interface EffectOptions {
