@@ -77,7 +77,7 @@ onMounted(() => {
         id: visualWindowId,
         title: 'Visual Window',
         role: 'secondary',
-        effects: ['gradient'], // Apenas gradient por padrão
+        effects: [], // Inicia sem efeitos - usuário deve ativar manualmente
         layout: 'fullscreen',
         backgroundColor: '#000000',
         createdAt: now,

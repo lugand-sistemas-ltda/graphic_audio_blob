@@ -33,17 +33,7 @@ body {
     @include flex-column;
     position: relative;
     overflow: hidden;
-    background: radial-gradient(circle var(--gradient-size, 600px) at var(--mouse-x, 50%) var(--mouse-y, 50%),
-            var(--random-color-0, rgba(0, 0, 0, 0.8)),
-            var(--random-color-1, rgba(20, 20, 20, 0.7)),
-            var(--random-color-2, rgba(40, 40, 40, 0.6)),
-            var(--random-color-3, rgba(60, 60, 60, 0.5)),
-            var(--random-color-4, rgba(80, 80, 80, 0.4)),
-            var(--random-color-5, rgba(100, 100, 100, 0.3)),
-            var(--random-color-6, rgba(120, 120, 120, 0.2)),
-            var(--random-color-7, rgba(140, 140, 140, 0.1)),
-            var(--random-color-8, rgba(160, 160, 160, 0.05)),
-            rgba(0, 40, 0, 0.3));
+    background: #000000; // Fundo preto puro - gradiente é aplicado dinamicamente pelo useSpectralVisualEffect quando ativo
     transition: background var(--transition-slow);
 }
 

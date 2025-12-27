@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
 import { useGlobalState } from '../../../core/state'
 
@@ -354,10 +354,8 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             },
             { immediate: true }
         )
-    } else {
-        // Se não tem windowId, sempre ativa (comportamento legado)
-        onMounted(startEffect)
     }
+    // Sem windowId: não inicia automaticamente (usuário deve ativar via controles)
 
     onUnmounted(stopEffect)
 
