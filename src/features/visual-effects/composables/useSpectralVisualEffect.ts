@@ -24,6 +24,11 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     let currentThemeSaturation = 85 // Saturação padrão (colorido)
     let isEffectActive = false
 
+    // Novos controles de comportamento
+    let mouseFollowEnabled = true // Mouse follow ativo por padrão
+    let autoCenterEnabled = true // Auto center ativo por padrão
+    let isMouseInsideWindow = true // Detecta se mouse está na janela
+
     // Obtém estado global para observar effects
     const { state } = windowId ? useGlobalState() : { state: null }
 
@@ -183,8 +188,31 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
         // Calcula efeito 3D do mouse
         if (enableMouseControl) {
-            const targetX = (mouseX - 50) * 0.5
-            const targetY = (mouseY - 50) * 0.5
+            let targetX: number
+            let targetY: number
+
+            // Se mouse follow está desabilitado, sempre fica no centro
+            if (!mouseFollowEnabled) {
+                targetX = 0
+                targetY = 0
+                mouseX = 50
+                mouseY = 50
+            }
+            // Se auto-center está ativo e mouse saiu da janela, volta ao centro gradualmente
+            else if (autoCenterEnabled && !isMouseInsideWindow) {
+                targetX = 0
+                targetY = 0
+                // Gradualmente volta mouseX e mouseY para o centro
+                mouseX += (50 - mouseX) * 0.02 // Transição mais lenta (2% por frame)
+                mouseY += (50 - mouseY) * 0.02
+            }
+            // Comportamento normal - segue o mouse
+            else {
+                targetX = (mouseX - 50) * 0.5
+                targetY = (mouseY - 50) * 0.5
+            }
+
+            // Interpolação suave do offset 3D
             mouse3DOffset.x += (targetX - mouse3DOffset.x) * 0.1
             mouse3DOffset.y += (targetY - mouse3DOffset.y) * 0.1
         }
@@ -282,8 +310,25 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
     // Mouse move handler
     const handleMouseMove = (e: MouseEvent) => {
-        mouseX = (e.clientX / window.innerWidth) * 100
-        mouseY = (e.clientY / window.innerHeight) * 100
+        if (mouseFollowEnabled) {
+            mouseX = (e.clientX / window.innerWidth) * 100
+            mouseY = (e.clientY / window.innerHeight) * 100
+            isMouseInsideWindow = true
+        }
+    }
+
+    // Mouse enter/leave handlers para auto-center
+    const handleMouseEnter = () => {
+        isMouseInsideWindow = true
+    }
+
+    const handleMouseLeave = () => {
+        isMouseInsideWindow = false
+
+        // Se auto-center estiver ativo e mouse follow habilitado, volta gradualmente ao centro
+        if (autoCenterEnabled && mouseFollowEnabled) {
+            // A transição para o centro será feita no updateLayers
+        }
     }
 
     const startEffect = () => {
@@ -308,6 +353,8 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
         if (enableMouseControl) {
             document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseenter', handleMouseEnter)
+            document.addEventListener('mouseleave', handleMouseLeave)
         }
 
         // Adiciona transição suave ao body
@@ -328,6 +375,8 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
         if (enableMouseControl) {
             document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseenter', handleMouseEnter)
+            document.removeEventListener('mouseleave', handleMouseLeave)
         }
         if (animationFrame) {
             cancelAnimationFrame(animationFrame)
@@ -367,6 +416,23 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         sphereReactivity = reactivity
     }
 
+    const setMouseFollow = (enabled: boolean) => {
+        mouseFollowEnabled = enabled
+        console.log('[SpectralEffect] Mouse Follow:', enabled ? 'ENABLED' : 'DISABLED')
+
+        // Se desabilitar, centraliza imediatamente
+        if (!enabled) {
+            mouseX = 50
+            mouseY = 50
+            mouse3DOffset = { x: 0, y: 0 }
+        }
+    }
+
+    const setAutoCenter = (enabled: boolean) => {
+        autoCenterEnabled = enabled
+        console.log('[SpectralEffect] Auto Center:', enabled ? 'ENABLED' : 'DISABLED')
+    }
+
     // Expõe a posição do mouse para debug
     const getSpherePosition = () => ({
         x: mouseX,
@@ -375,14 +441,20 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
     const getSphereSize = () => baseSphereSize
     const getSphereReactivity = () => sphereReactivity
+    const getMouseFollow = () => mouseFollowEnabled
+    const getAutoCenter = () => autoCenterEnabled
 
     return {
         startEffect,
         stopEffect,
         setSphereSize,
         setSphereReactivity,
+        setMouseFollow,
+        setAutoCenter,
         getSpherePosition,
         getSphereSize,
-        getSphereReactivity
+        getSphereReactivity,
+        getMouseFollow,
+        getAutoCenter
     }
 }

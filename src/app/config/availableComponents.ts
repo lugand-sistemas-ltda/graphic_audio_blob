@@ -16,6 +16,12 @@ export interface AvailableComponent {
  */
 export const AVAILABLE_COMPONENTS: AvailableComponent[] = [
     {
+        id: 'visual-effects-control',
+        name: 'Visual Effects',
+        category: 'visual',
+        collapsibleId: 'visual-effects-control'
+    },
+    {
         id: 'orb-effect-control',
         name: 'Orb Effect Control',
         category: 'visual',

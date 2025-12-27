@@ -8,6 +8,40 @@
         </div>
 
         <div v-if="isExpanded" class="orb-content">
+            <!-- Effect Behavior Controls -->
+            <div class="control-section">
+                <h5 class="section-title">Effect Behavior</h5>
+
+                <div class="toggle-group">
+                    <label class="toggle-item">
+                        <input type="checkbox" v-model="mouseFollow" @change="handleMouseFollowChange" />
+                        <span class="toggle-label">Mouse Follow</span>
+                        <span class="toggle-status" :class="{ active: mouseFollow }">
+                            {{ mouseFollow ? 'ON' : 'OFF' }}
+                        </span>
+                    </label>
+
+                    <label class="toggle-item" :class="{ disabled: !mouseFollow }">
+                        <input type="checkbox" v-model="autoCenter" @change="handleAutoCenterChange"
+                            :disabled="!mouseFollow" />
+                        <span class="toggle-label">Auto Center</span>
+                        <span class="toggle-status" :class="{ active: autoCenter }">
+                            {{ autoCenter ? 'ON' : 'OFF' }}
+                        </span>
+                    </label>
+                </div>
+
+                <p class="control-hint" v-if="!mouseFollow">
+                    💡 Effect fixed at center position
+                </p>
+                <p class="control-hint" v-else-if="autoCenter">
+                    💡 Effect follows mouse, centers when cursor leaves screen
+                </p>
+                <p class="control-hint" v-else>
+                    💡 Effect follows mouse freely
+                </p>
+            </div>
+
             <!-- Beat Sensitivity Control -->
             <div class="control-group">
                 <label for="beat-sensitivity-control">Beat Sensitivity</label>
@@ -43,12 +77,29 @@ const emit = defineEmits<{
     beatSensitivityChange: [sensitivity: number]
     sphereSizeChange: [size: number]
     sphereReactivityChange: [reactivity: number]
+    mouseFollowChange: [enabled: boolean]
+    autoCenterChange: [enabled: boolean]
 }>()
 
 const beatSensitivity = ref(150) // Valor padrão
+const mouseFollow = ref(true) // Mouse follow ativo por padrão
+const autoCenter = ref(true) // Auto center ativo por padrão
 
 const handleBeatSensitivityChange = () => {
     emit('beatSensitivityChange', beatSensitivity.value)
+}
+
+const handleMouseFollowChange = () => {
+    emit('mouseFollowChange', mouseFollow.value)
+    // Se desativar mouse follow, desativa auto center também
+    if (!mouseFollow.value) {
+        autoCenter.value = false
+        emit('autoCenterChange', false)
+    }
+}
+
+const handleAutoCenterChange = () => {
+    emit('autoCenterChange', autoCenter.value)
 }
 </script>
 
@@ -140,5 +191,96 @@ const handleBeatSensitivityChange = () => {
             text-shadow: var(--text-shadow-md);
         }
     }
+}
+
+.control-section {
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+
+    .section-title {
+        font-size: var(--font-size-xs);
+        color: var(--color-accent);
+        margin-bottom: var(--spacing-sm);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: var(--text-shadow-sm);
+    }
+}
+
+.toggle-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.toggle-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(var(--theme-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(.disabled) {
+        background: rgba(var(--theme-primary-rgb), 0.15);
+        border-color: rgba(var(--theme-primary-rgb), 0.3);
+    }
+
+    &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--color-theme-primary);
+
+        &:disabled {
+            cursor: not-allowed;
+        }
+    }
+
+    .toggle-label {
+        flex: 1;
+        font-size: var(--font-size-xs);
+        color: var(--color-text-dim);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .toggle-status {
+        font-size: var(--font-size-xs);
+        color: rgba(var(--theme-primary-rgb), 0.6);
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 3px;
+        background: rgba(var(--theme-primary-rgb), 0.1);
+        transition: all 0.3s ease;
+
+        &.active {
+            color: var(--color-theme-primary);
+            background: rgba(var(--theme-primary-rgb), 0.2);
+            text-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.6);
+        }
+    }
+}
+
+.control-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-style: italic;
+    margin: var(--spacing-xs) 0 0 0;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(var(--theme-primary-rgb), 0.05);
+    border-left: 2px solid rgba(var(--theme-primary-rgb), 0.3);
+    border-radius: 2px;
 }
 </style>

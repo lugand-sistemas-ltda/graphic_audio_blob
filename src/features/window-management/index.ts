@@ -17,6 +17,7 @@ export { default as WindowConfig } from './components/WindowConfig.vue'
 export { default as WindowTitlebar } from './components/WindowTitlebar.vue'
 export { default as ComponentManager } from './components/ComponentManager.vue'
 export { default as EffectsControl } from './components/EffectsControl.vue'
+export { default as VisualEffectsControl } from './components/VisualEffectsControl.vue'
 export { default as GlobalControls } from './components/GlobalControls.vue'
 export { default as WindowControl } from './components/WindowControl.vue'
 

@@ -6,13 +6,17 @@
 const SPACING = 20 // pixels
 
 export const defaultPositions = {
-    'theme-selector': () => ({
+    'visual-effects-control': () => ({
         x: SPACING,
         y: SPACING
     }),
+    'theme-selector': () => ({
+        x: SPACING,
+        y: SPACING + 200 // Abaixo do visual effects control
+    }),
     'debug-terminal': () => ({
         x: SPACING,
-        y: SPACING + 300 // Abaixo do theme selector
+        y: SPACING + 500 // Abaixo do theme selector
     }),
     'frequency-visualizer': () => ({
         x: SPACING,
