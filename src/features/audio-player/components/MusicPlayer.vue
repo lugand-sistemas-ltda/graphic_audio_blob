@@ -37,8 +37,7 @@
             <div class="control-group">
                 <label for="volume-control">Volume</label>
                 <div class="control-with-value">
-                    <input id="volume-control" type="range" min="0" max="100" v-model="volume"
-                        @input="handleVolumeChange" />
+                    <input id="volume-control" type="range" min="0" max="100" v-model="volume" />
                     <span class="value-display">{{ volume }}%</span>
                 </div>
             </div>
@@ -47,7 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, inject } from 'vue'
+import { useGlobalAudio } from '../../../core/global'
 
 interface Props {
     currentTrack: { title: string; file: string } | null | undefined
@@ -69,7 +69,16 @@ const emit = defineEmits<{
     volumeChange: [volume: number]
 }>()
 
-const volume = ref(70)
+const audioGlobal = useGlobalAudio()
+const windowId = inject<string>('windowId', 'main-window')
+
+const volume = computed({
+    get: () => Math.round(audioGlobal.state.value.volume * 100),
+    set: (v: number) => {
+        audioGlobal.setVolume(v / 100, windowId)
+        emit('volumeChange', v / 100)
+    }
+})
 
 const progressPercent = computed(() => {
     if (props.duration === 0) return 0
@@ -91,9 +100,7 @@ const handleProgressClick = (e: MouseEvent) => {
     emit('seek', time)
 }
 
-const handleVolumeChange = () => {
-    emit('volumeChange', volume.value / 100)
-}
+// volume changes handled by computed setter which updates global audio
 </script>
 
 <style scoped lang="scss">

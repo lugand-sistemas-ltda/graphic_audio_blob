@@ -6,6 +6,9 @@
         <!-- Sidebar Global (TODAS as janelas) -->
         <AppSidebar :window-id="windowId" />
 
+        <!-- Mini Player Global (auto-hide) -->
+        <MiniPlayer />
+
         <!-- Área de Conteúdo -->
         <main class="content-area">
             <RouterView />
@@ -24,6 +27,7 @@ import { inject, provide, ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppSidebar from '../components/layout/AppSidebar.vue'
+import MiniPlayer from '../components/layout/MiniPlayer.vue'
 import { useWindowType } from '../features/window-management'
 import { useWindowManager } from '../core/sync'
 

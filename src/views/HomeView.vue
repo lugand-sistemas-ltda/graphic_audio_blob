@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, watch, onMounted } from 'vue'
-import { SoundControl, AudioControls } from '../features/audio-player'
+import { SoundControl } from '../features/audio-player'
 import { OrbEffectControl, MatrixCharacter, FrequencyVisualizer } from '../features/visual-effects'
 import { DebugTerminal } from '../features/debug-tools'
 import { ThemeSelector } from '../features/theme-system'
@@ -268,8 +268,6 @@ const hasPrevious = computed(() => {
         <!-- Orb Effect Control -->
         <OrbEffectControl v-if="showOrbEffectControl" @beat-sensitivity-change="handleBeatSensitivityChange"
             @sphere-size-change="handleSphereSize" @sphere-reactivity-change="handleSphereReactivity" />
-
-        <AudioControls />
 
         <!-- Theme Selector (UNIVERSAL - funciona em todas as janelas) -->
         <ThemeSelector v-if="showThemeSelector" />

@@ -25,3 +25,19 @@ export { default as BaseButton } from './buttons/BaseButton.vue'
 // ===================================
 // export { default as BaseHeading } from './typography/BaseHeading.vue'
 // export { default as BaseText } from './typography/BaseText.vue'
+
+// ===================================
+// OVERLAYS
+// ===================================
+export * from './overlays'
+
+// ===================================
+// LISTS
+// ===================================
+export * from './lists'
+
+// ===================================
+// UTILS / SMALL UI
+// ===================================
+export { default as Tooltip } from './Tooltip.vue'
+export { default as ProgressBar } from './ProgressBar.vue'

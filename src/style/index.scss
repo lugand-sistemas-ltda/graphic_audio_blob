@@ -43,5 +43,8 @@
 // Alerts - família de componentes de alertas
 @use './alerts' as *;
 
+// Overlays - componentes fixos com auto-hide
+@use './overlays' as *;
+
 // Chameleon Mode - efeito de gradientes RGB animados
 @use './chameleon' as *;

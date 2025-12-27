@@ -1,0 +1,163 @@
+/**
+ * Overlays Styles
+ * 
+ * Estilos reutilizáveis para overlays fixos, auto-hide, etc.
+ */
+
+@use 'base/variables' as *;
+
+// ===================================
+// MIXINS
+// ===================================
+
+/**
+ * Mixin para overlay fixo básico
+ */
+@mixin overlay-base {
+    position: fixed;
+    pointer-events: auto;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: all 0.3s var(--ease-smooth);
+}
+
+/**
+ * Mixin para overlay compacto (estilo mini player)
+ */
+@mixin overlay-compact {
+    @include overlay-base;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.875rem;
+}
+
+/**
+ * Mixin para botão de pin/fixed
+ */
+@mixin overlay-pin-button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs);
+    cursor: pointer;
+    transition: all 0.2s var(--ease-smooth);
+    color: var(--text-secondary);
+
+    &:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--primary);
+    }
+
+    &.is-fixed {
+        background: var(--primary);
+        color: var(--bg-primary);
+        border-color: var(--primary);
+    }
+}
+
+// ===================================
+// UTILITY CLASSES
+// ===================================
+
+/**
+ * Classe base para overlays
+ */
+.overlay {
+    @include overlay-base;
+}
+
+/**
+ * Overlay compacto
+ */
+.overlay-compact {
+    @include overlay-compact;
+}
+
+/**
+ * Botão de pin
+ */
+.overlay-pin-btn {
+    @include overlay-pin-button;
+}
+
+/**
+ * Container horizontal para controles
+ */
+.overlay-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/**
+ * Separador vertical
+ */
+.overlay-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 var(--spacing-xs);
+}
+
+// ===================================
+// TRANSIÇÕES
+// ===================================
+
+/**
+ * Fade in/out
+ */
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+    transition: opacity 0.3s var(--ease-smooth);
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+    opacity: 0;
+}
+
+/**
+ * Slide down (top)
+ */
+.overlay-slide-down-enter-active,
+.overlay-slide-down-leave-active {
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.overlay-slide-down-enter-from,
+.overlay-slide-down-leave-to {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+/**
+ * Slide up (bottom)
+ */
+.overlay-slide-up-enter-active,
+.overlay-slide-up-leave-active {
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.overlay-slide-up-enter-from,
+.overlay-slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/**
+ * Scale
+ */
+.overlay-scale-enter-active,
+.overlay-scale-leave-active {
+    transition: all 0.2s var(--ease-smooth);
+}
+
+.overlay-scale-enter-from,
+.overlay-scale-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+}
