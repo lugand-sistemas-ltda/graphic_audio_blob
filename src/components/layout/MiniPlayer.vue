@@ -1,23 +1,14 @@
 <template>
-    <AutoHideOverlay 
-        position="bottom-center" 
-        :hide-delay="4000"
-        :initial-fixed="false"
-        transition-name="overlay-slide"
-        :z-index="10000"
-    >
+    <AutoHideOverlay position="bottom-center" :hide-delay="4000" :initial-fixed="false" transition-name="overlay-slide"
+        :z-index="10000">
         <template #default="{ isFixed, toggleFixed }">
             <div class="mini-player">
                 <!-- Pin button -->
-                <button 
-                    class="mini-player__pin" 
-                    :class="{ 'is-fixed': isFixed }"
-                    @click="handleToggleFixed(toggleFixed, isFixed)"
-                    :title="isFixed ? 'Unpin player' : 'Pin player'"
-                >
+                <button class="mini-player__pin" :class="{ 'is-fixed': isFixed }"
+                    @click="handleToggleFixed(toggleFixed, isFixed)" :title="isFixed ? 'Unpin player' : 'Pin player'">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M19 12l-7 7-7-7" v-if="!isFixed"/>
-                        <circle cx="12" cy="12" r="3" v-if="isFixed"/>
+                        <path d="M12 5v14M19 12l-7 7-7-7" v-if="!isFixed" />
+                        <circle cx="12" cy="12" r="3" v-if="isFixed" />
                     </svg>
                 </button>
 
@@ -28,18 +19,16 @@
                     <div class="mini-player__info-header">
                         <Tooltip :text="currentTrackName">
                             <template #trigger>
-                                <span class="mini-player__track-name">{{ currentTrackName }}</span>
+                                <span class="mini-player__track-name text-truncate-150">{{ currentTrackName }}</span>
                             </template>
                         </Tooltip>
-                        <span class="mini-player__track-time">{{ formatTime(audioGlobal.state.value.currentTime) }} / {{ formatTime(audioGlobal.state.value.duration) }}</span>
+                        <span class="mini-player__track-time">{{ formatTime(audioGlobal.state.value.currentTime) }} / {{
+                            formatTime(audioGlobal.state.value.duration) }}</span>
                     </div>
                     <!-- Progress bar -->
                     <div class="mini-player__progress-container">
-                        <ProgressBar
-                            :value="audioGlobal.state.value.currentTime || 0"
-                            :max="audioGlobal.state.value.duration || 100"
-                            @seek="onSeek"
-                        />
+                        <ProgressBar :value="audioGlobal.state.value.currentTime || 0"
+                            :max="audioGlobal.state.value.duration || 100" @seek="onSeek" />
                     </div>
                 </div>
 
@@ -48,38 +37,34 @@
                 <!-- Controls -->
                 <div class="mini-player__controls">
                     <!-- Previous -->
-                    <button 
-                        class="mini-player__btn"
-                        @click="previousTrack"
-                        :disabled="audioGlobal.state.value.currentTrackIndex === 0"
-                        title="Previous track"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    <button class="mini-player__btn" @click="previousTrack"
+                        :disabled="audioGlobal.state.value.currentTrackIndex === 0" title="Previous track">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 3H5V17H3V3Z" fill="currentColor" />
+                            <path d="M7 10L17 3V17L7 10Z" fill="currentColor" />
                         </svg>
                     </button>
 
                     <!-- Play/Pause -->
-                    <button 
-                        class="mini-player__btn mini-player__btn--primary"
-                        @click="togglePlay"
-                        title="Play/Pause"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path v-if="!audioGlobal.state.value.isPlaying" d="M8 5v14l11-7z"/>
-                            <path v-else d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+                    <button class="mini-player__btn mini-player__btn--primary" @click="togglePlay" title="Play/Pause">
+                        <svg v-if="!audioGlobal.state.value.isPlaying" width="20" height="20" viewBox="0 0 20 20"
+                            fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 3L17 10L5 17V3Z" fill="currentColor" />
+                        </svg>
+                        <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 3H8V17H4V3Z" fill="currentColor" />
+                            <path d="M12 3H16V17H12V3Z" fill="currentColor" />
                         </svg>
                     </button>
 
                     <!-- Next -->
-                    <button 
-                        class="mini-player__btn"
-                        @click="nextTrack"
+                    <button class="mini-player__btn" @click="nextTrack"
                         :disabled="audioGlobal.state.value.currentTrackIndex >= audioGlobal.state.value.tracks.length - 1"
-                        title="Next track"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                        title="Next track">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 3V17L13 10L3 3Z" fill="currentColor" />
+                            <path d="M15 3H17V17H15V3Z" fill="currentColor" />
                         </svg>
                     </button>
                 </div>
@@ -88,47 +73,30 @@
 
                 <!-- Volume -->
                 <div class="mini-player__volume">
-                    <button 
-                        class="mini-player__btn mini-player__btn--icon"
-                        @click="toggleMute"
-                        title="Mute/Unmute"
-                    >
+                    <button class="mini-player__btn mini-player__btn--icon" @click="toggleMute" title="Mute/Unmute">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path v-if="audioGlobal.state.value.volume > 0.5" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                            <path v-else-if="audioGlobal.state.value.volume > 0" d="M7 9v6h4l5 5V4l-5 5H7z"/>
-                            <path v-else d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                            <path v-if="audioGlobal.state.value.volume > 0.5"
+                                d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                            <path v-else-if="audioGlobal.state.value.volume > 0" d="M7 9v6h4l5 5V4l-5 5H7z" />
+                            <path v-else
+                                d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
                         </svg>
                     </button>
-                    <input 
-                        type="range" 
-                        class="mini-player__volume-slider"
-                        min="0" 
-                        max="100"
-                        :value="volumePercent"
-                        @input="handleVolumeChange"
-                        title="Volume"
-                    />
+                    <input type="range" class="mini-player__volume-slider" min="0" max="100" :value="volumePercent"
+                        @input="handleVolumeChange" title="Volume" />
                     <span class="mini-player__volume-value">{{ volumePercent }}%</span>
                 </div>
 
                 <div class="mini-player__divider"></div>
 
                 <!-- Playlist button -->
-                <ExpandableList
-                    expand-direction="up"
-                    :max-height="300"
-                    trigger-text="PLAYLIST"
-                    title="Show playlist"
-                    :close-on-click-outside="true"
-                >
+                <ExpandableList expand-direction="up" :max-height="300" trigger-text="PLAYLIST" title="Show playlist"
+                    :close-on-click-outside="true">
                     <div class="mini-player__playlist">
-                        <div 
-                            v-for="(track, index) in audioGlobal.state.value.tracks"
-                            :key="index"
+                        <div v-for="(track, index) in audioGlobal.state.value.tracks" :key="index"
                             class="mini-player__playlist-item"
                             :class="{ 'is-active': index === audioGlobal.state.value.currentTrackIndex }"
-                            @click="selectTrack(index)"
-                        >
+                            @click="selectTrack(index)">
                             <span class="mini-player__playlist-number">{{ String(index + 1).padStart(2, '0') }}</span>
                             <span class="mini-player__playlist-name">{{ track.name }}</span>
                             <span v-if="track.duration" class="mini-player__playlist-duration">
@@ -283,7 +251,7 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     max-width: 800px;
     position: relative; // Para o ::before funcionar
     margin-bottom: 2rem; // Afasta do fundo da tela
-    
+
     // Cores do tema (igual ao AudioControls/lower-menu)
     background: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(15px);
@@ -291,7 +259,7 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     box-shadow:
         0 0 30px rgba(var(--theme-primary-rgb), 0.2),
         inset 0 0 30px rgba(var(--theme-primary-rgb), 0.05);
-    
+
     // Efeito de scanline
     &::before {
         content: '';
@@ -323,13 +291,13 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     z-index: 1;
     color: var(--color-accent);
     border-color: var(--color-border);
-    
+
     &:hover {
         color: var(--theme-primary);
         border-color: var(--theme-primary);
         box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.3);
     }
-    
+
     &.is-fixed {
         color: var(--theme-primary);
         background: rgba(var(--theme-primary-rgb), 0.1);
@@ -363,13 +331,11 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--color-accent);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     font-family: 'Courier New', monospace;
     letter-spacing: 1px;
     text-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.5);
-    flex: 1;
+    // Truncamento agora é feito pela classe utility .text-truncate-200
+    // Não precisa mais de max-width aqui
 }
 
 .mini-player__track-time {
@@ -398,6 +364,8 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     border-radius: var(--radius-sm);
     width: 32px;
     height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -406,10 +374,15 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
     color: var(--color-accent);
     position: relative;
     z-index: 1;
+    overflow: visible; // Garante que SVGs não sejam cortados
 
     svg {
         position: relative;
-        z-index: 1;
+        z-index: 2;
+        fill: currentColor;
+        color: inherit;
+        display: block; // Remove espaço em branco do inline
+        flex-shrink: 0;
     }
 
     &:hover:not(:disabled) {
@@ -532,7 +505,7 @@ watch(() => audioGlobal.state.value.isPlaying, (playing) => {
         background: rgba(var(--theme-primary-rgb), 0.2);
         border-color: var(--theme-primary);
         box-shadow: 0 0 15px rgba(var(--theme-primary-rgb), 0.3);
-        
+
         .mini-player__playlist-name {
             color: var(--theme-primary);
             font-weight: 600;

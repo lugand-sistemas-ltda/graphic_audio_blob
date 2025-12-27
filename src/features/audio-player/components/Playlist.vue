@@ -34,6 +34,8 @@ const showPlaylist = ref(false)
 </script>
 
 <style scoped lang="scss">
+@use '../../../style/mixins' as *;
+
 .playlist-container {
     margin-top: 1rem;
 }
@@ -69,24 +71,7 @@ const showPlaylist = ref(false)
     padding: 0.5rem;
     border: 1px solid rgba(var(--theme-primary-rgb), 0.2);
     box-shadow: inset 0 0 20px rgba(var(--theme-primary-rgb), 0.05);
-
-    &::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgba(var(--theme-primary-rgb), 0.05);
-        border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(var(--theme-primary-rgb), 0.3);
-        border-radius: 4px;
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.5);
-        }
-    }
+    @include custom-scrollbar(8px, 0.05, 0.3, 0.5);
 }
 
 .playlist-item {

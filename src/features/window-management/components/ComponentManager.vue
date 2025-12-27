@@ -168,6 +168,7 @@ const toggleVisibility = (componentId: string) => {
 
 <style scoped lang="scss">
 @use '../../../style/base/variables' as *;
+@use '../../../style/mixins' as *;
 
 .component-manager {
     padding: var(--spacing-md);
@@ -214,23 +215,7 @@ const toggleVisibility = (componentId: string) => {
     margin-bottom: var(--spacing-md);
     max-height: 300px;
     overflow-y: auto;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgba(var(--theme-primary-rgb), 0.1);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(var(--theme-primary-rgb), 0.3);
-        border-radius: 3px;
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.5);
-        }
-    }
+    @include custom-scrollbar(6px, 0.1, 0.3, 0.5);
 }
 
 .picker-category {

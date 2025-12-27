@@ -117,6 +117,7 @@ function handleButtonClick(buttonId: string) {
 
 <style scoped lang="scss">
 @use '../../style/base/variables' as *;
+@use '../../style/mixins' as *;
 
 // Cores específicas para cada tipo de alert (usando paleta centralizada)
 $alert-colors: (
@@ -402,25 +403,8 @@ $alert-colors: (
         }
     }
 
-    // Scroll customizado (tema)
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgba(var(--theme-primary-rgb), 0.05);
-        border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(var(--theme-primary-rgb), 0.6);
-        border-radius: 3px;
-        transition: background 0.2s ease;
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.8);
-        }
-    }
+    // Scroll customizado usando mixin padronizado
+    @include custom-scrollbar(6px, 0.05, 0.6, 0.8);
 }
 
 // ===================================

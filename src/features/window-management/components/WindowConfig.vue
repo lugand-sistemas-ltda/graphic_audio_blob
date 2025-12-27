@@ -319,6 +319,7 @@ const getCategoryIcon = (category: string): string => {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 4px;
     margin-top: var(--spacing-xs);
+    @include custom-scrollbar(6px, 0.05, 0.3, 0.5);
 
     .picker-item {
         display: flex;
@@ -362,6 +363,7 @@ const getCategoryIcon = (category: string): string => {
     gap: var(--spacing-xs);
     max-height: 200px;
     overflow-y: auto;
+    @include custom-scrollbar(6px, 0.05, 0.3, 0.5);
 
     .component-item {
         display: flex;

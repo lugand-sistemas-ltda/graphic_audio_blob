@@ -2,6 +2,44 @@
 // REUSABLE MIXINS
 // ==============================================
 
+// ==============================================
+// SCROLLBAR THEMING
+// ==============================================
+// Mixin para scrollbar customizado com tema
+// Uso: @include custom-scrollbar;
+// Ou com largura customizada: @include custom-scrollbar(6px);
+@mixin custom-scrollbar($width: 8px, $track-opacity: 0.05, $thumb-opacity: 0.3, $thumb-hover-opacity: 0.5) {
+
+    // Webkit browsers (Chrome, Safari, Edge)
+    &::-webkit-scrollbar {
+        width: $width;
+        height: $width; // Para scrollbar horizontal
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(var(--theme-primary-rgb), $track-opacity);
+        border-radius: calc($width / 2);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(var(--theme-primary-rgb), $thumb-opacity);
+        border-radius: calc($width / 2);
+        transition: background 0.2s ease;
+
+        &:hover {
+            background: rgba(var(--theme-primary-rgb), $thumb-hover-opacity);
+        }
+    }
+
+    // Firefox
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--theme-primary-rgb), $thumb-opacity) rgba(var(--theme-primary-rgb), $track-opacity);
+}
+
+// ==============================================
+// PANEL & CONTAINER MIXINS
+// ==============================================
+
 // Matrix panel container
 @mixin matrix-panel {
     background: rgba(0, 0, 0, 0.95);
@@ -217,27 +255,6 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    // Estilização da scrollbar
-    &::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgba(var(--theme-primary-rgb), 0.05);
-        border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(var(--theme-primary-rgb), 0.3);
-        border-radius: 4px;
-        transition: background var(--transition-base);
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.5);
-        }
-    }
-
-    // Firefox scrollbar
-    scrollbar-width: thin;
-    scrollbar-color: rgba(var(--theme-primary-rgb), 0.3) rgba(var(--theme-primary-rgb), 0.05);
+    // Scrollbar usando o mixin padronizado
+    @include custom-scrollbar(8px, 0.05, 0.3, 0.5);
 }

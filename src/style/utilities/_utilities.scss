@@ -5,6 +5,31 @@
 // Uso: Combine múltiplas classes para criar variações
 // Exemplo: class="btn btn-primary btn-shadow btn-glow"
 
+@use '../mixins' as *;
+
+// ===================================
+// SCROLLBAR UTILITIES
+// ===================================
+// Classes para scrollbar customizado com tema
+// Uso: class="custom-scrollbar" ou class="custom-scrollbar-thin"
+
+.custom-scrollbar {
+    @include custom-scrollbar(8px);
+}
+
+.custom-scrollbar-thin {
+    @include custom-scrollbar(6px);
+}
+
+.custom-scrollbar-thick {
+    @include custom-scrollbar(12px);
+}
+
+// Variação com mais contraste
+.custom-scrollbar-contrast {
+    @include custom-scrollbar(8px, 0.1, 0.5, 0.7);
+}
+
 // ===================================
 // BUTTON UTILITIES
 // ===================================
@@ -371,6 +396,55 @@
 
 .text-theme {
     color: var(--color-theme-primary);
+}
+
+// Text Truncation (Quebra de texto com ellipsis)
+// Uso: class="text-truncate" ou class="text-truncate-200" (com largura específica)
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+// Variações com larguras predefinidas
+.text-truncate-100 {
+    @extend .text-truncate;
+    max-width: 100px;
+}
+
+.text-truncate-150 {
+    @extend .text-truncate;
+    max-width: 150px;
+}
+
+.text-truncate-200 {
+    @extend .text-truncate;
+    max-width: 200px;
+}
+
+.text-truncate-250 {
+    @extend .text-truncate;
+    max-width: 250px;
+}
+
+.text-truncate-300 {
+    @extend .text-truncate;
+    max-width: 300px;
+}
+
+.text-truncate-400 {
+    @extend .text-truncate;
+    max-width: 400px;
+}
+
+// Para uso em containers flex
+.text-truncate-flex {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0; // Importante para truncate funcionar em flex children
+    flex-shrink: 1;
 }
 
 // ===================================

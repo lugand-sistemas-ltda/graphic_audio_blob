@@ -1,38 +1,22 @@
 <template>
     <div class="expandable-list" ref="containerRef">
         <!-- Trigger button -->
-        <button 
-            class="expandable-list__trigger"
-            @click="toggle"
-            :class="{ 'is-open': isOpen }"
-            :title="title"
-        >
+        <button class="expandable-list__trigger" @click="toggle" :class="{ 'is-open': isOpen }" :title="title">
             <slot name="trigger" :is-open="isOpen">
                 <span>{{ triggerText }}</span>
-                <svg 
-                    class="expandable-list__icon" 
-                    :class="{ 'is-up': expandDirection === 'up' }"
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="currentColor"
-                >
-                    <path d="M7 10l5 5 5-5z"/>
+                <svg class="expandable-list__icon" :class="{ 'is-up': expandDirection === 'up' }" width="16" height="16"
+                    viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
                 </svg>
             </slot>
         </button>
 
         <!-- Expandable content -->
         <Transition :name="transitionName">
-            <div 
-                v-if="isOpen" 
-                class="expandable-list__content"
-                :class="[
-                    `expandable-list__content--${expandDirection}`,
-                    { 'has-scroll': maxHeight }
-                ]"
-                :style="contentStyle"
-            >
+            <div v-if="isOpen" class="expandable-list__content" :class="[
+                `expandable-list__content--${expandDirection}`,
+                { 'has-scroll': maxHeight }
+            ]" :style="contentStyle">
                 <div class="expandable-list__inner">
                     <slot :is-open="isOpen" :close="close" />
                 </div>
@@ -66,32 +50,32 @@ export interface Props {
      * Direção de expansão
      */
     expandDirection?: 'up' | 'down'
-    
+
     /**
      * Altura máxima do conteúdo (com scroll)
      */
     maxHeight?: number
-    
+
     /**
      * Texto do botão trigger (se não usar slot)
      */
     triggerText?: string
-    
+
     /**
      * Título (tooltip) do botão
      */
     title?: string
-    
+
     /**
      * Nome da transição CSS
      */
     transitionName?: string
-    
+
     /**
      * Inicialmente aberto
      */
     initiallyOpen?: boolean
-    
+
     /**
      * Fecha ao clicar fora
      */
@@ -127,7 +111,7 @@ const containerRef = ref<HTMLElement | null>(null)
 
 const contentStyle = computed(() => {
     if (!props.maxHeight) return {}
-    
+
     return {
         maxHeight: `${props.maxHeight}px`,
         overflowY: 'auto' as const
@@ -163,7 +147,7 @@ function toggle() {
  */
 function handleClickOutside(event: MouseEvent) {
     if (!props.closeOnClickOutside || !isOpen.value) return
-    
+
     const target = event.target as Node
     if (containerRef.value && !containerRef.value.contains(target)) {
         close()
@@ -197,6 +181,7 @@ defineExpose({
 
 <style scoped lang="scss">
 @use '../../../../style/base/variables' as *;
+@use '../../../../style/mixins' as *;
 
 .expandable-list {
     position: relative;
@@ -234,14 +219,14 @@ defineExpose({
 
 .expandable-list__icon {
     transition: transform 0.3s var(--ease-smooth);
-    
+
     &.is-up {
         transform: rotate(180deg);
     }
-    
+
     .expandable-list__trigger.is-open & {
         transform: rotate(180deg);
-        
+
         &.is-up {
             transform: rotate(0deg);
         }
@@ -259,7 +244,7 @@ defineExpose({
     box-shadow:
         0 0 30px rgba(var(--theme-primary-rgb), 0.2),
         inset 0 0 30px rgba(var(--theme-primary-rgb), 0.05);
-    
+
     // Scanline effect
     &::before {
         content: '';
@@ -289,24 +274,7 @@ defineExpose({
     }
 
     &.has-scroll {
-        // Scrollbar personalizado
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(var(--theme-primary-rgb), 0.05);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(var(--theme-primary-rgb), 0.3);
-            border-radius: 3px;
-            
-            &:hover {
-                background: rgba(var(--theme-primary-rgb), 0.5);
-            }
-        }
+        @include custom-scrollbar(6px, 0.05, 0.3, 0.5);
     }
 }
 

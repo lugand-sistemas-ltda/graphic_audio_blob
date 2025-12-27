@@ -56,6 +56,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../../style/base/variables' as *;
+@use '../../style/mixins' as *;
 
 .app-sidebar {
     position: fixed;
@@ -106,23 +107,7 @@ onUnmounted(() => {
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-
-    &::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgba(var(--theme-primary-rgb), 0.1);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(var(--theme-primary-rgb), 0.3);
-        border-radius: 4px;
-
-        &:hover {
-            background: rgba(var(--theme-primary-rgb), 0.5);
-        }
-    }
+    @include custom-scrollbar(8px, 0.1, 0.3, 0.5);
 }
 
 .sidebar-header {
