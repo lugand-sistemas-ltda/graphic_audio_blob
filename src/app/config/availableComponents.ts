@@ -28,6 +28,12 @@ export const AVAILABLE_COMPONENTS: AvailableComponent[] = [
         collapsibleId: 'orb-effect-control'
     },
     {
+        id: 'particles-effect-control',
+        name: 'Particles Effect Control',
+        category: 'visual',
+        collapsibleId: 'particles-effect-control'
+    },
+    {
         id: 'frequency-visualizer',
         name: 'Frequency Spectrum',
         category: 'visual',

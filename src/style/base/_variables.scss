@@ -96,6 +96,12 @@
     --transition-slow: 0.4s ease;
 
     // ============ Z-INDEX SCALE ============
+    // Visual Effects (backgrounds layers)
+    --z-effect-gradient: -2; // Gradient no body (mais atrás)
+    --z-effect-particles: -1; // Particles canvas (na frente do gradient)
+    --z-effect-waveform: -1; // Waveform canvas (mesmo nível de particles)
+
+    // UI Layers
     --z-base: 1;
     --z-overlay: 100;
     --z-modal: 500;

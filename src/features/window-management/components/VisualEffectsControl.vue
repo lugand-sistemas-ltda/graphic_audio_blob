@@ -16,11 +16,11 @@
                     <span v-if="hasEffect('gradient')" class="effect-status">ON</span>
                 </label>
 
-                <label class="effect-item disabled">
-                    <input type="checkbox" :checked="hasEffect('particles')" disabled />
+                <label class="effect-item" :class="{ active: hasEffect('particles') }">
+                    <input type="checkbox" :checked="hasEffect('particles')" @change="toggleEffect('particles')" />
                     <span class="effect-icon">✨</span>
                     <span class="effect-name">Particles</span>
-                    <span class="coming-soon">SOON</span>
+                    <span v-if="hasEffect('particles')" class="effect-status">ON</span>
                 </label>
 
                 <label class="effect-item disabled">

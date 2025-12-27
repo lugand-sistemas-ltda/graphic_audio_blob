@@ -2,7 +2,7 @@
 import { RouterView, useRoute } from 'vue-router'
 import { onMounted, onUnmounted, watch, ref, provide, inject } from 'vue'
 import { useAudioAnalyzer } from './features/audio-player/composables/useAudioAnalyzer'
-import { useSpectralVisualEffect, useRgbMode, useChameleonMode } from './features/visual-effects'
+import { useVisualEffectsManager, useRgbMode, useChameleonMode } from './features/visual-effects'
 import { usePlaylist } from './features/audio-player/composables/usePlaylist'
 import { useComponentManager } from './features/window-management'
 import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
@@ -97,14 +97,30 @@ useChameleonMode()
 // Inicializa o estado global
 useGlobalState({ enableLogging: true }) // Habilitado para debug
 
-// Inicializa o efeito visual espectral com dados de áudio GLOBAL
-// TODAS as janelas podem ter efeitos visuais usando frequencyData do globalAudio
-const visualEffect = useSpectralVisualEffect({
+// ========================================
+// VISUAL EFFECTS MANAGER (Fonte Única)
+// ========================================
+// Gerencia TODOS os efeitos visuais de forma centralizada e isolada
+// Cada efeito reage automaticamente ao estado global (window.effects)
+const visualEffectsManager = useVisualEffectsManager({
+    windowId: windowId,
     audioDataProvider: () => globalAudio.state.value.frequencyData,
-    enableMouseControl: true,
-    layerCount: 8,
-    windowId: windowId
+    enableMouseControl: true
 })
+
+// Mantém referências para backward compatibility com componentes
+const visualEffect = { value: null as any }
+const particlesEffect = { value: null as any }
+
+// Watch para atualizar referências quando efeitos forem inicializados
+watch(
+    () => [visualEffectsManager.gradientEffect.value.instance, visualEffectsManager.particlesEffect.value.instance],
+    ([gradient, particles]) => {
+        visualEffect.value = gradient
+        particlesEffect.value = particles
+    },
+    { immediate: true }
+)
 
 // Estados para os componentes de debug
 const spherePosition = ref({ x: 50, y: 50 })
@@ -149,11 +165,15 @@ const handleBeatSensitivityChange = (sensitivity: number) => {
 }
 
 const handleSphereSize = (size: number) => {
-    visualEffect.setSphereSize(size)
+    if (visualEffect.value) {
+        visualEffect.value.setSphereSize(size)
+    }
 }
 
 const handleSphereReactivity = (reactivity: number) => {
-    visualEffect.setSphereReactivity(reactivity)
+    if (visualEffect.value) {
+        visualEffect.value.setSphereReactivity(reactivity)
+    }
 }
 
 // ⚠️ PROVIDE DEVE VIR ANTES DE QUALQUER RENDER ⚠️
@@ -175,7 +195,10 @@ provide('componentManager', componentManager)
 provide('audio', audio)
 provide('globalAudio', globalAudio)
 provide('visualEffect', visualEffect)
+provide('particlesEffect', particlesEffect)
 provide('spherePosition', spherePosition)
+// 🎨 Provide do Visual Effects Manager (controles centralizados)
+provide('visualEffectsManager', visualEffectsManager)
 
 // ⚠️ DEPRECATED: Esses provides não são mais necessários
 // Componentes devem usar GlobalAudio diretamente:
@@ -204,8 +227,10 @@ provide('handlers', {
 // Atualiza posição da esfera e dados de áudio em tempo real
 const updateDebugData = () => {
     // Atualiza posição da esfera (precisa criar novo objeto para reatividade)
-    const newPosition = visualEffect.getSpherePosition()
-    spherePosition.value = { ...newPosition }
+    if (visualEffect.value && visualEffect.value.getSpherePosition) {
+        const newPosition = visualEffect.value.getSpherePosition()
+        spherePosition.value = { ...newPosition }
+    }
 
     // Atualiza dados de frequência do globalAudio (TODAS as janelas consomem daqui)
     const data = globalAudio.state.value.frequencyData

@@ -17,34 +17,6 @@
                 </div>
             </div>
 
-            <!-- Visual Effects -->
-            <div class="config-section">
-                <h4 class="section-title">[ VISUAL EFFECTS ]</h4>
-
-                <div class="effect-toggle">
-                    <label class="effect-label">
-                        <input type="checkbox" :checked="hasEffect('gradient')" @change="toggleEffect('gradient')" />
-                        <span>Gradient Sphere</span>
-                    </label>
-                </div>
-
-                <div class="effect-toggle">
-                    <label class="effect-label">
-                        <input type="checkbox" :checked="hasEffect('particles')" @change="toggleEffect('particles')"
-                            disabled />
-                        <span>Particles (Coming Soon)</span>
-                    </label>
-                </div>
-
-                <div class="effect-toggle">
-                    <label class="effect-label">
-                        <input type="checkbox" :checked="hasEffect('waveform')" @change="toggleEffect('waveform')"
-                            disabled />
-                        <span>Waveform (Coming Soon)</span>
-                    </label>
-                </div>
-            </div>
-
             <!-- Components Management -->
             <div class="config-section">
                 <h4 class="section-title">[ COMPONENTS ]</h4>
@@ -105,9 +77,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useGlobalState, updateWindow, toggleWindowEffect, getWindowComponents, moveComponent } from '../../../core/state'
+import { useGlobalState, updateWindow, getWindowComponents, moveComponent } from '../../../core/state'
 import { useComponentManager } from '../composables/useComponentManager'
-import type { WindowId, VisualEffect } from '../../../core/state/types'
+import type { WindowId } from '../../../core/state/types'
 
 interface Props {
     windowId: WindowId
@@ -166,20 +138,6 @@ const updateTitle = () => {
     if (localTitle.value.trim()) {
         updateWindow(props.windowId, { title: localTitle.value.trim() })
     }
-}
-
-/**
- * Verifica se efeito está ativo
- */
-const hasEffect = (effect: VisualEffect): boolean => {
-    return windowConfig.value?.effects.includes(effect) || false
-}
-
-/**
- * Toggle efeito visual
- */
-const toggleEffect = (effect: VisualEffect) => {
-    toggleWindowEffect(props.windowId, effect)
 }
 
 /**

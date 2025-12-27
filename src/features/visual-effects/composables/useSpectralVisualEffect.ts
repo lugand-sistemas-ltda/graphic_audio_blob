@@ -1,23 +1,21 @@
-import { onUnmounted, watch } from 'vue'
+import { onUnmounted } from 'vue'
 import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
-import { useGlobalState } from '../../../core/state'
 
 interface EffectOptions {
     audioDataProvider?: () => AudioFrequencyData | null
     enableMouseControl?: boolean
     layerCount?: number
-    windowId?: string | null
 }
 
 export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     const {
         audioDataProvider,
         enableMouseControl = true,
-        layerCount = 8, // 8 camadas para 8 bandas de frequência
-        windowId = null
+        layerCount = 8 // 8 camadas para 8 bandas de frequência
     } = options
 
     let animationFrame: number | null = null
+    let gradientContainer: HTMLDivElement | null = null
     let baseSphereSize = 300
     let sphereReactivity = 100
     let currentThemeHue = 120 // Valor padrão (verde Matrix)
@@ -28,9 +26,6 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     let mouseFollowEnabled = true // Mouse follow ativo por padrão
     let autoCenterEnabled = true // Auto center ativo por padrão
     let isMouseInsideWindow = true // Detecta se mouse está na janela
-
-    // Obtém estado global para observar effects
-    const { state } = windowId ? useGlobalState() : { state: null }
 
     // Sistema de camadas espectrais
     interface SpectralLayer {
@@ -271,21 +266,28 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             )
         }
 
-        // Adiciona cor final totalmente preta (sem som = fundo preto)
-        gradientStops.push(`rgba(0, 0, 0, 1) 100%`)
+        // Adiciona cor final - TRANSPARENTE para permitir ver particles canvas acima (z-index -1)
+        gradientStops.push(`rgba(0, 0, 0, 0) 100%`)
 
-        // Aplica gradiente com efeito 3D
+        // Aplica gradiente com efeito 3D no container dedicado
         const posX = 50 + mouse3DOffset.x
         const posY = 50 + mouse3DOffset.y
 
-        document.body.style.background = `radial-gradient(circle at ${posX}% ${posY}%, ${gradientStops.join(', ')})`
+        if (gradientContainer) {
+            const gradient = `radial-gradient(circle at ${posX}% ${posY}%, ${gradientStops.join(', ')})`
+            gradientContainer.style.background = gradient
+        } else {
+            console.error('[SpectralEffect] ❌ Container não existe!')
+        }
 
         // Efeito de pulso no beat
         const beatData = audioDataProvider?.()
-        if (beatData?.beat) {
-            document.body.style.transform = `scale(1.02)`
+        if (beatData?.beat && gradientContainer) {
+            gradientContainer.style.transform = `scale(1.02)`
             setTimeout(() => {
-                document.body.style.transform = `scale(1)`
+                if (gradientContainer) {
+                    gradientContainer.style.transform = `scale(1)`
+                }
             }, 100)
         }
     }
@@ -297,13 +299,31 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             return
         }
 
+        // Tenta obter dados de áudio
+        let audioData: AudioFrequencyData | null = null
         if (audioDataProvider) {
-            const data = audioDataProvider()
-            if (data) {
-                updateLayers(data)
-                renderLayers()
+            audioData = audioDataProvider()
+        }
+
+        // Se não houver dados de áudio, usa valores padrão para manter animação
+        if (!audioData) {
+            // Cria array de frequências com valores baixos (silêncio)
+            const defaultFrequencies = new Array(32).fill(20) // 32 bandas com valor 20 (baixo)
+
+            audioData = {
+                bass: 20,
+                mid: 15,
+                treble: 10,
+                overall: 15,
+                beat: false,
+                raw: new Uint8Array(32).fill(20),
+                frequencyBands: defaultFrequencies
             }
         }
+
+        // Sempre renderiza (com dados reais ou padrão)
+        updateLayers(audioData)
+        renderLayers()
 
         animationFrame = requestAnimationFrame(animate)
     }
@@ -331,11 +351,45 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         }
     }
 
+    /**
+     * Cria container dedicado para o gradiente
+     */
+    const setupGradientContainer = () => {
+        gradientContainer = document.createElement('div')
+        gradientContainer.id = 'gradient-effect-container'
+        gradientContainer.style.position = 'fixed'
+        gradientContainer.style.top = '0'
+        gradientContainer.style.left = '0'
+        gradientContainer.style.width = '100%'
+        gradientContainer.style.height = '100%'
+        gradientContainer.style.pointerEvents = 'none'
+        gradientContainer.style.zIndex = '-2' // Gradient atrás de tudo
+        gradientContainer.style.transition = 'background 0.1s ease, transform 0.1s ease'
+        gradientContainer.style.background = 'transparent' // Inicia transparente (gradiente aplicado em renderLayers)
+
+        document.body.appendChild(gradientContainer)
+
+        console.log('[SpectralEffect] 🎨 Container criado:', gradientContainer.id)
+    }
+
+    /**
+     * Remove container do gradiente
+     */
+    const cleanupGradientContainer = () => {
+        if (gradientContainer) {
+            gradientContainer.remove()
+            gradientContainer = null
+        }
+    }
+
     const startEffect = () => {
         if (isEffectActive) return
 
         console.log('[SpectralEffect] Starting effect...')
         isEffectActive = true
+
+        // Cria container dedicado
+        setupGradientContainer()
 
         // Atualiza hue inicial
         updateThemeHue()
@@ -357,9 +411,6 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             document.addEventListener('mouseleave', handleMouseLeave)
         }
 
-        // Adiciona transição suave ao body
-        document.body.style.transition = 'background 0.1s ease, transform 0.1s ease'
-
         console.log('[SpectralEffect] Effect started, starting animation...')
         animate()
     }
@@ -378,33 +429,19 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             document.removeEventListener('mouseenter', handleMouseEnter)
             document.removeEventListener('mouseleave', handleMouseLeave)
         }
+
         if (animationFrame) {
             cancelAnimationFrame(animationFrame)
             animationFrame = null
         }
 
-        // Reseta background para preto
-        document.body.style.background = '#000000'
+        // Remove container dedicado
+        cleanupGradientContainer()
     }
 
-    // Observa mudanças nos effects da janela
-    if (state && windowId) {
-        watch(
-            () => state.windows[windowId]?.effects || [],
-            (effects) => {
-                const hasGradient = effects.includes('gradient')
-                console.log('[SpectralEffect] Effects changed:', effects, 'hasGradient:', hasGradient)
-
-                if (hasGradient && !isEffectActive) {
-                    startEffect()
-                } else if (!hasGradient && isEffectActive) {
-                    stopEffect()
-                }
-            },
-            { immediate: true }
-        )
-    }
-    // Sem windowId: não inicia automaticamente (usuário deve ativar via controles)
+    // ⚠️ WATCH REMOVIDO - Manager controla start/stop
+    // O useVisualEffectsManager é responsável por iniciar/parar baseado no estado global
+    // Manter watch aqui causava conflito duplo de inicialização
 
     onUnmounted(stopEffect)
 

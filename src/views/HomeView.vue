@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, watch, onMounted } from 'vue'
 import { SoundControl } from '../features/audio-player'
-import { OrbEffectControl, MatrixCharacter, FrequencyVisualizer } from '../features/visual-effects'
+import { OrbEffectControl, MatrixCharacter, FrequencyVisualizer, ParticlesEffectControl } from '../features/visual-effects'
 import { VisualEffectsControl } from '../features/window-management'
 import { DebugTerminal } from '../features/debug-tools'
 import { ThemeSelector } from '../features/theme-system'
@@ -32,25 +32,17 @@ const currentVolume = computed(() => globalAudio.state.value.volume)
 const visualEffect = inject<any>('visualEffect', null)
 const spherePosition = inject<any>('spherePosition', null)
 
+// 🎨 Visual Effects Manager (controles centralizados)
+const visualEffectsManager = inject<any>('visualEffectsManager', null)
+
 // Debug
 console.log('[HomeView] 🎯 Dependencies:', {
     windowId,
     globalAudio: !!globalAudio,
     visualEffect: !!visualEffect,
+    visualEffectsManager: !!visualEffectsManager,
     hasFrequencyData: globalAudio.state.value.frequencyData.frequencyBands.length > 0
 })
-
-// DEBUG: Monitora dados de áudio
-watch(() => globalAudio.state.value.frequencyData, (data) => {
-    if (data.overall > 0) {
-        console.log('[HomeView] 📊 Receiving audio data:', {
-            bass: data.bass.toFixed(0),
-            mid: data.mid.toFixed(0),
-            treble: data.treble.toFixed(0),
-            beat: data.beat
-        })
-    }
-}, { deep: true })
 
 // ========================================
 // COMPONENTES DO GLOBALSTATE (Fonte única da verdade)
@@ -166,20 +158,63 @@ onMounted(() => {
     }
 })
 
-const handleSphereSize = (size: number) => {
-    visualEffect?.setSphereSize(size)
+// ========================================
+// VISUAL EFFECTS HANDLERS (Valores Normalizados 0-1)
+// ========================================
+// Gradient/Orb
+const handleEffectSizeChange = (normalizedSize: number) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.gradient.setSize(normalizedSize)
+    }
 }
 
-const handleSphereReactivity = (reactivity: number) => {
-    visualEffect?.setSphereReactivity(reactivity)
+const handleEffectSensitivityChange = (normalizedSensitivity: number) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.gradient.setReactivity(normalizedSensitivity)
+    }
 }
 
 const handleMouseFollowChange = (enabled: boolean) => {
-    visualEffect?.setMouseFollow(enabled)
+    if (visualEffectsManager) {
+        visualEffectsManager.gradient.setMouseFollow(enabled)
+    }
 }
 
 const handleAutoCenterChange = (enabled: boolean) => {
-    visualEffect?.setAutoCenter(enabled)
+    if (visualEffectsManager) {
+        visualEffectsManager.gradient.setAutoCenter(enabled)
+    }
+}
+
+// Particles (controles compartilhados + específicos)
+const handleParticleCountChange = (count: number) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.particles.setParticleCount(count)
+    }
+}
+
+const handleParticlesEffectSizeChange = (normalizedSize: number) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.particles.setSpawnSize(normalizedSize)
+    }
+}
+
+const handleParticlesEffectSensitivityChange = (normalizedSensitivity: number) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.particles.setReactivity(normalizedSensitivity)
+    }
+}
+
+const handleParticlesMouseFollowChange = (enabled: boolean) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.particles.setMouseFollow(enabled)
+    }
+}
+
+const handleParticlesAutoCenterChange = (enabled: boolean) => {
+    if (visualEffectsManager) {
+        visualEffectsManager.particles.setAutoCenter(enabled)
+    }
 }
 
 // ========================================
@@ -220,15 +255,21 @@ const showVisualEffectsControl = computed(() => {
     return comp?.visible ?? false
 })
 
+const showParticlesEffectControl = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'particles-effect-control')
+    return comp?.visible ?? false
+})
+
 // Debug: Monitora mudanças nos computeds
-watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTerminal, showFrequencyVisualizer, showVisualEffectsControl], (values) => {
+watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTerminal, showFrequencyVisualizer, showVisualEffectsControl, showParticlesEffectControl], (values) => {
     console.log('[HomeView] 🎨 Visibility computeds updated:', {
         soundControl: values[0],
         orbEffect: values[1],
         themeSelector: values[2],
         debug: values[3],
         frequency: values[4],
-        visualEffects: values[5]
+        visualEffects: values[5],
+        particles: values[6]
     })
 }, { immediate: true })
 
@@ -283,10 +324,17 @@ const hasPrevious = computed(() => {
         <!-- Visual Effects Control -->
         <VisualEffectsControl v-if="showVisualEffectsControl" />
 
-        <!-- Orb Effect Control -->
+        <!-- Orb Effect Control (Valores Normalizados 0-1) -->
         <OrbEffectControl v-if="showOrbEffectControl" @beat-sensitivity-change="handleBeatSensitivityChange"
-            @sphere-size-change="handleSphereSize" @sphere-reactivity-change="handleSphereReactivity"
+            @effect-size-change="handleEffectSizeChange" @effect-sensitivity-change="handleEffectSensitivityChange"
             @mouse-follow-change="handleMouseFollowChange" @auto-center-change="handleAutoCenterChange" />
+
+        <!-- Particles Effect Control (Valores Normalizados 0-1) -->
+        <ParticlesEffectControl v-if="showParticlesEffectControl" @particle-count-change="handleParticleCountChange"
+            @effect-size-change="handleParticlesEffectSizeChange"
+            @effect-sensitivity-change="handleParticlesEffectSensitivityChange"
+            @mouse-follow-change="handleParticlesMouseFollowChange"
+            @auto-center-change="handleParticlesAutoCenterChange" />
 
         <!-- Theme Selector (UNIVERSAL - funciona em todas as janelas) -->
         <ThemeSelector v-if="showThemeSelector" />

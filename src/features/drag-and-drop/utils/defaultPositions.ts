@@ -43,6 +43,13 @@ export const defaultPositions = {
             y: SPACING + 550 // Abaixo do sound control
         }
     },
+    'particles-effect-control': () => {
+        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
+        return {
+            x: Math.max(viewportWidth - 420, SPACING),
+            y: SPACING + 900 // Abaixo do orb effect control
+        }
+    },
     'matrix-character': () => {
         const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
         const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080
