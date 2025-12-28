@@ -7,47 +7,49 @@
             </button>
         </div>
         <div v-if="isExpanded" class="terminal-content">
-            <div class="terminal-line">
-                <span class="var-name">sphere.position.x:</span>
-                <span class="var-value">{{ position.x.toFixed(2) }}%</span>
+            <!-- AUDIO GLOBAL -->
+            <div class="terminal-section">
+                <div class="section-label">[ AUDIO ]</div>
+                <div class="terminal-line">
+                    <span class="var-name">playing:</span>
+                    <span class="var-value" :class="{ active: isPlaying }">{{ isPlaying ? 'TRUE' : 'FALSE' }}</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="var-name">time:</span>
+                    <span class="var-value">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="var-name">volume:</span>
+                    <span class="var-value">{{ Math.round(volume * 100) }}%</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="var-name">beat.detected:</span>
+                    <span class="var-value beat-indicator" :class="{ pulse: beatDetected }">{{ beatDetected ? '■' : '□' }}</span>
+                </div>
             </div>
-            <div class="terminal-line">
-                <span class="var-name">sphere.position.y:</span>
-                <span class="var-value">{{ position.y.toFixed(2) }}%</span>
+
+            <!-- THEME GLOBAL -->
+            <div class="terminal-section">
+                <div class="section-label">[ THEME ]</div>
+                <div class="terminal-line">
+                    <span class="var-name">current:</span>
+                    <span class="var-value">{{ currentTheme || 'matrix-green' }}</span>
+                </div>
             </div>
-            <div class="terminal-line separator">
-                <span class="var-name">sphere.size:</span>
-                <span class="var-value">{{ sphereSize }}px</span>
+
+            <!-- SYSTEM -->
+            <div class="terminal-section">
+                <div class="section-label">[ SYSTEM ]</div>
+                <div class="terminal-line">
+                    <span class="var-name">fps:</span>
+                    <span class="var-value">{{ fps }}</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="var-name">window.id:</span>
+                    <span class="var-value">{{ windowId }}</span>
+                </div>
             </div>
-            <div class="terminal-line">
-                <span class="var-name">sphere.reactivity:</span>
-                <span class="var-value">{{ sphereReactivity }}%</span>
-            </div>
-            <div class="terminal-line separator">
-                <span class="var-name">audio.playing:</span>
-                <span class="var-value" :class="{ active: isPlaying }">{{ isPlaying ? 'TRUE' : 'FALSE' }}</span>
-            </div>
-            <div class="terminal-line">
-                <span class="var-name">audio.time:</span>
-                <span class="var-value">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
-            </div>
-            <div class="terminal-line">
-                <span class="var-name">audio.volume:</span>
-                <span class="var-value">{{ Math.round(volume * 100) }}%</span>
-            </div>
-            <div class="terminal-line separator">
-                <span class="var-name">beat.detected:</span>
-                <span class="var-value beat-indicator" :class="{ pulse: beatDetected }">{{ beatDetected ? '■' : '□'
-                    }}</span>
-            </div>
-            <div class="terminal-line">
-                <span class="var-name">layers.active:</span>
-                <span class="var-value">{{ layerCount }} / 8</span>
-            </div>
-            <div class="terminal-line">
-                <span class="var-name">fps:</span>
-                <span class="var-value">{{ fps }}</span>
-            </div>
+
             <div class="terminal-footer">
                 <span class="timestamp">{{ timestamp }}</span>
             </div>
@@ -56,9 +58,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, unref, computed, type MaybeRef } from 'vue'
+import { ref, onMounted, onUnmounted, inject } from 'vue'
 import { useCollapsible } from '../../../shared'
 import { useVisibilityReload } from '../../window-management'
+import { useGlobalAudio, useGlobalTheme } from '../../../core/global'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'debug-terminal', initialState: true })
 
@@ -68,31 +71,50 @@ useVisibilityReload({
     onVisible: reloadState
 })
 
-interface Props {
-    spherePosition: MaybeRef<{ x: number; y: number }>
-    sphereSize: number
-    sphereReactivity: number
-    isPlaying: boolean
-    currentTime: number
-    duration: number
-    volume: number
-    beatDetected: boolean
-    layerCount: number
-}
+// ========================================
+// GLOBAL STATE (apenas dados globais)
+// ========================================
+const globalAudio = useGlobalAudio()
+const globalTheme = useGlobalTheme()
+const windowId = inject<string>('windowId', 'unknown')
 
-const props = defineProps<Props>()
+// Computed: Dados de áudio
+const isPlaying = ref(false)
+const currentTime = ref(0)
+const duration = ref(0)
+const volume = ref(0)
+const beatDetected = ref(false)
 
-// Unwrap spherePosition se for um ref
-const position = computed(() => {
-    const pos = unref(props.spherePosition)
-    return pos || { x: 50, y: 50 }
-})
+// Computed: Tema atual
+const currentTheme = ref('')
 
+// System metrics
 const fps = ref(60)
 const timestamp = ref('')
+
+// ========================================
+// WATCHERS - Sincroniza com GlobalAudio/Theme
+// ========================================
+let unwatchAudio: (() => void) | null = null
+let unwatchTheme: (() => void) | null = null
+
+const syncFromGlobal = () => {
+    // Audio
+    isPlaying.value = globalAudio.state.value.isPlaying
+    currentTime.value = globalAudio.state.value.currentTime
+    duration.value = globalAudio.state.value.duration
+    volume.value = globalAudio.state.value.volume
+    beatDetected.value = globalAudio.state.value.frequencyData.beat
+
+    // Theme
+    currentTheme.value = globalTheme.state.value.currentTheme
+}
+
+// ========================================
+// UTILS
+// ========================================
 let timeInterval: number | null = null
 
-// Atualiza timestamp
 const updateTimestamp = () => {
     const now = new Date()
     timestamp.value = now.toLocaleTimeString('en-US', { hour12: false })
@@ -103,11 +125,11 @@ let lastTime = performance.now()
 let frames = 0
 const calculateFPS = () => {
     frames++
-    const currentTime = performance.now()
-    if (currentTime >= lastTime + 1000) {
-        fps.value = Math.round((frames * 1000) / (currentTime - lastTime))
+    const currentTimeNow = performance.now()
+    if (currentTimeNow >= lastTime + 1000) {
+        fps.value = Math.round((frames * 1000) / (currentTimeNow - lastTime))
         frames = 0
-        lastTime = currentTime
+        lastTime = currentTimeNow
     }
     requestAnimationFrame(calculateFPS)
 }
@@ -119,14 +141,31 @@ const formatTime = (seconds: number): string => {
     return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+// ========================================
+// LIFECYCLE
+// ========================================
 onMounted(() => {
+    // Sincroniza inicial
+    syncFromGlobal()
+
+    // Watch global state changes
+    import('vue').then(({ watch }) => {
+        unwatchAudio = watch(() => globalAudio.state.value, syncFromGlobal, { deep: true })
+        unwatchTheme = watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
+    })
+
+    // Timestamp
     updateTimestamp()
     timeInterval = globalThis.setInterval(updateTimestamp, 1000)
+
+    // FPS
     calculateFPS()
 })
 
 onUnmounted(() => {
     if (timeInterval) clearInterval(timeInterval)
+    if (unwatchAudio) unwatchAudio()
+    if (unwatchTheme) unwatchTheme()
 })
 </script>
 

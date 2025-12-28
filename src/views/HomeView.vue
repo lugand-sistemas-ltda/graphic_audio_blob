@@ -27,8 +27,6 @@ const globalAudio = useGlobalAudio()
 
 // Computed: Dados de frequência do GlobalAudio (broadcast automático)
 const frequencyBands = computed(() => globalAudio.state.value.frequencyData.frequencyBands)
-const beatDetected = computed(() => globalAudio.state.value.frequencyData.beat)
-const currentVolume = computed(() => globalAudio.state.value.volume)
 
 // 🎨 Visual Effects Manager (controles centralizados)
 const visualEffectsManager = inject<any>('visualEffectsManager', null)
@@ -339,10 +337,8 @@ const hasPrevious = computed(() => {
         <!-- Matrix Character -->
         <MatrixCharacter v-if="showMatrixCharacter" />
 
-        <!-- Debug Terminal - Adaptado para novo sistema -->
-        <DebugTerminal v-if="showDebugTerminal" :sphere-position="{ x: 50, y: 50 }" :sphere-size="250"
-            :sphere-reactivity="100" :is-playing="isPlaying" :current-time="currentTime" :duration="duration"
-            :volume="currentVolume" :beat-detected="beatDetected" :layer-count="8" />
+        <!-- Debug Terminal - Monitor de estado global (sem props) -->
+        <DebugTerminal v-if="showDebugTerminal" />
 
         <!-- Frequency Visualizer - GLOBAL AUDIO SOURCE -->
         <FrequencyVisualizer v-if="showFrequencyVisualizer" :frequency-bands="frequencyBands" />
