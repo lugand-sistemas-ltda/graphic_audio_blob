@@ -27,7 +27,7 @@ interface Props {
 }
 
 // Parent precisava injetar dados de componentes específicos
-<DebugTerminal 
+<DebugTerminal
   :sphere-position="spherePosition"
   :sphere-size="sphereSize"
   :sphere-reactivity="sphereReactivity"
@@ -38,6 +38,7 @@ interface Props {
 ```
 
 **Consequências**:
+
 - Monitor não funcionava sem Orb Effect ativo
 - Violação de separação de responsabilidades
 - Acoplamento tight entre monitoring e visual effects
@@ -87,11 +88,13 @@ watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
       <div class="section-label">[ AUDIO ]</div>
       <div class="terminal-line">
         <span class="var-name">playing:</span>
-        <span class="var-value">{{ isPlaying ? 'TRUE' : 'FALSE' }}</span>
+        <span class="var-value">{{ isPlaying ? "TRUE" : "FALSE" }}</span>
       </div>
       <div class="terminal-line">
         <span class="var-name">time:</span>
-        <span class="var-value">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
+        <span class="var-value"
+          >{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span
+        >
       </div>
       <div class="terminal-line">
         <span class="var-name">volume:</span>
@@ -99,7 +102,9 @@ watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
       </div>
       <div class="terminal-line">
         <span class="var-name">beat.detected:</span>
-        <span class="var-value beat-indicator">{{ beatDetected ? '■' : '□' }}</span>
+        <span class="var-value beat-indicator">{{
+          beatDetected ? "■" : "□"
+        }}</span>
       </div>
     </div>
 
@@ -108,7 +113,7 @@ watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
       <div class="section-label">[ THEME ]</div>
       <div class="terminal-line">
         <span class="var-name">current:</span>
-        <span class="var-value">{{ currentTheme || 'matrix-green' }}</span>
+        <span class="var-value">{{ currentTheme || "matrix-green" }}</span>
       </div>
     </div>
 
@@ -135,12 +140,14 @@ watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
 ### DebugTerminal.vue
 
 **Removido**:
+
 - ❌ Interface `Props` completa
 - ❌ `defineProps<Props>()`
 - ❌ Computed `position` (calculava de spherePosition)
 - ❌ Todas as variáveis do template: `sphere.position.x/y`, `sphere.size`, `sphere.reactivity`, `layers.active`
 
 **Adicionado**:
+
 - ✅ `useGlobalAudio()` - Acesso direto ao gerenciador global de áudio
 - ✅ `useGlobalTheme()` - Acesso direto ao gerenciador global de tema
 - ✅ `inject('windowId')` - ID da janela do sistema de multi-window
@@ -151,32 +158,35 @@ watch(() => globalTheme.state.value, syncFromGlobal, { deep: true })
 ### HomeView.vue
 
 **Antes**:
+
 ```vue
-<DebugTerminal 
-  v-if="showDebugTerminal" 
-  :sphere-position="{ x: 50, y: 50 }" 
+<DebugTerminal
+  v-if="showDebugTerminal"
+  :sphere-position="{ x: 50, y: 50 }"
   :sphere-size="250"
-  :sphere-reactivity="100" 
-  :is-playing="isPlaying" 
-  :current-time="currentTime" 
+  :sphere-reactivity="100"
+  :is-playing="isPlaying"
+  :current-time="currentTime"
   :duration="duration"
-  :volume="currentVolume" 
-  :beat-detected="beatDetected" 
-  :layer-count="8" 
+  :volume="currentVolume"
+  :beat-detected="beatDetected"
+  :layer-count="8"
 />
 
-// Variáveis computadas necessárias
-const beatDetected = computed(() => globalAudio.state.value.frequencyData.beat)
-const currentVolume = computed(() => globalAudio.state.value.volume)
+// Variáveis computadas necessárias const beatDetected = computed(() =>
+globalAudio.state.value.frequencyData.beat) const currentVolume = computed(() =>
+globalAudio.state.value.volume)
 ```
 
 **Depois**:
+
 ```vue
 <!-- Debug Terminal - Monitor de estado global (sem props) -->
 <DebugTerminal v-if="showDebugTerminal" />
 ```
 
 **Variáveis removidas**:
+
 - ❌ `beatDetected` - Não mais necessária
 - ❌ `currentVolume` - Não mais necessária
 - ❌ `isPlaying`, `currentTime`, `duration` - Passados como props antes, agora acessados internamente
@@ -186,31 +196,34 @@ const currentVolume = computed(() => globalAudio.state.value.volume)
 ## 🎨 Dados Monitorados
 
 ### Antes (Mistura de Global + Componentes)
-| Variável | Fonte | Tipo |
-|----------|-------|------|
-| `sphere.position.x/y` | Orb Effect | ❌ Componente |
-| `sphere.size` | Orb Effect | ❌ Componente |
-| `sphere.reactivity` | Orb Effect | ❌ Componente |
-| `layers.active` | Layer System | ❌ Componente |
-| `playing`, `time`, `volume`, `beat` | GlobalAudio | ✅ Global |
-| `fps` | Local | ✅ Sistema |
+
+| Variável                            | Fonte        | Tipo          |
+| ----------------------------------- | ------------ | ------------- |
+| `sphere.position.x/y`               | Orb Effect   | ❌ Componente |
+| `sphere.size`                       | Orb Effect   | ❌ Componente |
+| `sphere.reactivity`                 | Orb Effect   | ❌ Componente |
+| `layers.active`                     | Layer System | ❌ Componente |
+| `playing`, `time`, `volume`, `beat` | GlobalAudio  | ✅ Global     |
+| `fps`                               | Local        | ✅ Sistema    |
 
 ### Agora (Apenas Global)
-| Variável | Fonte | Descrição |
-|----------|-------|-----------|
-| `playing` | GlobalAudio | Estado de reprodução |
-| `time` | GlobalAudio | Tempo atual / duração |
-| `volume` | GlobalAudio | Volume 0-100% |
-| `beat.detected` | GlobalAudio | Detecção de batida |
-| `current` | GlobalTheme | Tema ativo |
-| `fps` | Computed Local | Frames por segundo |
-| `window.id` | Inject | ID da janela |
+
+| Variável        | Fonte          | Descrição             |
+| --------------- | -------------- | --------------------- |
+| `playing`       | GlobalAudio    | Estado de reprodução  |
+| `time`          | GlobalAudio    | Tempo atual / duração |
+| `volume`        | GlobalAudio    | Volume 0-100%         |
+| `beat.detected` | GlobalAudio    | Detecção de batida    |
+| `current`       | GlobalTheme    | Tema ativo            |
+| `fps`           | Computed Local | Frames por segundo    |
+| `window.id`     | Inject         | ID da janela          |
 
 ---
 
 ## 🏗️ Princípios Arquiteturais
 
 ### 1. Separação de Responsabilidades
+
 ```
 Monitor NÃO deve saber sobre:
 ❌ Estrutura interna de componentes (orb, particles, etc)
@@ -224,17 +237,19 @@ Monitor DEVE saber sobre:
 ```
 
 ### 2. Acoplamento Frouxo
+
 ```typescript
 // ❌ ERRADO: Tight coupling
-const orb = inject('orbEffect')
-const position = orb.sphere.position
+const orb = inject("orbEffect");
+const position = orb.sphere.position;
 
 // ✅ CORRETO: Loose coupling via global managers
-const globalAudio = useGlobalAudio()
-const isPlaying = globalAudio.state.value.isPlaying
+const globalAudio = useGlobalAudio();
+const isPlaying = globalAudio.state.value.isPlaying;
 ```
 
 ### 3. Single Responsibility
+
 ```
 DebugTerminal tem UMA responsabilidade:
 "Exibir estado global da aplicação para debugging"
@@ -252,16 +267,19 @@ NÃO é responsabilidade do DebugTerminal:
 ### ✅ Cenários Testados
 
 1. **Independência de Efeitos**
+
    - Desabilitar Orb Effect
    - System Monitor continua funcionando
    - Mostra dados de áudio/tema normalmente
 
 2. **Broadcast Sync**
+
    - Abrir múltiplas janelas
    - Cada uma tem seu próprio monitor
    - Todos sincronizados via GlobalAudio/GlobalTheme
 
 3. **Lifecycle**
+
    - Montar componente → watch inicia, FPS calculado
    - Desmontar componente → intervals limpos, watches desfeitos
 
@@ -274,13 +292,13 @@ NÃO é responsabilidade do DebugTerminal:
 
 ## 📊 Métricas de Impacto
 
-| Métrica | Antes | Depois | Melhoria |
-|---------|-------|--------|----------|
-| Props do DebugTerminal | 9 | 0 | -100% |
-| Linhas de código | 309 | ~240 | -22% |
-| Dependências diretas | 2 (Props + Inject) | 2 (GlobalAudio + GlobalTheme) | Melhor qualidade |
-| Acoplamento com Orb | Alto | Zero | ✅ Desacoplado |
-| Reusabilidade | Baixa | Alta | ✅ Independente |
+| Métrica                | Antes              | Depois                        | Melhoria         |
+| ---------------------- | ------------------ | ----------------------------- | ---------------- |
+| Props do DebugTerminal | 9                  | 0                             | -100%            |
+| Linhas de código       | 309                | ~240                          | -22%             |
+| Dependências diretas   | 2 (Props + Inject) | 2 (GlobalAudio + GlobalTheme) | Melhor qualidade |
+| Acoplamento com Orb    | Alto               | Zero                          | ✅ Desacoplado   |
+| Reusabilidade          | Baixa              | Alta                          | ✅ Independente  |
 
 ---
 
@@ -302,12 +320,14 @@ const windowId = inject<string>('windowId')
 ```
 
 **Componentes que PODEM seguir este pattern**:
+
 - System Performance Monitor
 - Audio Analyzer Overlay
 - Theme Preview
 - Connection Status
 
 **Componentes que NÃO devem** (precisam de estado local):
+
 - Visual Effects (Orb, Particles) - têm estado próprio
 - Audio Controls - manipulam estado
 - Theme Selector - lista temas disponíveis
@@ -317,24 +337,27 @@ const windowId = inject<string>('windowId')
 ## 🎓 Lições Aprendidas
 
 ### ❌ Anti-Pattern Identificado
+
 ```vue
 <!-- Passar dados de componentes específicos para ferramentas globais -->
 <DebugTool :component-data="componentInternalState" />
 ```
 
 ### ✅ Pattern Correto
+
 ```vue
 <!-- Ferramenta acessa apenas gerenciadores globais -->
 <DebugTool />
 
 <!-- Dentro do componente -->
 <script setup>
-const globalManager = useGlobalManager()
-const data = computed(() => globalManager.state.value)
+const globalManager = useGlobalManager();
+const data = computed(() => globalManager.state.value);
 </script>
 ```
 
 ### Regra de Ouro
+
 > **"Se um componente de debug/monitoring precisa de props de outro componente específico, a arquitetura está errada. Deve acessar apenas gerenciadores globais."**
 
 ---
@@ -342,18 +365,19 @@ const data = computed(() => globalManager.state.value)
 ## 📝 Próximos Passos
 
 ### Melhorias Futuras
+
 1. **Expandir monitoramento global**
+
    - Adicionar `mouse.position` do GlobalState
    - Adicionar `broadcast.status` do BroadcastSync
    - Adicionar `windows.count` do WindowManager
 
 2. **Criar categoria de dados**
+
    ```vue
-   [ AUDIO ] - GlobalAudio
-   [ THEME ] - GlobalTheme
-   [ MOUSE ] - GlobalState (mouse position)
-   [ SYNC ]  - BroadcastSync (channel status)
-   [ SYSTEM ] - FPS, windowId, memory usage
+   [ AUDIO ] - GlobalAudio [ THEME ] - GlobalTheme [ MOUSE ] - GlobalState
+   (mouse position) [ SYNC ] - BroadcastSync (channel status) [ SYSTEM ] - FPS,
+   windowId, memory usage
    ```
 
 3. **Adicionar toggles de seção**
@@ -365,6 +389,7 @@ const data = computed(() => globalManager.state.value)
 ## ✅ Conclusão
 
 **System Monitor agora é**:
+
 - ✅ Completamente independente de efeitos visuais
 - ✅ Auto-contido (sem props)
 - ✅ Reutilizável em qualquer contexto
@@ -373,6 +398,7 @@ const data = computed(() => globalManager.state.value)
 - ✅ Estabelece pattern para outros monitores
 
 **Impacto na arquitetura**:
+
 - Quebrou acoplamento tight entre monitoring e visual effects
 - Estabeleceu boundary claro: global managers vs component state
 - Criou precedente para todas as ferramentas de debug futuras

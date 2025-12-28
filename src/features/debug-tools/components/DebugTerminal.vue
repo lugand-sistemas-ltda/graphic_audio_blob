@@ -24,7 +24,8 @@
                 </div>
                 <div class="terminal-line">
                     <span class="var-name">beat.detected:</span>
-                    <span class="var-value beat-indicator" :class="{ pulse: beatDetected }">{{ beatDetected ? '■' : '□' }}</span>
+                    <span class="var-value beat-indicator" :class="{ pulse: beatDetected }">{{ beatDetected ? '■' : '□'
+                        }}</span>
                 </div>
             </div>
 
