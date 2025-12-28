@@ -5,17 +5,24 @@
 
 import type { EffectThemeConfig } from '../types'
 
+// 🎯 ESTADO COMPARTILHADO GLOBALMENTE (singleton)
+// Todas as instâncias de useMousePosition() usam as MESMAS variáveis
+let sharedMouseX = 50 // Posição X em % (0-100)
+let sharedMouseY = 50 // Posição Y em % (0-100)
+let sharedMouse3DOffset = { x: 0, y: 0 } // Offset para efeito 3D
+let sharedIsMouseInsideWindow = true
+let sharedMouseFollowEnabled = true
+let sharedAutoCenterEnabled = true
+
+// Contador de instâncias ativas (para gerenciar event listeners)
+let activeInstances = 0
+
 /**
  * Composable para gerenciar posição do mouse e auto-center
  * Lógica compartilhada entre todos os efeitos visuais
+ * TODAS AS INSTÂNCIAS COMPARTILHAM O MESMO ESTADO
  */
 export const useMousePosition = () => {
-    let mouseX = 50 // Posição X em % (0-100)
-    let mouseY = 50 // Posição Y em % (0-100)
-    let mouse3DOffset = { x: 0, y: 0 } // Offset para efeito 3D
-    let isMouseInsideWindow = true
-    let mouseFollowEnabled = true
-    let autoCenterEnabled = true
 
     /**
      * Atualiza posição do mouse baseado nos controles ativos
@@ -25,67 +32,98 @@ export const useMousePosition = () => {
         let targetY: number
 
         // Mouse follow desabilitado = sempre no centro
-        if (!mouseFollowEnabled) {
+        if (!sharedMouseFollowEnabled) {
             targetX = 0
             targetY = 0
-            mouseX = 50
-            mouseY = 50
+            sharedMouseX = 50
+            sharedMouseY = 50
         }
         // Auto-center ativo + mouse fora = volta ao centro gradualmente
-        else if (autoCenterEnabled && !isMouseInsideWindow) {
+        else if (sharedAutoCenterEnabled && !sharedIsMouseInsideWindow) {
             targetX = 0
             targetY = 0
             // Transição suave para o centro (2% por frame)
-            mouseX += (50 - mouseX) * 0.02
-            mouseY += (50 - mouseY) * 0.02
+            sharedMouseX += (50 - sharedMouseX) * 0.02
+            sharedMouseY += (50 - sharedMouseY) * 0.02
         }
         // Comportamento normal - segue o mouse
         else {
-            targetX = (mouseX - 50) * 0.5
-            targetY = (mouseY - 50) * 0.5
+            targetX = (sharedMouseX - 50) * 0.5
+            targetY = (sharedMouseY - 50) * 0.5
         }
 
         // Interpolação suave do offset 3D
-        mouse3DOffset.x += (targetX - mouse3DOffset.x) * 0.1
-        mouse3DOffset.y += (targetY - mouse3DOffset.y) * 0.1
+        sharedMouse3DOffset.x += (targetX - sharedMouse3DOffset.x) * 0.1
+        sharedMouse3DOffset.y += (targetY - sharedMouse3DOffset.y) * 0.1
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-        if (mouseFollowEnabled) {
-            mouseX = (e.clientX / window.innerWidth) * 100
-            mouseY = (e.clientY / window.innerHeight) * 100
-            isMouseInsideWindow = true
+        if (sharedMouseFollowEnabled) {
+            sharedMouseX = (e.clientX / window.innerWidth) * 100
+            sharedMouseY = (e.clientY / window.innerHeight) * 100
+            sharedIsMouseInsideWindow = true
         }
     }
 
     const handleMouseEnter = () => {
-        isMouseInsideWindow = true
+        sharedIsMouseInsideWindow = true
     }
 
     const handleMouseLeave = () => {
-        isMouseInsideWindow = false
+        sharedIsMouseInsideWindow = false
     }
 
     const setMouseFollow = (enabled: boolean) => {
-        mouseFollowEnabled = enabled
+        sharedMouseFollowEnabled = enabled
         if (!enabled) {
-            mouseX = 50
-            mouseY = 50
-            mouse3DOffset = { x: 0, y: 0 }
+            sharedMouseX = 50
+            sharedMouseY = 50
+            sharedMouse3DOffset = { x: 0, y: 0 }
         }
     }
 
     const setAutoCenter = (enabled: boolean) => {
-        autoCenterEnabled = enabled
+        sharedAutoCenterEnabled = enabled
+    }
+
+    /**
+     * Inicia event listeners de mouse (compartilhados)
+     * Usa contador para evitar múltiplos event listeners
+     */
+    const start = () => {
+        activeInstances++
+
+        // Só adiciona listeners na primeira instância
+        if (activeInstances === 1) {
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseenter', handleMouseEnter)
+            document.addEventListener('mouseleave', handleMouseLeave)
+            console.log('[useMousePosition] 🎯 Event listeners iniciados')
+        }
+    }
+
+    /**
+     * Remove event listeners de mouse quando todas instâncias pararem
+     */
+    const stop = () => {
+        activeInstances--
+
+        // Só remove listeners quando não há mais instâncias ativas
+        if (activeInstances === 0) {
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseenter', handleMouseEnter)
+            document.removeEventListener('mouseleave', handleMouseLeave)
+            console.log('[useMousePosition] 🛑 Event listeners removidos')
+        }
     }
 
     return {
-        // Estado
-        get mouseX() { return mouseX },
-        get mouseY() { return mouseY },
-        get mouse3DOffset() { return mouse3DOffset },
-        get mouseFollowEnabled() { return mouseFollowEnabled },
-        get autoCenterEnabled() { return autoCenterEnabled },
+        // 🎯 Estado compartilhado via getters (leitura sempre do valor compartilhado atual)
+        get mouseX() { return sharedMouseX },
+        get mouseY() { return sharedMouseY },
+        get mouse3DOffset() { return sharedMouse3DOffset },
+        get mouseFollowEnabled() { return sharedMouseFollowEnabled },
+        get autoCenterEnabled() { return sharedAutoCenterEnabled },
 
         // Métodos
         updateMousePosition,
@@ -93,7 +131,9 @@ export const useMousePosition = () => {
         handleMouseEnter,
         handleMouseLeave,
         setMouseFollow,
-        setAutoCenter
+        setAutoCenter,
+        start,
+        stop
     }
 }
 

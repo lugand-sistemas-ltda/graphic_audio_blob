@@ -11,6 +11,11 @@ import type { BaseEffectOptions, BaseVisualEffect } from '../types'
 interface ParticlesEffectOptions extends BaseEffectOptions {
     /** Número de partículas a renderizar (padrão: 150) */
     particleCount?: number
+    /**
+     * 🎯 Provider de posição do mouse centralizado (vem do manager)
+     * Se não fornecido, cria instância própria (fallback para uso standalone)
+     */
+    mousePositionProvider?: ReturnType<typeof useMousePosition>
 }
 
 interface Particle {
@@ -31,7 +36,8 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
     const {
         audioDataProvider,
         enableMouseControl = true,
-        particleCount = 150
+        particleCount = 150,
+        mousePositionProvider // 🎯 Recebe do manager ou cria próprio
     } = options
 
     let animationFrame: number | null = null
@@ -44,21 +50,27 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
     let baseSize = 300 // Tamanho base do sistema (área de spawn)
     let reactivity = 100 // Intensidade de reação (0-200%)
 
-    // Helpers compartilhados
-    const mousePos = useMousePosition()
+    // 🎯 MOUSE POSITION: Usa provider do manager OU cria instância própria (fallback)
+    const mousePos = mousePositionProvider || useMousePosition()
     const theme = useEffectTheme()
 
     /**
      * Cria uma nova partícula
+     * @param centerX Centro X para spawn (padrão: centro da tela)
+     * @param centerY Centro Y para spawn (padrão: centro da tela)
      */
-    const createParticle = (): Particle => {
+    const createParticle = (centerX?: number, centerY?: number): Particle => {
         const angle = Math.random() * Math.PI * 2
         const distance = Math.random() * (baseSize / 2)
         const speed = 0.5 + Math.random() * 1.5
 
+        // Usa posição customizada ou centro da tela como fallback
+        const spawnX = centerX ?? window.innerWidth / 2
+        const spawnY = centerY ?? window.innerHeight / 2
+
         return {
-            x: window.innerWidth / 2 + Math.cos(angle) * distance,
-            y: window.innerHeight / 2 + Math.sin(angle) * distance,
+            x: spawnX + Math.cos(angle) * distance,
+            y: spawnY + Math.sin(angle) * distance,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             size: 2 + Math.random() * 4,
@@ -66,8 +78,8 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
             life: 1,
             maxLife: 0.5 + Math.random() * 0.5,
             frequency: Math.floor(Math.random() * 8), // Uma das 8 bandas
-            hue: theme.theme.hue + (Math.random() * 60 - 30), // Variação de cor
-            brightness: 50 + Math.random() * 50
+            hue: theme.theme.hue + (Math.random() * 30 - 15), // Variação sutil dentro da range do tema (±15°)
+            brightness: 40 + Math.random() * 40 // Luminosidade controlada (40-80%)
         }
     }
 
@@ -76,8 +88,16 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
      */
     const initializeParticles = () => {
         particles = []
+
+        // Atualiza posição do mouse para obter coordenadas corretas
+        mousePos.updateMousePosition()
+
+        // Calcula centro baseado no mouse (se mouse follow ativo)
+        const centerX = window.innerWidth / 2 + mousePos.mouse3DOffset.x * 5
+        const centerY = window.innerHeight / 2 + mousePos.mouse3DOffset.y * 5
+
         for (let i = 0; i < particleCount; i++) {
-            particles.push(createParticle())
+            particles.push(createParticle(centerX, centerY))
         }
     }
 
@@ -94,10 +114,10 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
         const centerX = window.innerWidth / 2 + mousePos.mouse3DOffset.x * 5
         const centerY = window.innerHeight / 2 + mousePos.mouse3DOffset.y * 5
 
-        // Spawn de novas partículas no beat
+        // Spawn de novas partículas no beat (na posição do centro atual)
         if (beat && particles.length < particleCount * 1.5) {
             for (let i = 0; i < 5; i++) {
-                particles.push(createParticle())
+                particles.push(createParticle(centerX, centerY))
             }
         }
 
@@ -155,18 +175,18 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
             const lifeLoss = 0.01 * (1 - normalizedIntensity * 0.5)
             particle.life -= lifeLoss
 
-            // Remove partículas mortas ou fora da tela
+            // Remove partículas mortas ou fora da tela e respawn no centro atual
             const margin = 200
             if (particle.life <= 0 ||
                 particle.x < -margin || particle.x > window.innerWidth + margin ||
                 particle.y < -margin || particle.y > window.innerHeight + margin) {
-                particles[index] = createParticle()
+                particles[index] = createParticle(centerX, centerY)
             }
         })
 
-        // Mantém número mínimo de partículas
+        // Mantém número mínimo de partículas (spawn no centro atual)
         while (particles.length < particleCount) {
-            particles.push(createParticle())
+            particles.push(createParticle(centerX, centerY))
         }
     }
 
@@ -193,7 +213,10 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
             const alpha = particle.life * (0.3 + normalizedIntensity * 0.7)
             const lightness = particle.brightness + normalizedIntensity * 30
 
-            ctx.fillStyle = `hsla(${particle.hue}, ${theme.theme.saturation}%, ${lightness}%, ${alpha})`
+            // Saturação alta para cores vibrantes (mínimo 70%, máximo 100%)
+            const saturation = Math.max(70, theme.theme.saturation)
+
+            ctx.fillStyle = `hsla(${particle.hue}, ${saturation}%, ${lightness}%, ${alpha})`
             ctx.beginPath()
             ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
             ctx.fill()
@@ -201,7 +224,7 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
             // Glow effect para partículas brilhantes
             if (normalizedIntensity > 0.7) {
                 ctx.shadowBlur = 20
-                ctx.shadowColor = `hsl(${particle.hue}, ${theme.theme.saturation}%, ${lightness}%)`
+                ctx.shadowColor = `hsl(${particle.hue}, ${saturation}%, ${lightness}%)`
             } else {
                 ctx.shadowBlur = 0
             }
@@ -316,10 +339,9 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
         setupCanvas()
         initializeParticles()
 
-        if (enableMouseControl) {
-            document.addEventListener('mousemove', mousePos.handleMouseMove)
-            document.addEventListener('mouseenter', mousePos.handleMouseEnter)
-            document.addEventListener('mouseleave', mousePos.handleMouseLeave)
+        // 🎯 Mouse control: Só inicia se não foi fornecido pelo manager
+        if (enableMouseControl && !mousePositionProvider) {
+            mousePos.start()
         }
 
         console.log('[ParticlesEffect] ✅ Efeito iniciado, começando loop de animação...')
@@ -338,10 +360,9 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
         theme.stopThemeObserver()
         cleanupCanvas()
 
-        if (enableMouseControl) {
-            document.removeEventListener('mousemove', mousePos.handleMouseMove)
-            document.removeEventListener('mouseenter', mousePos.handleMouseEnter)
-            document.removeEventListener('mouseleave', mousePos.handleMouseLeave)
+        // 🎯 Mouse control cleanup: Só para se criou própria instância
+        if (enableMouseControl && !mousePositionProvider) {
+            mousePos.stop()
         }
 
         if (animationFrame) {

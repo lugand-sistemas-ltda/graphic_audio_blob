@@ -28,6 +28,7 @@ import { useGlobalState } from '../../../core/state'
 import type { WindowId, VisualEffect } from '../../../core/state/types'
 import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
 import type { BaseEffectOptions } from '../types'
+import { useMousePosition } from './useEffectHelpers'
 
 export interface VisualEffectsManagerOptions {
     /**
@@ -142,6 +143,14 @@ export function useVisualEffectsManager(options: VisualEffectsManagerOptions): V
     const { windowId, audioDataProvider, enableMouseControl = true } = options
     const { state } = useGlobalState()
 
+    // 🎯 MOUSE POSITION CENTRALIZADO - Calculado UMA VEZ pelo manager
+    const managerMousePos = useMousePosition()
+
+    // Inicia tracking de mouse se enabled
+    if (enableMouseControl) {
+        managerMousePos.start()
+    }
+
     // Registry de efeitos gerenciados
     const effects = new Map<VisualEffect, ManagedEffect>()
 
@@ -182,7 +191,8 @@ export function useVisualEffectsManager(options: VisualEffectsManagerOptions): V
             const { useSpectralVisualEffect } = await import('./useSpectralVisualEffect')
             effect.instance = useSpectralVisualEffect({
                 ...getBaseOptions(),
-                layerCount: 8 // Atributo específico do gradient
+                layerCount: 8, // Atributo específico do gradient
+                mousePositionProvider: managerMousePos // 🎯 Passa posição centralizada
             })
             if (effect.instance) {
                 effect.instance.startEffect()
@@ -200,7 +210,8 @@ export function useVisualEffectsManager(options: VisualEffectsManagerOptions): V
         if (effect && !effect.instance) {
             const { useParticlesEffect } = await import('./useParticlesEffect')
             effect.instance = useParticlesEffect({
-                ...getBaseOptions()
+                ...getBaseOptions(),
+                mousePositionProvider: managerMousePos // 🎯 Passa posição centralizada
                 // Atributos específicos gerenciados pelo control component
             })
             if (effect.instance) {

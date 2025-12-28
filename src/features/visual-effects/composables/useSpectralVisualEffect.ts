@@ -1,17 +1,24 @@
 import { onUnmounted } from 'vue'
 import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
+import { useMousePosition } from './useEffectHelpers'
 
 interface EffectOptions {
     audioDataProvider?: () => AudioFrequencyData | null
     enableMouseControl?: boolean
     layerCount?: number
+    /**
+     * 🎯 Provider de posição do mouse centralizado (vem do manager)
+     * Se não fornecido, cria instância própria (fallback para uso standalone)
+     */
+    mousePositionProvider?: ReturnType<typeof useMousePosition>
 }
 
 export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     const {
         audioDataProvider,
         enableMouseControl = true,
-        layerCount = 8 // 8 camadas para 8 bandas de frequência
+        layerCount = 8, // 8 camadas para 8 bandas de frequência
+        mousePositionProvider // 🎯 Recebe do manager ou cria próprio
     } = options
 
     let animationFrame: number | null = null
@@ -22,10 +29,8 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     let currentThemeSaturation = 85 // Saturação padrão (colorido)
     let isEffectActive = false
 
-    // Novos controles de comportamento
-    let mouseFollowEnabled = true // Mouse follow ativo por padrão
-    let autoCenterEnabled = true // Auto center ativo por padrão
-    let isMouseInsideWindow = true // Detecta se mouse está na janela
+    // 🎯 MOUSE POSITION: Usa provider do manager OU cria instância própria (fallback)
+    const mousePos = mousePositionProvider || useMousePosition()
 
     // Sistema de camadas espectrais
     interface SpectralLayer {
@@ -37,11 +42,6 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     }
 
     const layers: SpectralLayer[] = []
-
-    // Mouse control com efeito 3D
-    let mouseX = 50
-    let mouseY = 50
-    let mouse3DOffset = { x: 0, y: 0 }
 
     // Atualiza o hue e saturação baseados na cor do tema atual
     const updateThemeHue = () => {
@@ -181,35 +181,9 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             }
         }
 
-        // Calcula efeito 3D do mouse
+        // 🎯 Atualiza posição do mouse usando helper compartilhado
         if (enableMouseControl) {
-            let targetX: number
-            let targetY: number
-
-            // Se mouse follow está desabilitado, sempre fica no centro
-            if (!mouseFollowEnabled) {
-                targetX = 0
-                targetY = 0
-                mouseX = 50
-                mouseY = 50
-            }
-            // Se auto-center está ativo e mouse saiu da janela, volta ao centro gradualmente
-            else if (autoCenterEnabled && !isMouseInsideWindow) {
-                targetX = 0
-                targetY = 0
-                // Gradualmente volta mouseX e mouseY para o centro
-                mouseX += (50 - mouseX) * 0.02 // Transição mais lenta (2% por frame)
-                mouseY += (50 - mouseY) * 0.02
-            }
-            // Comportamento normal - segue o mouse
-            else {
-                targetX = (mouseX - 50) * 0.5
-                targetY = (mouseY - 50) * 0.5
-            }
-
-            // Interpolação suave do offset 3D
-            mouse3DOffset.x += (targetX - mouse3DOffset.x) * 0.1
-            mouse3DOffset.y += (targetY - mouse3DOffset.y) * 0.1
+            mousePos.updateMousePosition()
         }
     }
 
@@ -269,9 +243,9 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         // Adiciona cor final - TRANSPARENTE para permitir ver particles canvas acima (z-index -1)
         gradientStops.push(`rgba(0, 0, 0, 0) 100%`)
 
-        // Aplica gradiente com efeito 3D no container dedicado
-        const posX = 50 + mouse3DOffset.x
-        const posY = 50 + mouse3DOffset.y
+        // 🎯 Aplica gradiente com efeito 3D usando posição compartilhada do mouse
+        const posX = 50 + mousePos.mouse3DOffset.x
+        const posY = 50 + mousePos.mouse3DOffset.y
 
         if (gradientContainer) {
             const gradient = `radial-gradient(circle at ${posX}% ${posY}%, ${gradientStops.join(', ')})`
@@ -328,28 +302,8 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         animationFrame = requestAnimationFrame(animate)
     }
 
-    // Mouse move handler
-    const handleMouseMove = (e: MouseEvent) => {
-        if (mouseFollowEnabled) {
-            mouseX = (e.clientX / window.innerWidth) * 100
-            mouseY = (e.clientY / window.innerHeight) * 100
-            isMouseInsideWindow = true
-        }
-    }
-
-    // Mouse enter/leave handlers para auto-center
-    const handleMouseEnter = () => {
-        isMouseInsideWindow = true
-    }
-
-    const handleMouseLeave = () => {
-        isMouseInsideWindow = false
-
-        // Se auto-center estiver ativo e mouse follow habilitado, volta gradualmente ao centro
-        if (autoCenterEnabled && mouseFollowEnabled) {
-            // A transição para o centro será feita no updateLayers
-        }
-    }
+    // 🎯 Mouse handlers delegados para useMousePosition()
+    // Os event listeners são gerenciados pelo helper compartilhado
 
     /**
      * Cria container dedicado para o gradiente
@@ -405,10 +359,9 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
 
         initializeLayers()
 
-        if (enableMouseControl) {
-            document.addEventListener('mousemove', handleMouseMove)
-            document.addEventListener('mouseenter', handleMouseEnter)
-            document.addEventListener('mouseleave', handleMouseLeave)
+        // 🎯 Mouse control: Só inicia se não foi fornecido pelo manager
+        if (enableMouseControl && !mousePositionProvider) {
+            mousePos.start()
         }
 
         console.log('[SpectralEffect] Effect started, starting animation...')
@@ -424,10 +377,9 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         themeObserver.disconnect()
         stopRgbPolling()
 
-        if (enableMouseControl) {
-            document.removeEventListener('mousemove', handleMouseMove)
-            document.removeEventListener('mouseenter', handleMouseEnter)
-            document.removeEventListener('mouseleave', handleMouseLeave)
+        // 🎯 Mouse control cleanup: Só para se criou própria instância
+        if (enableMouseControl && !mousePositionProvider) {
+            mousePos.stop()
         }
 
         if (animationFrame) {
@@ -453,33 +405,27 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         sphereReactivity = reactivity
     }
 
+    // 🎯 Delega controles de mouse para o helper compartilhado
     const setMouseFollow = (enabled: boolean) => {
-        mouseFollowEnabled = enabled
+        mousePos.setMouseFollow(enabled)
         console.log('[SpectralEffect] Mouse Follow:', enabled ? 'ENABLED' : 'DISABLED')
-
-        // Se desabilitar, centraliza imediatamente
-        if (!enabled) {
-            mouseX = 50
-            mouseY = 50
-            mouse3DOffset = { x: 0, y: 0 }
-        }
     }
 
     const setAutoCenter = (enabled: boolean) => {
-        autoCenterEnabled = enabled
+        mousePos.setAutoCenter(enabled)
         console.log('[SpectralEffect] Auto Center:', enabled ? 'ENABLED' : 'DISABLED')
     }
 
-    // Expõe a posição do mouse para debug
+    // 🎯 Expõe posição compartilhada do mouse
     const getSpherePosition = () => ({
-        x: mouseX,
-        y: mouseY
+        x: mousePos.mouseX,
+        y: mousePos.mouseY
     })
 
     const getSphereSize = () => baseSphereSize
     const getSphereReactivity = () => sphereReactivity
-    const getMouseFollow = () => mouseFollowEnabled
-    const getAutoCenter = () => autoCenterEnabled
+    const getMouseFollow = () => mousePos.mouseFollowEnabled
+    const getAutoCenter = () => mousePos.autoCenterEnabled
 
     return {
         startEffect,
