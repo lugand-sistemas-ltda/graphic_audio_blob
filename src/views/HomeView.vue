@@ -30,10 +30,6 @@ const frequencyBands = computed(() => globalAudio.state.value.frequencyData.freq
 const beatDetected = computed(() => globalAudio.state.value.frequencyData.beat)
 const currentVolume = computed(() => globalAudio.state.value.volume)
 
-// Visual Effect (ainda injetado - será refatorado depois se necessário)
-const visualEffect = inject<any>('visualEffect', null)
-const spherePosition = inject<any>('spherePosition', null)
-
 // 🎨 Visual Effects Manager (controles centralizados)
 const visualEffectsManager = inject<any>('visualEffectsManager', null)
 
@@ -41,7 +37,6 @@ const visualEffectsManager = inject<any>('visualEffectsManager', null)
 console.log('[HomeView] 🎯 Dependencies:', {
     windowId,
     globalAudio: !!globalAudio,
-    visualEffect: !!visualEffect,
     visualEffectsManager: !!visualEffectsManager,
     hasFrequencyData: globalAudio.state.value.frequencyData.frequencyBands.length > 0
 })
@@ -344,11 +339,10 @@ const hasPrevious = computed(() => {
         <!-- Matrix Character -->
         <MatrixCharacter v-if="showMatrixCharacter" />
 
-        <!-- Debug Terminal -->
-        <DebugTerminal v-if="showDebugTerminal && visualEffect" :sphere-position="spherePosition || { x: 50, y: 50 }"
-            :sphere-size="visualEffect.getSphereSize()" :sphere-reactivity="visualEffect.getSphereReactivity()"
-            :is-playing="isPlaying" :current-time="currentTime" :duration="duration" :volume="currentVolume"
-            :beat-detected="beatDetected" :layer-count="8" />
+        <!-- Debug Terminal - Adaptado para novo sistema -->
+        <DebugTerminal v-if="showDebugTerminal" :sphere-position="{ x: 50, y: 50 }" :sphere-size="250"
+            :sphere-reactivity="100" :is-playing="isPlaying" :current-time="currentTime" :duration="duration"
+            :volume="currentVolume" :beat-detected="beatDetected" :layer-count="8" />
 
         <!-- Frequency Visualizer - GLOBAL AUDIO SOURCE -->
         <FrequencyVisualizer v-if="showFrequencyVisualizer" :frequency-bands="frequencyBands" />

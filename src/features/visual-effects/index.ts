@@ -3,11 +3,12 @@
  * @module features/visual-effects
  * 
  * Self-contained feature for visual effects and animations:
- * - Frequency visualization
- * - Matrix character effects
- * - Orb effects
- * - RGB/Chameleon modes
- * - Spectral visualizations
+ * - Gradient/Orb effects (spectral visualization)
+ * - Particles effects (audio-reactive particles)
+ * - Background effects
+ * - Audio visualization
+ * 
+ * Note: RGB/Chameleon modes moved to theme-system feature
  */
 
 // Components
@@ -20,8 +21,6 @@ export { default as EffectReactivityControl } from './components/shared/EffectRe
 // Composables
 export { useAudioVisualEffect } from './composables/useAudioVisualEffect'
 export { useBackgroundEffect } from './composables/useBackgroundEffect'
-export { useChameleonMode } from './composables/useChameleonMode'
-export { useRgbMode } from './composables/useRgbMode'
 export { useSpectralVisualEffect } from './composables/gradient-effect/useSpectralVisualEffect'
 export { useParticlesEffect } from './composables/particles-effect/useParticlesEffect'
 export { useMousePosition, useEffectTheme } from './composables/shared/useEffectHelpers'
