@@ -6,63 +6,58 @@
 import type { EffectThemeConfig } from '../types'
 
 // 🎯 ESTADO COMPARTILHADO GLOBALMENTE (singleton)
-// Todas as instâncias de useMousePosition() usam as MESMAS variáveis
-let sharedMouseX = 50 // Posição X em % (0-100)
-let sharedMouseY = 50 // Posição Y em % (0-100)
-let sharedMouse3DOffset = { x: 0, y: 0 } // Offset para efeito 3D
+// APENAS A POSIÇÃO RAW DO MOUSE É COMPARTILHADA
+let sharedMouseX = 50 // Posição X em % (0-100) - RAW position
+let sharedMouseY = 50 // Posição Y em % (0-100) - RAW position
 let sharedIsMouseInsideWindow = true
-let sharedMouseFollowEnabled = true
-let sharedAutoCenterEnabled = true
 
 // Contador de instâncias ativas (para gerenciar event listeners)
 let activeInstances = 0
 
 /**
  * Composable para gerenciar posição do mouse e auto-center
- * Lógica compartilhada entre todos os efeitos visuais
- * TODAS AS INSTÂNCIAS COMPARTILHAM O MESMO ESTADO
+ * Cada instância tem seus PRÓPRIOS flags (mouseFollow/autoCenter)
+ * mas COMPARTILHA a posição raw do mouse para sincronização
  */
 export const useMousePosition = () => {
+    // 🎯 FLAGS LOCAIS - CADA EFEITO TEM OS SEUS PRÓPRIOS
+    let mouseFollowEnabled = true
+    let autoCenterEnabled = true
+    let mouse3DOffset = { x: 0, y: 0 } // Offset 3D local de cada efeito
 
     /**
-     * Atualiza posição do mouse baseado nos controles ativos
+     * Atualiza posição do mouse baseado nos controles ativos LOCAIS
      */
     const updateMousePosition = () => {
         let targetX: number
         let targetY: number
 
         // Mouse follow desabilitado = sempre no centro
-        if (!sharedMouseFollowEnabled) {
+        if (!mouseFollowEnabled) {
             targetX = 0
             targetY = 0
-            sharedMouseX = 50
-            sharedMouseY = 50
         }
         // Auto-center ativo + mouse fora = volta ao centro gradualmente
-        else if (sharedAutoCenterEnabled && !sharedIsMouseInsideWindow) {
+        else if (autoCenterEnabled && !sharedIsMouseInsideWindow) {
             targetX = 0
             targetY = 0
-            // Transição suave para o centro (2% por frame)
-            sharedMouseX += (50 - sharedMouseX) * 0.02
-            sharedMouseY += (50 - sharedMouseY) * 0.02
         }
-        // Comportamento normal - segue o mouse
+        // Comportamento normal - segue o mouse (usa posição RAW compartilhada)
         else {
             targetX = (sharedMouseX - 50) * 0.5
             targetY = (sharedMouseY - 50) * 0.5
         }
 
-        // Interpolação suave do offset 3D
-        sharedMouse3DOffset.x += (targetX - sharedMouse3DOffset.x) * 0.1
-        sharedMouse3DOffset.y += (targetY - sharedMouse3DOffset.y) * 0.1
+        // Interpolação suave do offset 3D LOCAL
+        mouse3DOffset.x += (targetX - mouse3DOffset.x) * 0.1
+        mouse3DOffset.y += (targetY - mouse3DOffset.y) * 0.1
     }
 
+    // 🎯 Event handlers compartilhados (atualizam posição RAW global)
     const handleMouseMove = (e: MouseEvent) => {
-        if (sharedMouseFollowEnabled) {
-            sharedMouseX = (e.clientX / window.innerWidth) * 100
-            sharedMouseY = (e.clientY / window.innerHeight) * 100
-            sharedIsMouseInsideWindow = true
-        }
+        sharedMouseX = (e.clientX / window.innerWidth) * 100
+        sharedMouseY = (e.clientY / window.innerHeight) * 100
+        sharedIsMouseInsideWindow = true
     }
 
     const handleMouseEnter = () => {
@@ -73,17 +68,16 @@ export const useMousePosition = () => {
         sharedIsMouseInsideWindow = false
     }
 
+    // 🎯 Controles LOCAIS (não afetam outros efeitos)
     const setMouseFollow = (enabled: boolean) => {
-        sharedMouseFollowEnabled = enabled
+        mouseFollowEnabled = enabled
         if (!enabled) {
-            sharedMouseX = 50
-            sharedMouseY = 50
-            sharedMouse3DOffset = { x: 0, y: 0 }
+            mouse3DOffset = { x: 0, y: 0 }
         }
     }
 
     const setAutoCenter = (enabled: boolean) => {
-        sharedAutoCenterEnabled = enabled
+        autoCenterEnabled = enabled
     }
 
     /**
@@ -118,12 +112,15 @@ export const useMousePosition = () => {
     }
 
     return {
-        // 🎯 Estado compartilhado via getters (leitura sempre do valor compartilhado atual)
+        // 🎯 Posição RAW compartilhada (global)
         get mouseX() { return sharedMouseX },
         get mouseY() { return sharedMouseY },
-        get mouse3DOffset() { return sharedMouse3DOffset },
-        get mouseFollowEnabled() { return sharedMouseFollowEnabled },
-        get autoCenterEnabled() { return sharedAutoCenterEnabled },
+        get isMouseInsideWindow() { return sharedIsMouseInsideWindow },
+
+        // 🎯 Estado local de cada efeito
+        get mouse3DOffset() { return mouse3DOffset },
+        get mouseFollowEnabled() { return mouseFollowEnabled },
+        get autoCenterEnabled() { return autoCenterEnabled },
 
         // Métodos
         updateMousePosition,

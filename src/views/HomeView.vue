@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { inject, computed, watch, onMounted } from 'vue'
 import { SoundControl } from '../features/audio-player'
-import { OrbEffectControl, MatrixCharacter, FrequencyVisualizer, ParticlesEffectControl } from '../features/visual-effects'
+import { OrbEffectControl, ParticlesEffectControl } from '../features/visual-effects'
+import { MatrixCharacter } from '../features/user-interface'
+import { FrequencyVisualizer } from '../features/audio-analyzers'
 import { VisualEffectsControl } from '../features/window-management'
 import { DebugTerminal } from '../features/debug-tools'
 import { ThemeSelector } from '../features/theme-system'

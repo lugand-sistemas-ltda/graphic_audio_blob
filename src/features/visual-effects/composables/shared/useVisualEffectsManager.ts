@@ -24,10 +24,10 @@
  */
 
 import { watch, type Ref } from 'vue'
-import { useGlobalState } from '../../../core/state'
-import type { WindowId, VisualEffect } from '../../../core/state/types'
-import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
-import type { BaseEffectOptions } from '../types'
+import { useGlobalState } from '../../../../core/state'
+import type { WindowId, VisualEffect } from '../../../../core/state/types'
+import type { AudioFrequencyData } from '../../../audio-player/composables/useAudioAnalyzer'
+import type { BaseEffectOptions } from '../../types'
 import { useMousePosition } from './useEffectHelpers'
 
 export interface VisualEffectsManagerOptions {
@@ -188,7 +188,7 @@ export function useVisualEffectsManager(options: VisualEffectsManagerOptions): V
     const initGradientEffect = async () => {
         const effect = effects.get('gradient')
         if (effect && !effect.instance) {
-            const { useSpectralVisualEffect } = await import('./useSpectralVisualEffect')
+            const { useSpectralVisualEffect } = await import('../gradient-effect/useSpectralVisualEffect')
             effect.instance = useSpectralVisualEffect({
                 ...getBaseOptions(),
                 layerCount: 8, // Atributo específico do gradient
@@ -208,7 +208,7 @@ export function useVisualEffectsManager(options: VisualEffectsManagerOptions): V
     const initParticlesEffect = async () => {
         const effect = effects.get('particles')
         if (effect && !effect.instance) {
-            const { useParticlesEffect } = await import('./useParticlesEffect')
+            const { useParticlesEffect } = await import('../particles-effect/useParticlesEffect')
             effect.instance = useParticlesEffect({
                 ...getBaseOptions(),
                 mousePositionProvider: managerMousePos // 🎯 Passa posição centralizada

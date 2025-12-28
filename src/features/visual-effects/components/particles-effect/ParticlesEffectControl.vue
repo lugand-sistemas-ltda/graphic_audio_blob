@@ -1,14 +1,14 @@
 <template>
-    <div class="orb-effect-control" v-draggable="{ id: 'orb-effect-control', handle: '.orb-header' }">
-        <div class="orb-header">
-            <span class="orb-title">[ ORB EFFECT CONTROL ]</span>
+    <div class="particles-effect-control" v-draggable="{ id: 'particles-effect-control', handle: '.particles-header' }">
+        <div class="particles-header">
+            <span class="particles-title">[ PARTICLES EFFECT CONTROL ]</span>
             <button class="collapse-toggle" @click="toggleExpanded" :aria-label="isExpanded ? 'Collapse' : 'Expand'">
                 {{ isExpanded ? '−' : '+' }}
             </button>
         </div>
 
-        <div v-if="isExpanded" class="orb-content">
-            <!-- Effect Behavior Controls -->
+        <div v-if="isExpanded" class="particles-content">
+            <!-- Effect Behavior Controls (Compartilhado com Orb) -->
             <div class="control-section">
                 <h5 class="section-title">Effect Behavior</h5>
 
@@ -32,23 +32,23 @@
                 </div>
 
                 <p class="control-hint" v-if="!mouseFollow">
-                    💡 Effect fixed at center position
+                    💡 Particles spawn at center position
                 </p>
                 <p class="control-hint" v-else-if="autoCenter">
-                    💡 Effect follows mouse, centers when cursor leaves screen
+                    💡 Particles follow mouse, center when cursor leaves screen
                 </p>
                 <p class="control-hint" v-else>
-                    💡 Effect follows mouse freely
+                    💡 Particles follow mouse freely
                 </p>
             </div>
 
-            <!-- Beat Sensitivity Control -->
+            <!-- Particle Count Control (Específico) -->
             <div class="control-group">
-                <label for="beat-sensitivity-control">Beat Sensitivity</label>
+                <label for="particle-count-control">Particle Count</label>
                 <div class="control-with-value">
-                    <input id="beat-sensitivity-control" type="range" min="50" max="300" v-model="beatSensitivity"
-                        @input="handleBeatSensitivityChange" />
-                    <span class="value-display">{{ beatSensitivity }}</span>
+                    <input id="particle-count-control" type="range" min="50" max="300" v-model="particleCount"
+                        @input="handleParticleCountChange" />
+                    <span class="value-display">{{ particleCount }}</span>
                 </div>
             </div>
 
@@ -56,11 +56,12 @@
             <div class="control-section">
                 <h5 class="section-title">Effect Properties</h5>
 
-                <EffectSizeControl v-model="effectSize" label="Effect Size" control-id="orb-effect-size"
-                    description="Tamanho do efeito visual (esfera)" @update:model-value="handleEffectSizeChange" />
+                <EffectSizeControl v-model="effectSize" label="Effect Size" control-id="particles-effect-size"
+                    description="Tamanho da área de spawn das partículas"
+                    @update:model-value="handleEffectSizeChange" />
 
                 <EffectReactivityControl v-model="effectSensitivity" label="Audio Reactivity"
-                    control-id="orb-effect-reactivity" description="Sensibilidade à intensidade do áudio"
+                    control-id="particles-effect-reactivity" description="Sensibilidade à intensidade do áudio"
                     @update:model-value="handleEffectSensitivityChange" />
             </div>
         </div>
@@ -69,38 +70,42 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import EffectSizeControl from './shared/EffectSizeControl.vue'
-import EffectReactivityControl from './shared/EffectReactivityControl.vue'
-import { useCollapsible } from '../../../shared'
-import { useVisibilityReload } from '../../window-management/composables/useVisibilityReload'
+import EffectSizeControl from '../shared/EffectSizeControl.vue'
+import EffectReactivityControl from '../shared/EffectReactivityControl.vue'
+import { useCollapsible } from '../../../../shared'
+import { useVisibilityReload } from '../../../window-management/composables/useVisibilityReload'
 
-const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({ id: 'orb-effect-control', initialState: true })
+const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({
+    id: 'particles-effect-control',
+    initialState: true
+})
 
 // Detecta quando o componente fica visível e recarrega o estado
 useVisibilityReload({
-    selector: '.orb-effect-control',
+    selector: '.particles-effect-control',
     onVisible: reloadState
 })
 
 const emit = defineEmits<{
-    beatSensitivityChange: [sensitivity: number]
+    particleCountChange: [count: number]
     effectSizeChange: [normalizedSize: number]
     effectSensitivityChange: [normalizedSensitivity: number]
     mouseFollowChange: [enabled: boolean]
     autoCenterChange: [enabled: boolean]
 }>()
 
-const beatSensitivity = ref(150) // Valor padrão
+// Controle específico do particles
+const particleCount = ref(150) // Número de partículas
 
-// Valores normalizados 0-1
+// Valores normalizados 0-1 (compartilhados entre todos os efeitos)
 const effectSize = ref(0.5) // 50% = ~300px (meio do range 100-500)
 const effectSensitivity = ref(0.5) // 50% = ~100% reactivity (meio do range 0-200%)
 
 const mouseFollow = ref(true) // Mouse follow ativo por padrão
 const autoCenter = ref(true) // Auto center ativo por padrão
 
-const handleBeatSensitivityChange = () => {
-    emit('beatSensitivityChange', beatSensitivity.value)
+const handleParticleCountChange = () => {
+    emit('particleCountChange', particleCount.value)
 }
 
 const handleEffectSizeChange = (normalizedValue: number) => {
@@ -126,17 +131,17 @@ const handleAutoCenterChange = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../../../style/base/variables' as *;
-@use '../../../style/mixins' as *;
+@use '../../../../style/base/variables' as *;
+@use '../../../../style/mixins' as *;
 
-.orb-effect-control {
+.particles-effect-control {
     @include draggable-container;
     z-index: var(--z-header);
 
-    .orb-header {
+    .particles-header {
         @include draggable-header;
 
-        .orb-title {
+        .particles-title {
             @include draggable-title;
         }
 
@@ -145,7 +150,7 @@ const handleAutoCenterChange = () => {
         }
     }
 
-    .orb-content {
+    .particles-content {
         @include draggable-content;
     }
 }

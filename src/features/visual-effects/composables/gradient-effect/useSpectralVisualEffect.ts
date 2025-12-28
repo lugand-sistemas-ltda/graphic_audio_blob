@@ -1,6 +1,6 @@
 import { onUnmounted } from 'vue'
-import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
-import { useMousePosition } from './useEffectHelpers'
+import type { AudioFrequencyData } from '../../../audio-player/composables/useAudioAnalyzer'
+import { useMousePosition } from '../shared/useEffectHelpers'
 
 interface EffectOptions {
     audioDataProvider?: () => AudioFrequencyData | null
@@ -12,7 +12,6 @@ interface EffectOptions {
      */
     mousePositionProvider?: ReturnType<typeof useMousePosition>
 }
-
 export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     const {
         audioDataProvider,
@@ -29,7 +28,12 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
     let currentThemeSaturation = 85 // Saturação padrão (colorido)
     let isEffectActive = false
 
-    // 🎯 MOUSE POSITION: Usa provider do manager OU cria instância própria (fallback)
+    // 🎯 FLAGS LOCAIS - Estado próprio do Spectral Effect
+    let spectralMouseFollowEnabled = true
+    let spectralAutoCenterEnabled = true
+    let spectralMouse3DOffset = { x: 0, y: 0 }
+
+    // 🎯 MOUSE POSITION: Usa provider do manager (apenas posição RAW)
     const mousePos = mousePositionProvider || useMousePosition()
 
     // Sistema de camadas espectrais
@@ -181,9 +185,30 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
             }
         }
 
-        // 🎯 Atualiza posição do mouse usando helper compartilhado
+        // 🎯 Calcula offset 3D LOCAL usando flags próprias + posição RAW compartilhada
         if (enableMouseControl) {
-            mousePos.updateMousePosition()
+            let targetX: number
+            let targetY: number
+
+            // Mouse follow desabilitado = sempre no centro
+            if (!spectralMouseFollowEnabled) {
+                targetX = 0
+                targetY = 0
+            }
+            // Auto-center ativo + mouse fora = volta ao centro gradualmente
+            else if (spectralAutoCenterEnabled && !mousePos.isMouseInsideWindow) {
+                targetX = 0
+                targetY = 0
+            }
+            // Comportamento normal - segue o mouse (usa posição RAW compartilhada)
+            else {
+                targetX = (mousePos.mouseX - 50) * 0.5
+                targetY = (mousePos.mouseY - 50) * 0.5
+            }
+
+            // Interpolação suave do offset 3D LOCAL
+            spectralMouse3DOffset.x += (targetX - spectralMouse3DOffset.x) * 0.1
+            spectralMouse3DOffset.y += (targetY - spectralMouse3DOffset.y) * 0.1
         }
     }
 
@@ -243,9 +268,9 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         // Adiciona cor final - TRANSPARENTE para permitir ver particles canvas acima (z-index -1)
         gradientStops.push(`rgba(0, 0, 0, 0) 100%`)
 
-        // 🎯 Aplica gradiente com efeito 3D usando posição compartilhada do mouse
-        const posX = 50 + mousePos.mouse3DOffset.x
-        const posY = 50 + mousePos.mouse3DOffset.y
+        // 🎯 Aplica gradiente com efeito 3D usando offset LOCAL calculado
+        const posX = 50 + spectralMouse3DOffset.x
+        const posY = 50 + spectralMouse3DOffset.y
 
         if (gradientContainer) {
             const gradient = `radial-gradient(circle at ${posX}% ${posY}%, ${gradientStops.join(', ')})`
@@ -405,27 +430,30 @@ export const useSpectralVisualEffect = (options: EffectOptions = {}) => {
         sphereReactivity = reactivity
     }
 
-    // 🎯 Delega controles de mouse para o helper compartilhado
+    // 🎯 Controles LOCAIS - Armazena estado próprio do Spectral
     const setMouseFollow = (enabled: boolean) => {
-        mousePos.setMouseFollow(enabled)
+        spectralMouseFollowEnabled = enabled
+        if (!enabled) {
+            spectralMouse3DOffset = { x: 0, y: 0 }
+        }
         console.log('[SpectralEffect] Mouse Follow:', enabled ? 'ENABLED' : 'DISABLED')
     }
 
     const setAutoCenter = (enabled: boolean) => {
-        mousePos.setAutoCenter(enabled)
+        spectralAutoCenterEnabled = enabled
         console.log('[SpectralEffect] Auto Center:', enabled ? 'ENABLED' : 'DISABLED')
     }
 
-    // 🎯 Expõe posição compartilhada do mouse
+    // 🎯 Expõe posição LOCAL calculada
     const getSpherePosition = () => ({
-        x: mousePos.mouseX,
-        y: mousePos.mouseY
+        x: 50 + spectralMouse3DOffset.x,
+        y: 50 + spectralMouse3DOffset.y
     })
 
     const getSphereSize = () => baseSphereSize
     const getSphereReactivity = () => sphereReactivity
-    const getMouseFollow = () => mousePos.mouseFollowEnabled
-    const getAutoCenter = () => mousePos.autoCenterEnabled
+    const getMouseFollow = () => spectralMouseFollowEnabled
+    const getAutoCenter = () => spectralAutoCenterEnabled
 
     return {
         startEffect,

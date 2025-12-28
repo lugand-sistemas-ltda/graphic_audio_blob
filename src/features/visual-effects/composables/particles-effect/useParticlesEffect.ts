@@ -4,9 +4,9 @@
  */
 
 import { onUnmounted } from 'vue'
-import type { AudioFrequencyData } from '../../audio-player/composables/useAudioAnalyzer'
-import { useMousePosition, useEffectTheme } from './useEffectHelpers'
-import type { BaseEffectOptions, BaseVisualEffect } from '../types'
+import type { AudioFrequencyData } from '../../../audio-player/composables/useAudioAnalyzer'
+import { useMousePosition, useEffectTheme } from '../shared/useEffectHelpers'
+import type { BaseEffectOptions, BaseVisualEffect } from '../../types'
 
 interface ParticlesEffectOptions extends BaseEffectOptions {
     /** Número de partículas a renderizar (padrão: 150) */
@@ -50,7 +50,12 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
     let baseSize = 300 // Tamanho base do sistema (área de spawn)
     let reactivity = 100 // Intensidade de reação (0-200%)
 
-    // 🎯 MOUSE POSITION: Usa provider do manager OU cria instância própria (fallback)
+    // 🎯 FLAGS LOCAIS - Estado próprio do Particles Effect
+    let particlesMouseFollowEnabled = true
+    let particlesAutoCenterEnabled = true
+    let particlesMouse3DOffset = { x: 0, y: 0 }
+
+    // 🎯 MOUSE POSITION: Usa provider do manager (apenas posição RAW)
     const mousePos = mousePositionProvider || useMousePosition()
     const theme = useEffectTheme()
 
@@ -89,12 +94,31 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
     const initializeParticles = () => {
         particles = []
 
-        // Atualiza posição do mouse para obter coordenadas corretas
-        mousePos.updateMousePosition()
+        // 🎯 Calcula offset 3D LOCAL usando flags próprias + posição RAW compartilhada
+        if (enableMouseControl) {
+            let targetX: number
+            let targetY: number
 
-        // Calcula centro baseado no mouse (se mouse follow ativo)
-        const centerX = window.innerWidth / 2 + mousePos.mouse3DOffset.x * 5
-        const centerY = window.innerHeight / 2 + mousePos.mouse3DOffset.y * 5
+            if (!particlesMouseFollowEnabled) {
+                targetX = 0
+                targetY = 0
+            }
+            else if (particlesAutoCenterEnabled && !mousePos.isMouseInsideWindow) {
+                targetX = 0
+                targetY = 0
+            }
+            else {
+                targetX = (mousePos.mouseX - 50) * 0.5
+                targetY = (mousePos.mouseY - 50) * 0.5
+            }
+
+            particlesMouse3DOffset.x += (targetX - particlesMouse3DOffset.x) * 0.1
+            particlesMouse3DOffset.y += (targetY - particlesMouse3DOffset.y) * 0.1
+        }
+
+        // Calcula centro baseado no offset LOCAL
+        const centerX = window.innerWidth / 2 + particlesMouse3DOffset.x * 5
+        const centerY = window.innerHeight / 2 + particlesMouse3DOffset.y * 5
 
         for (let i = 0; i < particleCount; i++) {
             particles.push(createParticle(centerX, centerY))
@@ -107,12 +131,31 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
     const updateParticles = (audioData: AudioFrequencyData) => {
         const { frequencyBands, beat } = audioData
 
-        // Atualiza posição do mouse
-        mousePos.updateMousePosition()
+        // 🎯 Calcula offset 3D LOCAL usando flags próprias
+        if (enableMouseControl) {
+            let targetX: number
+            let targetY: number
 
-        // Calcula centro considerando mouse
-        const centerX = window.innerWidth / 2 + mousePos.mouse3DOffset.x * 5
-        const centerY = window.innerHeight / 2 + mousePos.mouse3DOffset.y * 5
+            if (!particlesMouseFollowEnabled) {
+                targetX = 0
+                targetY = 0
+            }
+            else if (particlesAutoCenterEnabled && !mousePos.isMouseInsideWindow) {
+                targetX = 0
+                targetY = 0
+            }
+            else {
+                targetX = (mousePos.mouseX - 50) * 0.5
+                targetY = (mousePos.mouseY - 50) * 0.5
+            }
+
+            particlesMouse3DOffset.x += (targetX - particlesMouse3DOffset.x) * 0.1
+            particlesMouse3DOffset.y += (targetY - particlesMouse3DOffset.y) * 0.1
+        }
+
+        // Calcula centro considerando offset LOCAL
+        const centerX = window.innerWidth / 2 + particlesMouse3DOffset.x * 5
+        const centerY = window.innerHeight / 2 + particlesMouse3DOffset.y * 5
 
         // Spawn de novas partículas no beat (na posição do centro atual)
         if (beat && particles.length < particleCount * 1.5) {
@@ -384,11 +427,14 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
         startEffect,
         stopEffect,
         setMouseFollow: (enabled: boolean) => {
-            mousePos.setMouseFollow(enabled)
+            particlesMouseFollowEnabled = enabled
+            if (!enabled) {
+                particlesMouse3DOffset = { x: 0, y: 0 }
+            }
             console.log('[ParticlesEffect] Mouse Follow:', enabled ? 'ENABLED' : 'DISABLED')
         },
         setAutoCenter: (enabled: boolean) => {
-            mousePos.setAutoCenter(enabled)
+            particlesAutoCenterEnabled = enabled
             console.log('[ParticlesEffect] Auto Center:', enabled ? 'ENABLED' : 'DISABLED')
         },
         setSize: (size: number) => {
@@ -399,8 +445,8 @@ export const useParticlesEffect = (options: ParticlesEffectOptions = {}): BaseVi
             reactivity = value
             console.log('[ParticlesEffect] Reactivity:', value)
         },
-        getMouseFollow: () => mousePos.mouseFollowEnabled,
-        getAutoCenter: () => mousePos.autoCenterEnabled,
+        getMouseFollow: () => particlesMouseFollowEnabled,
+        getAutoCenter: () => particlesAutoCenterEnabled,
         getSize: () => baseSize,
         getReactivity: () => reactivity
     }
