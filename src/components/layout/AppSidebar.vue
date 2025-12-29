@@ -18,9 +18,6 @@
 
                 <!-- Component Manager -->
                 <ComponentManager :window-id="windowId" />
-
-                <!-- Window Control (Multi-Window) -->
-                <WindowControl />
             </div>
         </transition>
     </aside>
@@ -28,7 +25,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import { GlobalControls, ComponentManager, WindowControl } from '../../features/window-management'
+import { GlobalControls, ComponentManager } from '../../features/window-management'
 import type { WindowId } from '../../core/state/types'
 
 interface Props {

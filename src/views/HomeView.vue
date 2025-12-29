@@ -4,7 +4,7 @@ import { SoundControl } from '../features/audio-player'
 import { OrbEffectControl, ParticlesEffectControl } from '../features/visual-effects'
 import { MatrixCharacter } from '../features/user-interface'
 import { FrequencyVisualizer } from '../features/audio-analyzers'
-import { VisualEffectsControl } from '../features/window-management'
+import { VisualEffectsControl, MultiWindowControl } from '../features/window-management'
 import { DebugTerminal } from '../features/debug-tools'
 import { ThemeSelector } from '../features/theme-system'
 import AlertContainer from '../components/alerts/AlertContainer.vue'
@@ -255,8 +255,13 @@ const showParticlesEffectControl = computed(() => {
     return comp?.visible ?? false
 })
 
+const showMultiWindowControl = computed(() => {
+    const comp = globalWindowComponents.value.find(c => c.id === 'multi-window-control')
+    return comp?.visible ?? false
+})
+
 // Debug: Monitora mudanças nos computeds
-watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTerminal, showFrequencyVisualizer, showVisualEffectsControl, showParticlesEffectControl], (values) => {
+watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTerminal, showFrequencyVisualizer, showVisualEffectsControl, showParticlesEffectControl, showMultiWindowControl], (values) => {
     console.log('[HomeView] 🎨 Visibility computeds updated:', {
         soundControl: values[0],
         orbEffect: values[1],
@@ -264,7 +269,8 @@ watch([showSoundControl, showOrbEffectControl, showThemeSelector, showDebugTermi
         debug: values[3],
         frequency: values[4],
         visualEffects: values[5],
-        particles: values[6]
+        particles: values[6],
+        multiWindow: values[7]
     })
 }, { immediate: true })
 
@@ -333,6 +339,9 @@ const hasPrevious = computed(() => {
 
         <!-- Theme Selector (UNIVERSAL - funciona em todas as janelas) -->
         <ThemeSelector v-if="showThemeSelector" />
+
+        <!-- Multi-Window Control (SYSTEM - gerenciamento de janelas) -->
+        <MultiWindowControl v-if="showMultiWindowControl" />
 
         <!-- Matrix Character -->
         <MatrixCharacter v-if="showMatrixCharacter" />

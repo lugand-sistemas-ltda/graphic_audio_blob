@@ -14,9 +14,13 @@ export const defaultPositions = {
         x: SPACING,
         y: SPACING + 200 // Abaixo do visual effects control
     }),
+    'multi-window-control': () => ({
+        x: SPACING,
+        y: SPACING + 350 // Abaixo do theme selector
+    }),
     'debug-terminal': () => ({
         x: SPACING,
-        y: SPACING + 500 // Abaixo do theme selector
+        y: SPACING + 650 // Abaixo do multi-window control
     }),
     'frequency-visualizer': () => ({
         x: SPACING,

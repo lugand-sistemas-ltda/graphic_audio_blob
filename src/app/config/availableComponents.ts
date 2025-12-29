@@ -58,6 +58,12 @@ export const AVAILABLE_COMPONENTS: AvailableComponent[] = [
         collapsibleId: 'theme-selector'
     },
     {
+        id: 'multi-window-control',
+        name: 'Multi-Window Control',
+        category: 'system',
+        collapsibleId: 'multi-window-control'
+    },
+    {
         id: 'matrix-character',
         name: 'Matrix Character',
         category: 'system',
