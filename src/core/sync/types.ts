@@ -47,6 +47,7 @@ export interface SyncMessage<T = any> {
     timestamp: number
     windowId: string
     role?: WindowRole
+    title?: string // Título da janela (para sincronização)
 }
 
 // Dados de áudio sincronizados
@@ -101,6 +102,7 @@ export interface ComponentStateData {
 export interface WindowInfo {
     id: string
     role: WindowRole
+    title?: string // Título da janela (opcional, sincronizado via broadcast)
     connectedAt: number
     lastHeartbeat: number
     isAlive: boolean

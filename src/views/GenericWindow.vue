@@ -38,13 +38,25 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useWindowManager } from '../core/sync'
+import { setWindowId, setWindowTitle, announceConnection, useWindowManager } from '../core/sync'
 import { useGlobalState, registerWindow, getWindowComponents } from '../core/state'
 import { useSpectralVisualEffect } from '../features/visual-effects'
 import { WindowTitlebar, WindowConfig } from '../features/window-management'
 
-// ID único para esta janela genérica
-const genericWindowId = ref(`window-${Date.now()}`)
+// ========================================
+// WINDOW ID STRATEGY - Consistente com arquitetura global
+// ========================================
+// Gera ID sequencial genérico (generic-window-1, generic-window-2, etc)
+// Este ID será compartilhado entre GlobalState e BroadcastSync
+let windowCounter = 0
+const getNextWindowId = (() => {
+    return () => {
+        windowCounter++
+        return `generic-window-${windowCounter}`
+    }
+})()
+
+const genericWindowId = ref(getNextWindowId())
 
 // Window Manager
 const windowManager = useWindowManager({ enableLogging: false })
@@ -129,11 +141,21 @@ watch(shouldRenderGradient, (newValue, oldValue) => {
 
 // Esconde status após 5 segundos
 onMounted(() => {
-    // Registra esta janela no estado global
+    // ========================================
+    // PASSO 1: Define o ID único da janela (CRITICAL FIRST!)
+    // ========================================
+    // Sincroniza ID com BroadcastSync antes de qualquer comunicação
+    setWindowId(genericWindowId.value)
+
+    // ========================================
+    // PASSO 2: Registra esta janela no estado global
+    // ========================================
     const now = Date.now()
+    const windowTitle = `Generic Window ${windowCounter}`
+
     registerWindow({
         id: genericWindowId.value,
-        title: 'New Window',
+        title: windowTitle,
         role: 'secondary',
         effects: [], // Vazia por padrão
         layout: 'free',
@@ -142,6 +164,21 @@ onMounted(() => {
         lastActive: now,
         activeComponents: [],
         allComponentsHidden: false
+    })
+
+    // ========================================
+    // PASSO 3: Sincroniza título com BroadcastSync
+    // ========================================
+    setWindowTitle(windowTitle)
+
+    // ========================================
+    // PASSO 4: Anuncia conexão (APÓS configurar ID, role e title!)
+    // ========================================
+    announceConnection()
+
+    console.log('[GenericWindow] Window setup complete:', {
+        genericWindowId: genericWindowId.value,
+        windowTitle
     })
 
     // Inicializa efeitos se necessário

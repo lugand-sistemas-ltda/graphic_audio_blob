@@ -8,6 +8,7 @@ import { usePlaylist } from './features/audio-player/composables/usePlaylist'
 import { useComponentManager } from './features/window-management'
 import { useGlobalState, registerWindow, addComponentToWindow } from './core/state'
 import { useGlobalAudio, useGlobalTheme } from './core/global'
+import { setWindowId, setWindowTitle, announceConnection } from './core/sync'
 import { AVAILABLE_COMPONENTS } from './app/config/availableComponents'
 import LoadingScreen from './shared/components/ui/feedback/LoadingScreen.vue'
 
@@ -246,17 +247,29 @@ const updateDebugData = () => {
 
 // Registra todos os componentes gerenciáveis E inicia audio
 onMounted(async () => {
-    // Inicializa o estado global para esta janela específica
+    // ========================================
+    // PASSO 1: Define o ID único da janela (CRITICAL FIRST!)
+    // ========================================
+    // Este ID será usado tanto pelo GlobalState quanto pelo BroadcastSync
+    // garantindo consistência em todo o sistema
+    setWindowId(windowId)
+
+    // ========================================
+    // PASSO 2: Inicializa o estado global para esta janela específica
+    // ========================================
     const { setCurrentWindowId } = useGlobalState()
     setCurrentWindowId(windowId)
 
-    // Primeiro, registra a janela no estado global
+    // ========================================
+    // PASSO 3: Registra a janela no estado global
+    // ========================================
     const now = Date.now()
     const windowRole = isMainWindow ? 'main' : 'secondary'
+    const windowTitle = isMainWindow ? 'Spectral Audio Visualizer' : 'Child Window'
 
     registerWindow({
         id: windowId,
-        title: isMainWindow ? 'Spectral Audio Visualizer' : 'Child Window',
+        title: windowTitle,
         role: windowRole,
         effects: [], // Inicializa sem efeitos - usuário ativa pelo menu
         layout: 'free',
@@ -265,6 +278,22 @@ onMounted(async () => {
         lastActive: now,
         activeComponents: [], // Lista de componentes ativos nesta janela
         allComponentsHidden: false // Flag para hide/show all
+    })
+
+    // ========================================
+    // PASSO 4: Sincroniza título com BroadcastSync para outras janelas verem
+    // ========================================
+    setWindowTitle(windowTitle)
+
+    // ========================================
+    // PASSO 5: Anuncia conexão (APÓS configurar ID, role e title!)
+    // ========================================
+    announceConnection()
+
+    console.log('[App.vue] Window setup complete:', {
+        windowId,
+        windowRole,
+        windowTitle
     })
 
     // ========================================

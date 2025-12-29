@@ -26,11 +26,13 @@
             <!-- Connected Windows List -->
             <div v-if="connectedWindows.length > 0" class="connected-windows-list">
                 <div class="list-header">Active Windows:</div>
-                <div v-for="window in connectedWindows" :key="window.id" class="window-item">
-                    <span class="window-role">{{ formatWindowTitle(window) }}</span>
-                    <span class="window-status" :class="{ alive: window.isAlive }">
-                        {{ window.isAlive ? '🟢' : '🔴' }}
-                    </span>
+                <div class="windows-scroll-container">
+                    <div v-for="window in connectedWindows" :key="window.id" class="window-item">
+                        <span class="window-role">{{ getWindowTitle(window.id) }}</span>
+                        <span class="window-status" :class="{ alive: window.isAlive }">
+                            {{ window.isAlive ? '🟢' : '🔴' }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -38,10 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useCollapsible } from '../../../shared'
+import { computed, inject } from 'vue'
+import { useCollapsible, useGlobalAlerts } from '../../../shared'
 import { useVisibilityReload } from '../composables/useVisibilityReload'
 import { useWindowManager } from '../../../core/sync'
+import type { WindowId } from '../../../core/state/types'
 
 const { isExpanded, toggle: toggleExpanded, reloadState } = useCollapsible({
     id: 'multi-window-control',
@@ -58,6 +61,9 @@ useVisibilityReload({
 // WINDOW MANAGER (singleton global)
 // ========================================
 const windowManager = useWindowManager()
+const currentWindowId = inject<WindowId>('windowId', 'main')
+const alerts = useGlobalAlerts(currentWindowId)
+
 const windowCount = windowManager.windowCount
 const connectedWindows = computed(() => windowManager.getAliveWindows())
 const canOpenWindow = computed(() => true) // Browser will block if necessary
@@ -68,15 +74,27 @@ const canOpenWindow = computed(() => true) // Browser will block if necessary
 const openNewWindow = () => {
     const newWindow = windowManager.openGenericWindow()
     if (!newWindow) {
-        alert('Popup blocked! Please allow popups for this site.')
+        alerts.showAlert({
+            type: 'warning',
+            title: 'Popup Blocked',
+            message: 'Please allow popups for this site to open new windows.',
+            icon: '🚫'
+        })
     }
 }
 
 // ========================================
 // UTILS
 // ========================================
-const formatWindowTitle = (window: any): string => {
-    return window.title || formatRole(window.role)
+const getWindowTitle = (windowId: string): string => {
+    // Busca diretamente no connectedWindows que agora tem o título sincronizado
+    const window = connectedWindows.value.find(w => w.id === windowId)
+
+    if (window) {
+        return window.title || formatRole(window.role)
+    }
+
+    return 'Unknown Window'
 }
 
 const formatRole = (role: string): string => {
@@ -188,6 +206,17 @@ const formatRole = (role: string): string => {
         margin-bottom: var(--spacing-sm);
         padding-bottom: var(--spacing-xs);
         border-bottom: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+    }
+
+    // Scroll container - limita altura para 4 itens
+    .windows-scroll-container {
+        max-height: 240px; // Aproximadamente 4 itens (35px cada)
+        overflow-y: auto;
+        overflow-x: hidden;
+        @include custom-scrollbar(0.3, 0.15);
+
+        // Espaçamento suave ao fazer scroll
+        scroll-behavior: smooth;
     }
 
     .window-item {

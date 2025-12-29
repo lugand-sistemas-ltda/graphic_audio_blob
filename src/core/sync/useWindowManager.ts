@@ -19,7 +19,7 @@ export function useWindowManager(config?: { enableLogging?: boolean }) {
     const sync = useBroadcastSync(config)
 
     // Computed properties úteis
-    const windowCount = computed(() => sync.getAliveWindows().length + 1) // +1 para janela atual
+    const windowCount = computed(() => sync.getAliveWindows().length) // Já inclui janela atual
     const isMultiWindow = computed(() => windowCount.value > 1)
     const isMainWindow = computed(() => sync.currentRole.value === 'main')
 

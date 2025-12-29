@@ -27,17 +27,11 @@ let broadcastChannel: BroadcastChannel | null = null
 let heartbeatIntervalId: number | null = null
 
 const connectedWindows = ref<Map<string, WindowInfo>>(new Map())
-const currentWindowId = ref<string>(generateWindowId())
+const currentWindowId = ref<string | null>(null) // Será definido via setWindowId()
 const currentRole = ref<WindowRole>('main')
+const currentTitle = ref<string>('Window') // Título da janela atual
 const messageHandlers = new Map<SyncMessageType, Set<MessageHandler>>()
 const config = ref<Required<SyncConfig>>(DEFAULT_CONFIG)
-
-/**
- * Gera ID único para a janela atual
- */
-function generateWindowId(): string {
-    return `window_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-}
 
 /**
  * Log condicional baseado na configuração
@@ -95,18 +89,19 @@ function initializeBroadcastChannel() {
  * Processa mensagens do sistema (heartbeat, conexão, etc)
  */
 function handleSystemMessage(message: SyncMessage) {
-    const { type, windowId, role, timestamp } = message
+    const { type, windowId, role, title, timestamp } = message
 
     switch (type) {
         case 'WINDOW_CONNECTED':
             connectedWindows.value.set(windowId, {
                 id: windowId,
                 role: role || 'custom',
+                title: title || 'Window',
                 connectedAt: timestamp,
                 lastHeartbeat: timestamp,
                 isAlive: true
             })
-            log(`Window connected: ${windowId} (${role})`)
+            log(`Window connected: ${windowId} (${role}) - ${title}`)
             break
 
         case 'WINDOW_DISCONNECTED':
@@ -119,12 +114,17 @@ function handleSystemMessage(message: SyncMessage) {
             if (window) {
                 window.lastHeartbeat = timestamp
                 window.isAlive = true
+                // Atualiza título se mudou
+                if (title && title !== window.title) {
+                    window.title = title
+                }
                 connectedWindows.value.set(windowId, window)
             } else {
                 // Nova janela detectada via heartbeat
                 connectedWindows.value.set(windowId, {
                     id: windowId,
                     role: role || 'custom',
+                    title: title || 'Window',
                     connectedAt: timestamp,
                     lastHeartbeat: timestamp,
                     isAlive: true
@@ -191,12 +191,19 @@ export function broadcast<T = any>(type: SyncMessageType, data: T) {
         return
     }
 
+    // Garante que windowId foi definido
+    if (!currentWindowId.value) {
+        console.error('[MultiWindow] Cannot broadcast: windowId not set. Call setWindowId() first.')
+        return
+    }
+
     const message: SyncMessage<T> = {
         type,
         data,
         timestamp: Date.now(),
         windowId: currentWindowId.value,
-        role: currentRole.value
+        role: currentRole.value,
+        title: currentTitle.value // Inclui título da janela
     }
 
     try {
@@ -249,6 +256,39 @@ export function setWindowRole(role: WindowRole) {
 }
 
 /**
+ * Define o ID da janela atual (deve ser chamado ANTES de qualquer broadcast)
+ * Este ID deve vir do GlobalState para garantir consistência
+ */
+export function setWindowId(id: string) {
+    if (currentWindowId.value) {
+        console.warn('[MultiWindow] Window ID already set. Ignoring new ID.')
+        return
+    }
+    currentWindowId.value = id
+    log(`Window ID set: ${id}`)
+}
+
+/**
+ * Define o título da janela atual
+ */
+export function setWindowTitle(title: string) {
+    currentTitle.value = title
+    log(`Window title set: ${title}`)
+}
+
+/**
+ * Anuncia a conexão desta janela para outras janelas
+ * Deve ser chamado APÓS setWindowId(), setWindowRole() e setWindowTitle()
+ */
+export function announceConnection() {
+    if (!currentWindowId.value) {
+        console.error('[MultiWindow] Cannot announce connection: windowId not set. Call setWindowId() first.')
+        return
+    }
+
+    broadcast('WINDOW_CONNECTED', {})
+    log(`Connection announced: ${currentWindowId.value} (${currentRole.value}) - ${currentTitle.value}`)
+}/**
  * Obtém informações sobre janelas conectadas
  */
 export function getConnectedWindows(): WindowInfo[] {
@@ -257,9 +297,27 @@ export function getConnectedWindows(): WindowInfo[] {
 
 /**
  * Obtém apenas janelas ativas (respondendo a heartbeat)
+ * INCLUI a janela atual no resultado
  */
 export function getAliveWindows(): WindowInfo[] {
-    return getConnectedWindows().filter(w => w.isAlive)
+    const otherWindows = getConnectedWindows().filter(w => w.isAlive)
+
+    // Adiciona a janela atual à lista se o ID foi definido
+    if (currentWindowId.value) {
+        const currentWindow: WindowInfo = {
+            id: currentWindowId.value,
+            role: currentRole.value,
+            title: currentTitle.value,
+            connectedAt: Date.now(),
+            lastHeartbeat: Date.now(),
+            isAlive: true
+        }
+
+        // Adiciona a janela atual no início da lista
+        return [currentWindow, ...otherWindows]
+    }
+
+    return otherWindows
 }
 
 /**
@@ -290,8 +348,9 @@ export function useBroadcastSync(customConfig?: Partial<SyncConfig>) {
         initializeBroadcastChannel()
         startHeartbeat()
 
-        // Anuncia conexão da janela
-        broadcast('WINDOW_CONNECTED', {})
+        // NÃO anuncia conexão automaticamente mais!
+        // O App.vue/GenericWindow.vue deve chamar announceConnection() explicitamente
+        // após configurar windowId, role e title
     }
 
     // Cleanup ao desmontar
@@ -320,7 +379,10 @@ export function useBroadcastSync(customConfig?: Partial<SyncConfig>) {
         broadcast,
         onMessage,
         offMessage,
+        setWindowId,
         setWindowRole,
+        setWindowTitle,
+        announceConnection,
         getConnectedWindows,
         getAliveWindows,
         getWindowsByRole,
