@@ -19,9 +19,6 @@
                 <!-- Component Manager -->
                 <ComponentManager :window-id="windowId" />
 
-                <!-- Effects Control -->
-                <EffectsControl :window-id="windowId" />
-
                 <!-- Window Control (Multi-Window) -->
                 <WindowControl />
             </div>
@@ -31,7 +28,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import { GlobalControls, ComponentManager, EffectsControl, WindowControl } from '../../features/window-management'
+import { GlobalControls, ComponentManager, WindowControl } from '../../features/window-management'
 import type { WindowId } from '../../core/state/types'
 
 interface Props {
