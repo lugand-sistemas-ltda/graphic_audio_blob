@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useWindowManager } from '../core/sync'
+import { ref, onMounted } from 'vue'
+import { useGlobalAudio } from '../core/global'
 import { useSpectralVisualEffect } from '../features/visual-effects'
 import { registerWindow } from '../core/state'
 import { WindowConfig } from '../features/window-management'
@@ -32,35 +32,25 @@ import { WindowConfig } from '../features/window-management'
 // ID único para esta janela visual
 const visualWindowId = 'visual-' + Date.now()
 
-// Define role da janela como 'visual'
-const windowManager = useWindowManager({ enableLogging: false })
-windowManager.setWindowRole('visual')
+// Global Audio (para sincronização de dados de áudio)
+const globalAudio = useGlobalAudio()
 
 const showInfo = ref(true)
 const isConnected = ref(false)
 
-// Provider de dados de áudio sincronizados
-let audioDataCache = {
-    frequencyBands: [0, 0, 0, 0, 0, 0, 0, 0],
-    bass: 0,
-    mid: 0,
-    treble: 0,
-    overall: 0,
-    beat: false,
-    raw: new Uint8Array(0)
-}
-
-// Escuta dados de áudio da janela principal
-const unsubscribe = windowManager.onAudioData((data) => {
-    audioDataCache = {
-        ...data,
-        raw: new Uint8Array(0) // raw não é sincronizado, apenas dados processados
+// Provider de dados de áudio - usa GlobalAudio diretamente
+const audioDataProvider = () => {
+    const data = globalAudio.state.value.frequencyData
+    return {
+        frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
+        bass: data.bass || 0,
+        mid: data.mid || 0,
+        treble: data.treble || 0,
+        overall: data.overall || 0,
+        beat: data.beat || false,
+        raw: data.raw || new Uint8Array(0)
     }
-    isConnected.value = true
-})
-
-// Provider que retorna os dados sincronizados
-const audioDataProvider = () => audioDataCache
+}
 
 // Inicializa efeito visual com dados sincronizados
 useSpectralVisualEffect({
@@ -89,11 +79,6 @@ onMounted(() => {
     setTimeout(() => {
         showInfo.value = false
     }, 5000)
-})
-
-// Cleanup
-onUnmounted(() => {
-    unsubscribe()
 })
 </script>
 

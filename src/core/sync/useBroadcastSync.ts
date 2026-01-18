@@ -25,6 +25,7 @@ const DEFAULT_CONFIG: Required<SyncConfig> = {
 // Estado global compartilhado entre todas as instâncias do composable
 let broadcastChannel: BroadcastChannel | null = null
 let heartbeatIntervalId: number | null = null
+let activeInstances = 0 // ✅ Contador de instâncias ativas
 
 const connectedWindows = ref<Map<string, WindowInfo>>(new Map())
 const currentWindowId = ref<string | null>(null) // Será definido via setWindowId()
@@ -186,8 +187,13 @@ function stopHeartbeat() {
  * Envia mensagem para todas as outras janelas
  */
 export function broadcast<T = any>(type: SyncMessageType, data: T) {
+    // Garante que BroadcastChannel está inicializado
     if (!broadcastChannel) {
-        // Não loga warning para evitar spam - broadcast será inicializado quando necessário
+        initializeBroadcastChannel()
+    }
+
+    if (!broadcastChannel) {
+        console.error('[MultiWindow] BroadcastChannel not available')
         return
     }
 
@@ -216,8 +222,18 @@ export function broadcast<T = any>(type: SyncMessageType, data: T) {
 
 /**
  * Registra handler para tipo específico de mensagem
+ * GARANTE que o BroadcastChannel esteja inicializado
  */
 export function onMessage<T = any>(type: SyncMessageType, handler: MessageHandler<T>) {
+    // Garante que BroadcastChannel está inicializado
+    if (!broadcastChannel) {
+        initializeBroadcastChannel()
+        // Inicia heartbeat se ainda não foi iniciado
+        if (!heartbeatIntervalId) {
+            startHeartbeat()
+        }
+    }
+
     if (!messageHandlers.has(type)) {
         messageHandlers.set(type, new Set())
     }
@@ -338,6 +354,9 @@ export function hasOtherWindows(): boolean {
  * Composable principal do sistema multi-window
  */
 export function useBroadcastSync(customConfig?: Partial<SyncConfig>) {
+    // Incrementa contador de instâncias ativas
+    activeInstances++
+
     // Aplica configuração customizada
     if (customConfig) {
         config.value = { ...DEFAULT_CONFIG, ...customConfig }
@@ -355,17 +374,25 @@ export function useBroadcastSync(customConfig?: Partial<SyncConfig>) {
 
     // Cleanup ao desmontar
     onUnmounted(() => {
+        // Decrementa contador de instâncias
+        activeInstances--
+
         // Anuncia desconexão
         broadcast('WINDOW_DISCONNECTED', {})
 
-        // Para heartbeat se for a última instância
-        stopHeartbeat()
+        // ✅ SÓ FECHA O CANAL SE NÃO HOUVER MAIS NENHUMA INSTÂNCIA ATIVA
+        if (activeInstances <= 0) {
+            // Para heartbeat
+            stopHeartbeat()
 
-        // Fecha channel se for a última instância
-        if (broadcastChannel) {
-            broadcastChannel.close()
-            broadcastChannel = null
-            log('BroadcastChannel closed')
+            // Fecha channel
+            if (broadcastChannel) {
+                broadcastChannel.close()
+                broadcastChannel = null
+                log('BroadcastChannel closed (no more active instances)')
+            }
+        } else {
+            log(`BroadcastChannel kept open (${activeInstances} active instances remaining)`)
         }
     })
 

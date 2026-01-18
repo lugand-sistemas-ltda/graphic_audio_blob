@@ -38,8 +38,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { setWindowId, setWindowTitle, announceConnection, useWindowManager } from '../core/sync'
+import { setWindowId, setWindowTitle, announceConnection } from '../core/sync'
 import { useGlobalState, registerWindow, getWindowComponents } from '../core/state'
+import { useGlobalAudio } from '../core/global'
 import { useSpectralVisualEffect } from '../features/visual-effects'
 import { WindowTitlebar, WindowConfig } from '../features/window-management'
 
@@ -58,11 +59,11 @@ const getNextWindowId = (() => {
 
 const genericWindowId = ref(getNextWindowId())
 
-// Window Manager
-const windowManager = useWindowManager({ enableLogging: false })
-
 // Global State
 const { state } = useGlobalState()
+
+// Global Audio (para sincronização de dados de áudio)
+const globalAudio = useGlobalAudio()
 
 // Connection status
 const isConnected = ref(false)
@@ -85,28 +86,19 @@ const hasComponents = computed(() => {
     return windowComponents.value.length > 0
 })
 
-// Provider de dados de áudio sincronizados
-let audioDataCache = {
-    frequencyBands: [0, 0, 0, 0, 0, 0, 0, 0],
-    bass: 0,
-    mid: 0,
-    treble: 0,
-    overall: 0,
-    beat: false,
-    raw: new Uint8Array(0)
-}
-
-// Escuta dados de áudio da janela principal
-const unsubscribe = windowManager.onAudioData((data) => {
-    audioDataCache = {
-        ...data,
-        raw: new Uint8Array(0)
+// Provider de dados de áudio - usa GlobalAudio diretamente
+const audioDataProvider = () => {
+    const data = globalAudio.state.value.frequencyData
+    return {
+        frequencyBands: data.frequencyBands || [0, 0, 0, 0, 0, 0, 0, 0],
+        bass: data.bass || 0,
+        mid: data.mid || 0,
+        treble: data.treble || 0,
+        overall: data.overall || 0,
+        beat: data.beat || false,
+        raw: data.raw || new Uint8Array(0)
     }
-    isConnected.value = true
-})
-
-// Provider que retorna os dados sincronizados
-const audioDataProvider = () => audioDataCache
+}
 
 // Inicializa efeito visual APENAS se gradient estiver ativo
 let visualEffect: any = null
@@ -191,7 +183,6 @@ onMounted(() => {
 
 // Cleanup
 onUnmounted(() => {
-    unsubscribe()
     stopVisualEffect()
 })
 </script>
