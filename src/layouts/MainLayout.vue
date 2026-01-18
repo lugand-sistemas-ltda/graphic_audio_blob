@@ -3,6 +3,9 @@
         <!-- Header Global (TODAS as janelas) -->
         <AppHeader :window-id="windowId" />
 
+        <!-- Integrated Terminal (Global) -->
+        <IntegratedTerminal />
+
         <!-- Sidebar Global (TODAS as janelas) -->
         <AppSidebar :window-id="windowId" />
 
@@ -28,6 +31,7 @@ import { RouterView } from 'vue-router'
 import AppHeader from '../components/layout/AppHeader.vue'
 import AppSidebar from '../components/layout/AppSidebar.vue'
 import MiniPlayer from '../components/layout/MiniPlayer.vue'
+import IntegratedTerminal from '../components/layout/IntegratedTerminal.vue'
 import { useWindowType } from '../features/window-management'
 import { useWindowManager } from '../core/sync'
 

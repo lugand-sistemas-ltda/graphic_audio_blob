@@ -36,6 +36,12 @@ export type SyncMessageType =
     | 'GLOBAL_RGB_CONFIG'
     | 'GLOBAL_CHAMELEON_TOGGLE'
     | 'GLOBAL_CHAMELEON_CONFIG'
+    // Global Terminal messages
+    | 'TERMINAL_TOGGLE'
+    | 'TERMINAL_FULLSCREEN'
+    | 'TERMINAL_CLEAR'
+    | 'TERMINAL_OUTPUT'
+    | 'TERMINAL_COMMAND'
 
 // Roles que uma janela pode assumir
 export type WindowRole = 'main' | 'visual' | 'controls' | 'grid' | 'custom'
