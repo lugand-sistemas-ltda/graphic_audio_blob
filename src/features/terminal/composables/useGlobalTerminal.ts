@@ -5,7 +5,7 @@
 
 import { ref, readonly } from 'vue'
 import type { TerminalState, TerminalLine, TerminalContext } from '../types'
-import { executeCommand as execCommand, registerBasicCommands } from '../commands'
+import { executeCommand as execCommand, registerAllCommands } from '../commands'
 import { broadcast, onMessage } from '../../../core/sync'
 
 // ========================================
@@ -210,8 +210,8 @@ function setupSyncHandlers() {
 function initialize() {
     if (initialized) return
 
-    // Registra comandos básicos
-    registerBasicCommands()
+    // Registra todos os comandos
+    registerAllCommands()
 
     // Setup sync handlers
     setupSyncHandlers()
